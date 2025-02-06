@@ -1,6 +1,11 @@
 # Clickr
 
-
+## Devloped by
+Bode Packer
+Hayden Hilterbrand
+Luke Hamling
+Ryan Dalrymple
+Tim Blamires
 
 ## Getting started
 
