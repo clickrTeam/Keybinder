@@ -4,6 +4,9 @@
 #include <QCoreApplication>
 #include <QStringList>
 #include <QDebug>
+#include <thread>
+#include <iostream>
+#include "win/deamon.h"
 
 int main(int argc, char *argv[])
 {
@@ -23,6 +26,9 @@ int main(int argc, char *argv[])
         // Run UI
         MainWindow w;
         w.show();
+        #ifdef _WIN32
+        std::thread t1(startup);
+        #endif
 
         return a.exec();
     }

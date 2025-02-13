@@ -11,6 +11,8 @@ qt_add_executable(Clickr
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    win/deamon.cpp
+    win/deamon.h
 )
 
 target_link_libraries(Clickr
