@@ -48,10 +48,20 @@ void cleanup() {
 // SOURCE- https://youtu.be/QIWw0jZqGKA?si=snqwlN0HlzcFlaWn
 LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    // Ignore system call - I believe if nCode < 0 then its a system call and we should always ignore it.
+    if (nCode < 0) {
+        return CallNextHookEx(NULL, nCode, wParam, lParam);
+    }
     // nCode - N/I, wParam tells us what type of event happend, lParam is the key and scan code and flags
     KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam); // reinterpret_cast is c++ style casting instead of c style (KBDLLHOOKSTRUCT)lParam
     // lParam has vkCode which is the virtual key code while scanCode is the hardware key code which can be diffrent for the same keys
 
+    // Ignore sythesized Inputs
+    if (kbdStruct->flags & LLKHF_INJECTED) {
+        return CallNextHookEx(NULL, nCode, wParam, lParam);
+    }
+
+    // Handle input
     switch (wParam)
     {
     case WM_KEYDOWN: {
