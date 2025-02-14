@@ -1,18 +1,29 @@
 #include <QDebug>
+#include <QCoreApplication>
 #include "deamon.h"
 #include <windows.h>
 #include <winuser.h>
 
+HHOOK kbd = NULL; // Global hook handle
+
 void startup() {
-    qDebug() << "Started";
-    HHOOK kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
-    winDeamon(&kbd);
+    qDebug() << "Starting Win systems";
+    kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
+    if (!kbd) {
+        qDebug() << "Failed to install keyboard hook!";
+        return;
+    }
+
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
+        cleanup();
+    });
+    winDeamon();
 
     // idHook, HookProc, Hinstance - N/I, dwThreadId - N/I
     // hooks idHook to HookProc, this happens before the os processes the input
 };
 
-void winDeamon(HHOOK* kbd) {
+void winDeamon() {
     // message loop - spin until the user presses a key, somehow a common practice in windows programming. aka message pump
     MSG msg;
     while (GetMessage(&msg, NULL, NULL, NULL) > 0)
@@ -21,7 +32,15 @@ void winDeamon(HHOOK* kbd) {
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(*kbd);
+    cleanup();
+}
+
+void cleanup() {
+    if (kbd) {
+        UnhookWindowsHookEx(kbd);
+        kbd = NULL;
+        qDebug() << "Keyboard hook uninstalled.";
+    }
 }
 
 //  - N/I = Not Important
