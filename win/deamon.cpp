@@ -35,17 +35,50 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
 
     switch (wParam)
     {
-    case WM_KEYDOWN:
+    case WM_KEYDOWN: {
         char c = MapVirtualKey(kbdStruct->vkCode, MAPVK_VK_TO_CHAR);
         qDebug() << GetKeyName(kbdStruct->vkCode);
-        break;
+        KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
 
-        // default:
-        //     return CallNextHookEx(NULL, nCode, wParam, lParam);
-        //     break;
+        if (kbdStruct->vkCode == 'W') // Detect 'W' keydown
+        {
+            // Inject Shift+W manually
+            INPUT inputs[4] = {};
+
+            // Press Shift
+            inputs[0].type = INPUT_KEYBOARD;
+            inputs[0].ki.wVk = VK_SHIFT;
+
+            // Press W
+            inputs[1].type = INPUT_KEYBOARD;
+            inputs[1].ki.wVk = 'W';
+
+            // Release W
+            inputs[2].type = INPUT_KEYBOARD;
+            inputs[2].ki.wVk = 'W';
+            inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+
+            // Release Shift
+            inputs[3].type = INPUT_KEYBOARD;
+            inputs[3].ki.wVk = VK_SHIFT;
+            inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+
+            SendInput(4, inputs, sizeof(INPUT));
+
+            return 1; // Suppress the original W key release
+        }
+        break;
     }
-    // continue down the chain of hooks
+    case WM_KEYUP: {
+        break;
+    }
+    default: {
+        break;
+    }
+    }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
+    // continue down the chain of hooks
+    // return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 std::string GetKeyName(unsigned int virtualKey)
