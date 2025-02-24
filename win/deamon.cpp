@@ -1,18 +1,29 @@
 #include <QDebug>
+#include <QCoreApplication>
 #include "deamon.h"
 #include <windows.h>
 #include <winuser.h>
 
+HHOOK kbd = NULL; // Global hook handle
+
 void startup() {
-    qDebug() << "Started";
-    HHOOK kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
-    winDeamon(&kbd);
+    qDebug() << "Starting Win systems";
+    kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
+    if (!kbd) {
+        qDebug() << "Failed to install keyboard hook!";
+        return;
+    }
+
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
+        cleanup();
+    });
+    winDeamon();
 
     // idHook, HookProc, Hinstance - N/I, dwThreadId - N/I
     // hooks idHook to HookProc, this happens before the os processes the input
 };
 
-void winDeamon(HHOOK* kbd) {
+void winDeamon() {
     // message loop - spin until the user presses a key, somehow a common practice in windows programming. aka message pump
     MSG msg;
     while (GetMessage(&msg, NULL, NULL, NULL) > 0)
@@ -21,7 +32,15 @@ void winDeamon(HHOOK* kbd) {
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(*kbd);
+    cleanup();
+}
+
+void cleanup() {
+    if (kbd) {
+        UnhookWindowsHookEx(kbd);
+        kbd = NULL;
+        qDebug() << "Keyboard hook uninstalled.";
+    }
 }
 
 //  - N/I = Not Important
@@ -29,23 +48,66 @@ void winDeamon(HHOOK* kbd) {
 // SOURCE- https://youtu.be/QIWw0jZqGKA?si=snqwlN0HlzcFlaWn
 LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    // Ignore system call - I believe if nCode < 0 then its a system call and we should always ignore it.
+    if (nCode < 0) {
+        return CallNextHookEx(NULL, nCode, wParam, lParam);
+    }
     // nCode - N/I, wParam tells us what type of event happend, lParam is the key and scan code and flags
     KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam); // reinterpret_cast is c++ style casting instead of c style (KBDLLHOOKSTRUCT)lParam
     // lParam has vkCode which is the virtual key code while scanCode is the hardware key code which can be diffrent for the same keys
 
+    // Ignore sythesized Inputs
+    if (kbdStruct->flags & LLKHF_INJECTED) {
+        return CallNextHookEx(NULL, nCode, wParam, lParam);
+    }
+
+    // Handle input
     switch (wParam)
     {
-    case WM_KEYDOWN:
+    case WM_KEYDOWN: {
         char c = MapVirtualKey(kbdStruct->vkCode, MAPVK_VK_TO_CHAR);
         qDebug() << GetKeyName(kbdStruct->vkCode);
-        break;
+        KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
 
-        // default:
-        //     return CallNextHookEx(NULL, nCode, wParam, lParam);
-        //     break;
+        if (kbdStruct->vkCode == 'W') // Detect 'W' keydown
+        {
+            // Inject Shift+W manually
+            INPUT inputs[4] = {};
+
+            // Press Shift
+            inputs[0].type = INPUT_KEYBOARD;
+            inputs[0].ki.wVk = VK_SHIFT;
+
+            // Press W
+            inputs[1].type = INPUT_KEYBOARD;
+            inputs[1].ki.wVk = 'W';
+
+            // Release W
+            inputs[2].type = INPUT_KEYBOARD;
+            inputs[2].ki.wVk = 'W';
+            inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+
+            // Release Shift
+            inputs[3].type = INPUT_KEYBOARD;
+            inputs[3].ki.wVk = VK_SHIFT;
+            inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+
+            SendInput(4, inputs, sizeof(INPUT));
+
+            return 1; // Suppress the original W key release
+        }
+        break;
     }
-    // continue down the chain of hooks
+    case WM_KEYUP: {
+        break;
+    }
+    default: {
+        break;
+    }
+    }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
+    // continue down the chain of hooks
+    // return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 std::string GetKeyName(unsigned int virtualKey)
