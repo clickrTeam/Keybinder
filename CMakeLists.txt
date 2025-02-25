@@ -8,11 +8,9 @@ qt_standard_project_setup()
 qt_add_executable(Keybinder
     WIN32 MACOSX_BUNDLE
     main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    win/deamon.cpp
-    win/deamon.h
+    win/deamon.cpp win/deamon.h
+    startup.h startup.cpp
+    profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
 )
 
 target_link_libraries(Keybinder

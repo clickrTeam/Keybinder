@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <string>
 
-void startup();
+void winStartDeamon();
 void winDeamon();
 void cleanup();
 LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam);

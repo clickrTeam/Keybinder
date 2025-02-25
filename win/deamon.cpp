@@ -6,7 +6,7 @@
 
 HHOOK kbd = NULL; // Global hook handle
 
-void startup() {
+void winStartDeamon() {
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
     if (!kbd) {
@@ -24,6 +24,7 @@ void startup() {
 };
 
 void winDeamon() {
+    qDebug() << "Win, message pump starting";
     // message loop - spin until the user presses a key, somehow a common practice in windows programming. aka message pump
     MSG msg;
     while (GetMessage(&msg, NULL, NULL, NULL) > 0)
