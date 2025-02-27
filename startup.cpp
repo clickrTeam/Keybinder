@@ -5,7 +5,7 @@
 QThread *deamon = nullptr;
 
 void startUp(bool isOsStartup) {
-    proccessProfile("../../exampleProfiles/e1.json");
+    proccessProfile("../../exampleProfiles/e2.json");
 #ifdef _WIN32
     deamon = QThread::create(winStartDeamon);
 #elif defined(__APPLE__)

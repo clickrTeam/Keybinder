@@ -1,0 +1,21 @@
+{
+    "name": "Default Profile",
+    "layers": [
+        {
+            "layer_name": "Gaming Layer",
+            "keybinds": [
+                {
+                    "key": {
+                        "value": "w",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "q",
+                        "type": "tap"
+                    }
+                }
+            ]
+        }
+    ]
+}
+    

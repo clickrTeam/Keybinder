@@ -11,6 +11,7 @@ qt_add_executable(Keybinder
     win/deamon.cpp win/deamon.h
     startup.h startup.cpp
     profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
+    profileInterpreter/profile.h
 )
 
 target_link_libraries(Keybinder

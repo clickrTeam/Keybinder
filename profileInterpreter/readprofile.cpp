@@ -30,6 +30,83 @@ void proccessProfile(const QString &profileFilePath) {
         return;
     }
     qDebug() << "Profile json read";
+
+    readProfile(jsonDoc.object());
 }
 
-void readProfile(QFile profileFile) {}
+Profile readProfile(QJsonObject profile) {
+    Profile pro;
+    qDebug() << "Profile Name:" << profile.value(PROFILE_NAME).toString();
+    pro.name = profile.value(PROFILE_NAME).toString();
+
+    const QJsonArray layers = profile.value(PROFILE_LAYERS).toArray();
+    for (const QJsonValue& layer : layers) {
+        pro.layers.append(readLayer(layer.toObject()));
+    }
+    return pro;
+}
+
+Layer readLayer(QJsonObject layer) {
+    Layer lyr;
+    qDebug() << "Layer Name:" << layer.value(LAYER_NAME).toString();
+    lyr.layerName = layer.value(LAYER_NAME).toString();
+
+    const QJsonArray keybinds = layer.value(LAYER_KEYBINDS).toArray();
+    for (const QJsonValue& keybindValue : keybinds) {
+        Keybind kybnd;
+        QJsonObject keybind = keybindValue.toObject();
+        QJsonObject key = keybind.value(KEYBIND_KEY).toObject();
+        kybnd.key = readKey(key);
+        QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
+        kybnd.bind = readBind(bind);
+        lyr.keybinds.append(kybnd);
+    }
+    return lyr;
+}
+
+Key readKey(QJsonObject key) {
+    QString keyType = key.value(TYPE).toString();
+    QString keyValue = key.value(VALUE).toString();
+    Key ky;
+    ky.type = keyType;
+    ky.value = keyValue;
+
+    // Output key information
+    qDebug() << "Key Type:" << keyType;
+    qDebug() << "Key Value:" << keyValue;
+    return ky;
+}
+
+Bind readBind(QJsonObject bind) {
+    QString bindType = bind.value(TYPE).toString();
+    QString bindValue = bind.value(VALUE).toString();
+    Bind bnd;
+    bnd.type = bindType;
+    bnd.value = bindValue;
+
+    // Output bind information
+    qDebug() << "Bind Type:" << bindType;
+    qDebug() << "Bind Value:" << bindValue;
+    return bnd;
+}
+
+// {
+//     "name": "Default Profile",
+//              "layers": [
+//                             {
+//                                 "layer_name": "Gaming Layer",
+//                                 "keybinds": [
+//                                     {
+//                                         "key": {
+//                                             "value": "w",
+//                                             "type": "tap"
+//                                         },
+//                                         "bind": {
+//                                             "value": "q",
+//                                             "type": "tap"
+//                                         }
+//                                     }
+//                          ]
+//              }
+//     ]
+// }

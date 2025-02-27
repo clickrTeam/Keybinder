@@ -2,10 +2,28 @@
 #define READPROFILE_H
 #include <QFile>
 #include <QDebug>
-#include <qjsondocument.h>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
+#include "profile.h"
 
+// Define constants for each JSON key
+#define PROFILE_NAME "name"
+#define PROFILE_LAYERS "layers"
+#define LAYER_NAME "layer_name"
+#define LAYER_KEYBINDS "keybinds"
+#define KEYBIND_KEY "key"
+#define KEYBIND_BIND "bind"
+#define VALUE "value"
+#define TYPE "type"
+
+// functions
 void proccessProfile(const QString &profileFilePath);
 
-void readProfile(QFile profileFile);
+Profile readProfile(QJsonObject profile);
+Layer readLayer(QJsonObject layer);
+Key readKey(QJsonObject key);
+Bind readBind(QJsonObject bind);
 
 #endif // READPROFILE_H
