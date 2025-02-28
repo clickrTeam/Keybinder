@@ -1,18 +1,22 @@
-#include <QDebug>
 #include <QCoreApplication>
 #include "deamon.h"
 #include <windows.h>
 #include <winuser.h>
 
 HHOOK kbd = NULL; // Global hook handle
+Profile activeProfile;
+Layer activeLayer;
 
-void winStartDeamon() {
+void winStartDeamon(Profile _activeProfile) {
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
     if (!kbd) {
         qDebug() << "Failed to install keyboard hook!";
         return;
     }
+    activeProfile = _activeProfile;
+    activeLayer = activeProfile.layers[0];
+    qDebug() << activeLayer.tapKeyBinds.keys();
 
     QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
         cleanup();
@@ -61,41 +65,16 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
     if (kbdStruct->flags & LLKHF_INJECTED) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
-
     // Handle input
     switch (wParam)
     {
-    case WM_KEYDOWN: {
-        char c = MapVirtualKey(kbdStruct->vkCode, MAPVK_VK_TO_CHAR);
-        qDebug() << GetKeyName(kbdStruct->vkCode);
-        KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+    case WM_KEYDOWN: case WM_SYSKEYDOWN: {
+        QString c = vkToString(kbdStruct->vkCode);
+        qDebug() << c;
 
-        if (kbdStruct->vkCode == 'W') // Detect 'W' keydown
-        {
-            // Inject Shift+W manually
-            INPUT inputs[4] = {};
-
-            // Press Shift
-            inputs[0].type = INPUT_KEYBOARD;
-            inputs[0].ki.wVk = VK_SHIFT;
-
-            // Press W
-            inputs[1].type = INPUT_KEYBOARD;
-            inputs[1].ki.wVk = 'W';
-
-            // Release W
-            inputs[2].type = INPUT_KEYBOARD;
-            inputs[2].ki.wVk = 'W';
-            inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            // Release Shift
-            inputs[3].type = INPUT_KEYBOARD;
-            inputs[3].ki.wVk = VK_SHIFT;
-            inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            SendInput(4, inputs, sizeof(INPUT));
-
-            return 1; // Suppress the original W key release
+        if (activeLayer.tapKeyBinds.contains(c)) {
+            qDebug() << "Qin";
+            return press(activeLayer.tapKeyBinds[c]);
         }
         break;
     }
@@ -111,29 +90,66 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
     // return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
-std::string GetKeyName(unsigned int virtualKey)
+LRESULT press(QString bind) {
+    // Inject Shift+W manually
+    INPUT inputs[2] = {};
+    WORD vk = stringToVk(bind);
+
+    // Press x
+    inputs[0].type = INPUT_KEYBOARD;
+    inputs[0].ki.wVk = vk;
+
+    // Release x
+    inputs[1].type = INPUT_KEYBOARD;
+    inputs[1].ki.wVk = vk;
+    inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+    SendInput(2, inputs, sizeof(INPUT));
+    return 1; // Suppress keypress
+}
+
+WORD stringToVk(const QString& keyString) {
+    // Look up the key string in the QMap
+    if (keyMap.contains(keyString)) {
+        return keyMap.value(keyString);
+    }
+    qCritical() << "KeyMapWin missing following key:" << keyString;
+    return 0;  // Return 0 if the key is not found in the map
+}
+
+
+QString vkToString(unsigned int virtualKey)
 {
-    unsigned int scanCode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
-    switch (virtualKey)
-    {
-    case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
-    case VK_PRIOR: case VK_NEXT: // page up and page down
-    case VK_END: case VK_HOME:
-    case VK_INSERT: case VK_DELETE:
-    case VK_DIVIDE: // numpad slash
-    case VK_NUMLOCK:
-    {
-        scanCode |= 0x100; // set extended bit
-        break;
+    if (vkToStringMap.contains(virtualKey)) {
+        return vkToStringMap.value(virtualKey);
     }
-    }
-    char keyName[50];
-    if (GetKeyNameTextA(scanCode << 16, keyName, sizeof(keyName)) != 0)
-    {
-        return keyName;
-    }
-    else
-    {
-        return "[Error]";
-    }
+    qCritical() << "KeyMapWin missing following vkey:" << virtualKey;
+    return 0;
+    // unsigned int scanCode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
+    // switch (virtualKey)
+    // {
+    // case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
+    // case VK_PRIOR: case VK_NEXT: // page up and page down
+    // case VK_END: case VK_HOME:
+    // case VK_INSERT: case VK_DELETE:
+    // case VK_DIVIDE: // numpad slash
+    // case VK_NUMLOCK:
+    // {
+    //     scanCode |= 0x100; // set extended bit
+    //     break;
+    // }
+    // case VK_LWIN: case VK_RWIN:
+    // {
+    //     return "Cmd";
+    // }
+    // }
+    // char keyName[50];
+    // if (GetKeyNameTextA(scanCode << 16, keyName, sizeof(keyName)) != 0)
+    // {
+    //     return keyName;
+    // }
+    // else
+    // {
+    //     return "[Error]";
+    // }
 }

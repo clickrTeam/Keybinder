@@ -1,13 +1,10 @@
 #include "startup.h"
-#include "profileInterpreter/readprofile.h"
-#include <qthread.h>
-
 QThread *deamon = nullptr;
 
 void startUp(bool isOsStartup) {
-    proccessProfile("../../exampleProfiles/e1.json");
+    Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
 #ifdef _WIN32
-    deamon = QThread::create(winStartDeamon);
+    deamon = QThread::create(winStartDeamon, activeProfile);
 #elif defined(__APPLE__)
     // TODO change
 #elif defined(__linux__)
