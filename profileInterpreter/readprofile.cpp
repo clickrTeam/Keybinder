@@ -2,7 +2,8 @@
 #include <qdebug.h>
 #include <QFileInfo>
 
-void proccessProfile(const QString &profileFilePath) {
+// TODO add json verification and creation on electron app.
+Profile proccessProfile(const QString &profileFilePath) {
     QFile profileFile(profileFilePath);
 
     // Get absolute path
@@ -11,13 +12,13 @@ void proccessProfile(const QString &profileFilePath) {
 
     if (!profileFile.exists()) {
         qCritical() << "Profile does not exist:" << profileFile.fileName();
-        return;
+        return Profile();
     }
 
     qDebug() << "Found profile";
     if (!profileFile.open(QIODevice::ReadOnly)) {
         qCritical() << "Could not open file!";
-        return;
+        return Profile();
     }
 
     QByteArray jsonData = profileFile.readAll();
@@ -27,11 +28,11 @@ void proccessProfile(const QString &profileFilePath) {
     QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData);
     if (jsonDoc.isNull() || !jsonDoc.isObject()) {
         qCritical() << "Invalid JSON!";
-        return;
+        return Profile();
     }
     qDebug() << "Profile json read";
 
-    readProfile(jsonDoc.object());
+    return readProfile(jsonDoc.object());
 }
 
 Profile readProfile(QJsonObject profile) {
@@ -43,6 +44,7 @@ Profile readProfile(QJsonObject profile) {
     for (const QJsonValue& layer : layers) {
         pro.layers.append(readLayer(layer.toObject()));
     }
+    pro.isNull = false;
     return pro;
 }
 
@@ -60,6 +62,10 @@ Layer readLayer(QJsonObject layer) {
         QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
         kybnd.bind = readBind(bind);
         lyr.keybinds.append(kybnd);
+    }
+    for (const Keybind &keybind: std::as_const(lyr.keybinds)) {
+        if (keybind.key.type == "tap")
+            lyr.tapKeyBinds[keybind.key.value] = keybind.bind.value;
     }
     return lyr;
 }

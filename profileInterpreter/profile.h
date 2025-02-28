@@ -25,11 +25,13 @@ class Layer {
 public:
     QString layerName;  // The layer name (e.g., "Gaming Layer")
     QList<Keybind> keybinds;  // List of keybinds in this layer
+    QMap<QString, QString> tapKeyBinds;
 };
 class Profile {
 public:
     QString name;  // The name of the profile (e.g., "Default Profile")
     QList<Layer> layers;  // List of layers in the profile
+    bool isNull = true;
 };
 
 #endif // PROFILE_H

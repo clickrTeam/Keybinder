@@ -18,8 +18,10 @@
 #define VALUE "value"
 #define TYPE "type"
 
+#define TAP "tap"
+
 // functions
-void proccessProfile(const QString &profileFilePath);
+Profile proccessProfile(const QString &profileFilePath);
 
 Profile readProfile(QJsonObject profile);
 Layer readLayer(QJsonObject layer);

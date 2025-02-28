@@ -6,11 +6,11 @@
             "keybinds": [
                 {
                     "key": {
-                        "value": "w",
+                        "value": "W",
                         "type": "tap"
                     },
                     "bind": {
-                        "value": "q",
+                        "value": "Q",
                         "type": "tap"
                     }
                 }

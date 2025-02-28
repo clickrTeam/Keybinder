@@ -5,14 +5,19 @@
 #include <winuser.h>
 
 HHOOK kbd = NULL; // Global hook handle
+Profile activeProfile;
+Layer activeLayer;
 
-void winStartDeamon() {
+void winStartDeamon(Profile _activeProfile) {
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
     if (!kbd) {
         qDebug() << "Failed to install keyboard hook!";
         return;
     }
+    activeProfile = _activeProfile;
+    activeLayer = activeProfile.layers[0];
+    qDebug() << activeLayer.tapKeyBinds.keys();
 
     QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
         cleanup();
@@ -66,37 +71,44 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
     switch (wParam)
     {
     case WM_KEYDOWN: {
-        char c = MapVirtualKey(kbdStruct->vkCode, MAPVK_VK_TO_CHAR);
+        char _c = MapVirtualKey(kbdStruct->vkCode, MAPVK_VK_TO_CHAR);
+        QString c = QString(_c);
         qDebug() << GetKeyName(kbdStruct->vkCode);
         KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+        qDebug() << c;
 
-        if (kbdStruct->vkCode == 'W') // Detect 'W' keydown
-        {
-            // Inject Shift+W manually
-            INPUT inputs[4] = {};
-
-            // Press Shift
-            inputs[0].type = INPUT_KEYBOARD;
-            inputs[0].ki.wVk = VK_SHIFT;
-
-            // Press W
-            inputs[1].type = INPUT_KEYBOARD;
-            inputs[1].ki.wVk = 'W';
-
-            // Release W
-            inputs[2].type = INPUT_KEYBOARD;
-            inputs[2].ki.wVk = 'W';
-            inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            // Release Shift
-            inputs[3].type = INPUT_KEYBOARD;
-            inputs[3].ki.wVk = VK_SHIFT;
-            inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
-
-            SendInput(4, inputs, sizeof(INPUT));
-
-            return 1; // Suppress the original W key release
+        if (activeLayer.tapKeyBinds.contains(c)) {
+            qDebug() << "Win";
+        } else {
+            qDebug() << "poopoo";
         }
+        // if (kbdStruct->vkCode == 'W') // Detect 'W' keydown
+        // {
+        //     // Inject Shift+W manually
+        //     INPUT inputs[4] = {};
+
+        //     // Press Shift
+        //     inputs[0].type = INPUT_KEYBOARD;
+        //     inputs[0].ki.wVk = VK_SHIFT;
+
+        //     // Press W
+        //     inputs[1].type = INPUT_KEYBOARD;
+        //     inputs[1].ki.wVk = 'W';
+
+        //     // Release W
+        //     inputs[2].type = INPUT_KEYBOARD;
+        //     inputs[2].ki.wVk = 'W';
+        //     inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        //     // Release Shift
+        //     inputs[3].type = INPUT_KEYBOARD;
+        //     inputs[3].ki.wVk = VK_SHIFT;
+        //     inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        //     SendInput(4, inputs, sizeof(INPUT));
+
+        //     return 1; // Suppress the original W key release
+        // }
         break;
     }
     case WM_KEYUP: {
