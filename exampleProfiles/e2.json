@@ -6,11 +6,41 @@
             "keybinds": [
                 {
                     "key": {
+                        "value": "Tab",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "E",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
+                        "value": "Alt",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "W",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
                         "value": "W",
                         "type": "tap"
                     },
                     "bind": {
                         "value": "Q",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
+                        "value": "Cmd",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "R",
                         "type": "tap"
                     }
                 }
