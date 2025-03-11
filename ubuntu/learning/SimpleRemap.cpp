@@ -6,11 +6,13 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 using std::cout;
 using std::endl;
 using std::cerr;
 using std::string;
 using std::vector;
+using std::map;
 
 
 // Open the uinput device to send key events
@@ -199,6 +201,34 @@ int main()
     bool escape_pressed = false;
     int key = KEY_H;
 
+    map<int, int> remaps;
+    remaps[KEY_A] = KEY_Z;
+    remaps[KEY_B] = KEY_Y;
+    remaps[KEY_C] = KEY_X;
+    remaps[KEY_D] = KEY_W;
+    remaps[KEY_E] = KEY_V;
+    remaps[KEY_F] = KEY_U;
+    remaps[KEY_G] = KEY_T;
+    remaps[KEY_H] = KEY_S;
+    remaps[KEY_I] = KEY_R;
+    remaps[KEY_J] = KEY_Q;
+    remaps[KEY_K] = KEY_P;
+    remaps[KEY_L] = KEY_O;
+    remaps[KEY_M] = KEY_N;
+    remaps[KEY_N] = KEY_M;
+    remaps[KEY_O] = KEY_L;
+    remaps[KEY_P] = KEY_K;
+    remaps[KEY_Q] = KEY_J;
+    remaps[KEY_R] = KEY_I;
+    remaps[KEY_S] = KEY_H;
+    remaps[KEY_T] = KEY_G;
+    remaps[KEY_U] = KEY_F;
+    remaps[KEY_V] = KEY_E;
+    remaps[KEY_W] = KEY_D;
+    remaps[KEY_X] = KEY_C;
+    remaps[KEY_Y] = KEY_B;
+    remaps[KEY_Z] = KEY_A;
+
     cout << "\nRemapping keys to '" << key << "'. Press ESC to terminate." << endl;
 
     while (!escape_pressed)
@@ -214,7 +244,13 @@ int main()
                     break;
                 }
                 // Send new key instead of the original key
-                send_key_event(uinp_fd, key);
+                cout << remaps[event.code] << endl;
+                for (const auto& [key, val] : remaps) {
+                    if (val == event.code) {
+                        cout << "in if" << endl;
+                        send_key_event(uinp_fd, remaps[event.code]);
+                    }
+                }
             }
         }
     }
