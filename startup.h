@@ -2,6 +2,9 @@
 #define STARTUP_H
 
 #include <thread>
+#include "profileInterpreter/readprofile.h"
+#include <qthread.h>
+#include "profileInterpreter/profile.h"
 
 #ifdef _WIN32
     #include "win/deamon.h"

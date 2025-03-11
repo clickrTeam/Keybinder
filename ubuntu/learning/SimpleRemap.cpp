@@ -73,7 +73,7 @@ int main()
     // Open the /dev/input/ directory
     DIR *dir = opendir("/dev/input/");
     if (!dir) {
-        std::cerr << "Failed to open /dev/input/ directory" << std::endl;
+        cerr << "Failed to open /dev/input/ directory" << endl;
         return 1;
     }
 
@@ -93,7 +93,6 @@ int main()
         {
             string event_path = "/dev/input/" + string(entry->d_name);
             event_counter++;
-            //cout << event_path << endl;
 
             struct libevdev *dev = nullptr;
 
@@ -180,7 +179,7 @@ int main()
     struct libevdev *keyb;
     if (libevdev_new_from_fd(keyb_fd, &keyb) < 0) 
     {
-        std::cerr << "Failed to initialize libevdev" << std::endl;
+        cerr << "Failed to initialize libevdev" << endl;
         return 1;
     }
 

@@ -8,6 +8,7 @@ Ryan Dalrymple
 Tim Blamires
 
 ## Architecture
+```
 Keybinder
 │
 ├── CMakeLists.txt            # CMake build file
@@ -32,4 +33,4 @@ Keybinder
     └── e1.json               # Example profile in JSON format
     └── e2.json               # Another example profile in JSON format
     └── ...                   # More JSON profiles
-
+```
