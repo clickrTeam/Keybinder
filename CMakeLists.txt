@@ -5,6 +5,21 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
 
 qt_standard_project_setup()
 
+set(SOURCES "")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(SOURCES
+        win/deamon.cpp win/deamon.h
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(SOURCES
+        ""
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
+    set(SOURCES
+        ""
+    )
+endif()
+
 qt_add_executable(Keybinder
     WIN32 MACOSX_BUNDLE
     main.cpp
@@ -12,6 +27,7 @@ qt_add_executable(Keybinder
     startup.h startup.cpp
     profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
     profileInterpreter/profile.h
+    ${SOURCES}
 )
 
 target_link_libraries(Keybinder
