@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #ifndef DEAMON_H
 #define DEAMON_H
 #include <qglobalstatic.h>
@@ -63,3 +64,4 @@ const QMap<WORD, QString> vkToStringMap = []() {
 }();
 
 #endif // DEAMON_H
+#endif
