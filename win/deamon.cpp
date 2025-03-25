@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <QCoreApplication>
 #include "deamon.h"
 #include <windows.h>
@@ -153,3 +154,5 @@ QString vkToString(unsigned int virtualKey)
     //     return "[Error]";
     // }
 }
+
+#endif
