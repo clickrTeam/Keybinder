@@ -1,14 +1,13 @@
-#include <QApplication>
-#include <QCoreApplication>
-#include <QStringList>
-#include <QDebug>
 #include "startup.h"
+#include <QCoreApplication>
+#include <QDebug>
+#include <QStringList>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     QStringList arguments = QCoreApplication::arguments();
-    // TODO: We need to add this argument to startup locations. i.e. add to windows registery with exe location.
+    // TODO: We need to add this argument to startup locations. i.e. add to
+    // windows registery with exe location.
     bool isOsStartup = arguments.contains("--osstartup");
 
     if (isOsStartup) {
