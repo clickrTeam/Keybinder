@@ -1,4 +1,6 @@
 #include "startup.h"
+#include "./ubuntu/learning/SimpleRemap.h"
+//#include "./ubuntu/learning/SimpleRemap.cpp"
 QThread *deamon = nullptr;
 
 void startUp(bool isOsStartup) {

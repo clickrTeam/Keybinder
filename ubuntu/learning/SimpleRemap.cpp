@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <vector>
 #include <map>
+#include "SimpleRemap.h"
 using std::cout;
 using std::endl;
 using std::cerr;

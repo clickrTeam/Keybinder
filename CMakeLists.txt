@@ -13,6 +13,7 @@ qt_add_executable(Keybinder
     profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
     profileInterpreter/profile.h
     ubuntu/learning/SimpleRemap.cpp
+    ubuntu/learning/SimpleRemap.h
 )
 
 target_link_libraries(Keybinder
