@@ -12,6 +12,7 @@ qt_add_executable(Keybinder
     startup.h startup.cpp
     profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
     profileInterpreter/profile.h
+    ubuntu/learning/SimpleRemap.cpp
 )
 
 target_link_libraries(Keybinder
@@ -19,6 +20,10 @@ target_link_libraries(Keybinder
         Qt::Core
         Qt::Widgets
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(Keybinder PRIVATE evdev)
+endif()
 
 include(GNUInstallDirs)
 

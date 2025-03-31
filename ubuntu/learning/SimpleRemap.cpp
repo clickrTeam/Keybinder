@@ -1,3 +1,4 @@
+#ifdef __linux__
 #include <linux/uinput.h>  // Required for injecting events
 #include <iostream>
 #include <libevdev-1.0/libevdev/libevdev.h>
@@ -74,13 +75,13 @@ void send_key_event(int fd, int keycode)
     write(fd, &event, sizeof(event));
 }
 
-int main()
+void linuxStartDeamon()
 {
     // Open the /dev/input/ directory
     DIR *dir = opendir("/dev/input/");
     if (!dir) {
         cerr << "Failed to open /dev/input/ directory" << endl;
-        return 1;
+        return;
     }
 
     struct dirent *entry;
@@ -132,14 +133,14 @@ int main()
             int fd = open(event_path.c_str(), O_RDONLY | O_NONBLOCK);
             if (fd < 0) {
                 cerr << "Failed to open " << event_path << endl;
-                return false;
+                return;
             }
         
             // Initialize the evdev device
             if (libevdev_new_from_fd(fd, &dev) < 0) {
                 cerr << "Failed to initialize evdev device" << endl;
                 close(fd);
-                return false;
+                return;
             }
 
             // If a keyboard device has spacebar and the x key, it is most likely an actual keyboard
@@ -206,20 +207,20 @@ int main()
     if (keyb_fd < 0) 
     {
         cerr << "Failed to open device: " << strerror(errno) << endl;
-        return 1;
+        return;
     }
 
     struct libevdev *keyb;
     if (libevdev_new_from_fd(keyb_fd, &keyb) < 0) 
     {
         cerr << "Failed to initialize libevdev" << endl;
-        return 1;
+        return;
     }
 
     // Prevent the original key press from being typed
     if (libevdev_grab(keyb, LIBEVDEV_GRAB) < 0) {
         cerr << "Failed to grab the keyboard device" << endl;
-        return 1;
+        return;
     }    
 
     // Set up uinput for key injection
@@ -227,7 +228,7 @@ int main()
     if (uinp_fd < 0)
     {
         cerr << "Failed to set up uinput" << endl;
-        return 1;
+        return;
     }
 
     bool escape_pressed = false;
@@ -260,6 +261,5 @@ int main()
     libevdev_grab(keyb, LIBEVDEV_UNGRAB);
     libevdev_free(keyb);
     close(keyb_fd);
-
-    return 0;
 }
+#endif

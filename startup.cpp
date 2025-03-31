@@ -8,7 +8,7 @@ void startUp(bool isOsStartup) {
 #elif defined(__APPLE__)
     // TODO change
 #elif defined(__linux__)
-    // TODO change
+    deamon = QThread::create(linuxStartDeamon);
 #else
     #error "Unknown operating system"
 #endif
