@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(Keybinder LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
 
 qt_standard_project_setup()
 
@@ -17,7 +18,6 @@ qt_add_executable(Keybinder
 target_link_libraries(Keybinder
     PRIVATE
         Qt::Core
-        Qt::Widgets
 )
 
 include(GNUInstallDirs)
