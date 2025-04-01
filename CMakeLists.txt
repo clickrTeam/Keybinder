@@ -14,6 +14,8 @@ qt_add_executable(Keybinder
     profileInterpreter/profile.h
     ubuntu/learning/SimpleRemap.cpp
     ubuntu/learning/SimpleRemap.h
+    ubuntu/linux_configure.h
+    ubuntu/linux_deamon.h
 )
 
 target_link_libraries(Keybinder
