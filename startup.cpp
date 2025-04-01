@@ -1,4 +1,6 @@
 #include "startup.h"
+#include "./ubuntu/learning/SimpleRemap.h"
+//#include "./ubuntu/learning/SimpleRemap.cpp"
 QThread *deamon = nullptr;
 
 void startUp(bool isOsStartup) {
@@ -8,7 +10,7 @@ void startUp(bool isOsStartup) {
 #elif defined(__APPLE__)
     // TODO change
 #elif defined(__linux__)
-    // TODO change
+    deamon = QThread::create(linuxStartDeamon);
 #else
     #error "Unknown operating system"
 #endif
