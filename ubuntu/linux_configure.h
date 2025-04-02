@@ -18,11 +18,19 @@ QString retrieve_eventX(QString config_file_path);
 QString retrieve_eventX();
 
 ///
-/// \brief Stores the keyboard's eventX file in the config file
+/// \brief Stores the keyboard's eventX file in the config file. Uses the default file path.
 /// \param eventX_path: The string that represents which event device corresponds to the keyboard
 /// \return True if config file has successfully written, false otherwise
 ///
 bool record_eventX(QString eventX_path);
+
+///
+/// \brief Stores the keyboard's eventX file in the config file
+/// \param eventX_path: The string that represents which event device corresponds to the keyboard
+/// \param config_file_path: The path to the config file
+/// \return True if config file has successfully written, false otherwise
+///
+bool record_eventX(QString eventX_path, QString config_file_path);
 
 ///
 /// \brief Prompts the user to press a key on their keyboard, then records which device that press came from.
