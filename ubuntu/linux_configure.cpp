@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QVector>
+#include <QElapsedTimer>
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <dirent.h>
 #include <iostream>
@@ -106,6 +107,7 @@ bool record_eventX(QString eventX_path)
 
 QString detect_keyboard()
 {
+    uint timeout_seconds = 30;
     QString keyb_path;
     // Open the /dev/input/ directory
     DIR *dir = opendir("/dev/input/");
@@ -168,8 +170,10 @@ QString detect_keyboard()
     cout << "Number of possible keyboards: " << possible_keyboards << endl;
 
     // Now we listen to key events to determine which device is indeed the keyboard
-    cout << "Press SPACEBAR to identify the correct keyboard device." << endl;
+    cout << "Press SPACEBAR to identify the correct keyboard device. This will time out after " << timeout_seconds << " seconds." << endl;
     bool found_keyb = false;
+    QElapsedTimer timer;
+    timer.start();
 
     while(!found_keyb)
     {
@@ -190,6 +194,12 @@ QString detect_keyboard()
 
         if (found_keyb)
         {
+            break;
+        }
+
+        if (timer.elapsed() >= timeout_seconds * 1000)
+        {
+            qDebug() << timeout_seconds << " seconds have passed and a keyboard has not been detected. Exiting detection loop." << Qt::endl;
             break;
         }
     }
