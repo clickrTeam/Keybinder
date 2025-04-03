@@ -25,7 +25,7 @@ class Layer {
 public:
     QString layerName;  // The layer name (e.g., "Gaming Layer")
     QList<Keybind> keybinds;  // List of keybinds in this layer
-    QMap<QString, QString> tapKeyBinds;
+    QMap<int, int> tapKeyBinds;
 };
 class Profile {
 public:

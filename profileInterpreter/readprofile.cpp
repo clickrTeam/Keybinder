@@ -65,7 +65,7 @@ Layer readLayer(QJsonObject layer) {
     }
     for (const Keybind &keybind: std::as_const(lyr.keybinds)) {
         if (keybind.key.type == "tap")
-            lyr.tapKeyBinds[keybind.key.value] = keybind.bind.value;
+            lyr.tapKeyBinds[stringToKey(keybind.key.value)] = stringToKey(keybind.bind.value);
     }
     return lyr;
 }
@@ -94,6 +94,15 @@ Bind readBind(QJsonObject bind) {
     qDebug() << "Bind Type:" << bindType;
     qDebug() << "Bind Value:" << bindValue;
     return bnd;
+}
+
+int stringToKey(QString keyString){
+    // Look up the key string in the QMap
+    if (keyMap.contains(keyString)) {
+        return keyMap.value(keyString);
+    }
+    qCritical() << "KeyMapWin missing following key:" << keyString;
+    return 0;  // Return 0 if the key is not found in the map
 }
 
 // {

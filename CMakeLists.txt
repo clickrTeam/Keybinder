@@ -17,6 +17,8 @@ qt_add_executable(Keybinder
     ubuntu/learning/SimpleRemap.h
     ubuntu/linux_configure.h
     ubuntu/linux_deamon.h
+    mapper.cpp
+    mapper.h
 )
 
 target_link_libraries(Keybinder

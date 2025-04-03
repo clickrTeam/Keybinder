@@ -1,23 +1,19 @@
 #ifdef _WIN32
 #include <QCoreApplication>
 #include "deamon.h"
-#include <windows.h>
-#include <winuser.h>
+
+#include "../mapper.h"
+#include "deamon.h"
 
 HHOOK kbd = NULL; // Global hook handle
-Profile activeProfile;
-Layer activeLayer;
 
-void winStartDeamon(Profile _activeProfile) {
+void winStartDeamon() {
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
     if (!kbd) {
         qDebug() << "Failed to install keyboard hook!";
         return;
     }
-    activeProfile = _activeProfile;
-    activeLayer = activeProfile.layers[0];
-    qDebug() << activeLayer.tapKeyBinds.keys();
 
     QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
         cleanup();
@@ -70,13 +66,8 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
     switch (wParam)
     {
     case WM_KEYDOWN: case WM_SYSKEYDOWN: {
-        QString c = vkToString(kbdStruct->vkCode);
-        qDebug() << c;
-
-        if (activeLayer.tapKeyBinds.contains(c)) {
-            qDebug() << "Qin";
-            return press(activeLayer.tapKeyBinds[c]);
-        }
+        if (mapKeyDownToBind(kbdStruct->vkCode))
+            return 1; // Suppress keypress
         break;
     }
     case WM_KEYUP: {
@@ -91,10 +82,11 @@ LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
     // return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
-LRESULT press(QString bind) {
+void press(int virtualKey) {
+    qDebug() << "press";
     // Inject Shift+W manually
     INPUT inputs[2] = {};
-    WORD vk = stringToVk(bind);
+    WORD vk = virtualKey;
 
     // Press x
     inputs[0].type = INPUT_KEYBOARD;
@@ -106,53 +98,5 @@ LRESULT press(QString bind) {
     inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
 
     SendInput(2, inputs, sizeof(INPUT));
-    return 1; // Suppress keypress
 }
-
-WORD stringToVk(const QString& keyString) {
-    // Look up the key string in the QMap
-    if (keyMap.contains(keyString)) {
-        return keyMap.value(keyString);
-    }
-    qCritical() << "KeyMapWin missing following key:" << keyString;
-    return 0;  // Return 0 if the key is not found in the map
-}
-
-
-QString vkToString(unsigned int virtualKey)
-{
-    if (vkToStringMap.contains(virtualKey)) {
-        return vkToStringMap.value(virtualKey);
-    }
-    qCritical() << "KeyMapWin missing following vkey:" << virtualKey;
-    return 0;
-    // unsigned int scanCode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
-    // switch (virtualKey)
-    // {
-    // case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
-    // case VK_PRIOR: case VK_NEXT: // page up and page down
-    // case VK_END: case VK_HOME:
-    // case VK_INSERT: case VK_DELETE:
-    // case VK_DIVIDE: // numpad slash
-    // case VK_NUMLOCK:
-    // {
-    //     scanCode |= 0x100; // set extended bit
-    //     break;
-    // }
-    // case VK_LWIN: case VK_RWIN:
-    // {
-    //     return "Cmd";
-    // }
-    // }
-    // char keyName[50];
-    // if (GetKeyNameTextA(scanCode << 16, keyName, sizeof(keyName)) != 0)
-    // {
-    //     return keyName;
-    // }
-    // else
-    // {
-    //     return "[Error]";
-    // }
-}
-
 #endif
