@@ -7,7 +7,6 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
 qt_standard_project_setup()
 
 # Conditionally add the platform-specific directory.
-
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")
 add_subdirectory(common)
@@ -23,13 +22,20 @@ elseif (UNIX)
     add_subdirectory(linux)
 endif()
 
+# Print common sources
+message(STATUS "Common sources: ${COMMON_SOURCES}")
+message(STATUS "Platform sources: ${PLATFORM_SOURCES}")
+
+# Print include directories
+message(STATUS "Common header paths: ${COMMON_HEADER_PATHS}")
+message(STATUS "Platform header paths: ${PLATFORM_HEADER_PATHS}")
 qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
 )
 
-target_include_directories(keybinder  PRIVATE  ${COMMON_HEADERS_PATHS} ${PLATFORM_HEADER_PATHS})
+target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})
 
 target_link_libraries(keybinder
     PRIVATE
