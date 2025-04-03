@@ -22,13 +22,6 @@ elseif (UNIX)
     add_subdirectory(linux)
 endif()
 
-# Print common sources
-message(STATUS "Common sources: ${COMMON_SOURCES}")
-message(STATUS "Platform sources: ${PLATFORM_SOURCES}")
-
-# Print include directories
-message(STATUS "Common header paths: ${COMMON_HEADER_PATHS}")
-message(STATUS "Platform header paths: ${PLATFORM_HEADER_PATHS}")
 qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}

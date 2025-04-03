@@ -1,6 +1,6 @@
 
 set(PLATFORM_SOURCES
-    src/daemon.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
     PARENT_SCOPE
 )
 
