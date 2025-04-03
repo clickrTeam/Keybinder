@@ -1,12 +1,12 @@
 #ifndef READPROFILE_H
 #define READPROFILE_H
-#include <QFile>
+#include "profile.h"
 #include <QDebug>
-#include <QJsonDocument>
+#include <QFile>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include "profile.h"
 
 // Define constants for each JSON key
 #define PROFILE_NAME "name"

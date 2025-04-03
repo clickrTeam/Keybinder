@@ -1,4 +1,6 @@
+// TODO: rework with daemon abstract class
 #include "startup.h"
+
 QThread *deamon = nullptr;
 
 void startUp(bool isOsStartup) {
@@ -10,7 +12,7 @@ void startUp(bool isOsStartup) {
 #elif defined(__linux__)
     // TODO change
 #else
-    #error "Unknown operating system"
+#error "Unknown operating system"
 #endif
     if (deamon != nullptr)
         deamon->start(QThread::HighestPriority);

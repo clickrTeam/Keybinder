@@ -1,6 +1,5 @@
-#ifdef _WIN32
-#include <QCoreApplication>
 #include "deamon.h"
+#include <QCoreApplication>
 #include <windows.h>
 #include <winuser.h>
 
@@ -19,9 +18,8 @@ void winStartDeamon(Profile _activeProfile) {
     activeLayer = activeProfile.layers[0];
     qDebug() << activeLayer.tapKeyBinds.keys();
 
-    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
-        cleanup();
-    });
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit, []() { cleanup(); });
     winDeamon();
 
     // idHook, HookProc, Hinstance - N/I, dwThreadId - N/I
@@ -30,10 +28,10 @@ void winStartDeamon(Profile _activeProfile) {
 
 void winDeamon() {
     qDebug() << "Win, message pump starting";
-    // message loop - spin until the user presses a key, somehow a common practice in windows programming. aka message pump
+    // message loop - spin until the user presses a key, somehow a common
+    // practice in windows programming. aka message pump
     MSG msg;
-    while (GetMessage(&msg, NULL, NULL, NULL) > 0)
-    {
+    while (GetMessage(&msg, NULL, NULL, NULL) > 0) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -52,24 +50,28 @@ void cleanup() {
 //  - N/I = Not Important
 // WM - Windows Message
 // SOURCE- https://youtu.be/QIWw0jZqGKA?si=snqwlN0HlzcFlaWn
-LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    // Ignore system call - I believe if nCode < 0 then its a system call and we should always ignore it.
+LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam) {
+    // Ignore system call - I believe if nCode < 0 then its a system call and we
+    // should always ignore it.
     if (nCode < 0) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
-    // nCode - N/I, wParam tells us what type of event happend, lParam is the key and scan code and flags
-    KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam); // reinterpret_cast is c++ style casting instead of c style (KBDLLHOOKSTRUCT)lParam
-    // lParam has vkCode which is the virtual key code while scanCode is the hardware key code which can be diffrent for the same keys
+    // nCode - N/I, wParam tells us what type of event happend, lParam is the
+    // key and scan code and flags
+    KBDLLHOOKSTRUCT *kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT *>(
+        lParam); // reinterpret_cast is c++ style casting instead of c style
+                 // (KBDLLHOOKSTRUCT)lParam
+    // lParam has vkCode which is the virtual key code while scanCode is the
+    // hardware key code which can be diffrent for the same keys
 
     // Ignore sythesized Inputs
     if (kbdStruct->flags & LLKHF_INJECTED) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
     // Handle input
-    switch (wParam)
-    {
-    case WM_KEYDOWN: case WM_SYSKEYDOWN: {
+    switch (wParam) {
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN: {
         QString c = vkToString(kbdStruct->vkCode);
         qDebug() << c;
 
@@ -109,18 +111,16 @@ LRESULT press(QString bind) {
     return 1; // Suppress keypress
 }
 
-WORD stringToVk(const QString& keyString) {
+WORD stringToVk(const QString &keyString) {
     // Look up the key string in the QMap
     if (keyMap.contains(keyString)) {
         return keyMap.value(keyString);
     }
     qCritical() << "KeyMapWin missing following key:" << keyString;
-    return 0;  // Return 0 if the key is not found in the map
+    return 0; // Return 0 if the key is not found in the map
 }
 
-
-QString vkToString(unsigned int virtualKey)
-{
+QString vkToString(unsigned int virtualKey) {
     if (vkToStringMap.contains(virtualKey)) {
         return vkToStringMap.value(virtualKey);
     }
@@ -154,5 +154,3 @@ QString vkToString(unsigned int virtualKey)
     //     return "[Error]";
     // }
 }
-
-#endif

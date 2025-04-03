@@ -1,19 +1,19 @@
 #ifndef STARTUP_H
 #define STARTUP_H
 
-#include <thread>
+#include "profileInterpreter/profile.h"
 #include "profileInterpreter/readprofile.h"
 #include <qthread.h>
-#include "profileInterpreter/profile.h"
+#include <thread>
 
 #ifdef _WIN32
-    #include "win/deamon.h"
+#include "win/deamon.h"
 #elif defined(__APPLE__)
-    // TODO change
+// TODO change
 #elif defined(__linux__)
-    // TODO change
+// TODO change
 #else
-    #error "Unknown operating system"
+#error "Unknown operating system"
 #endif
 
 void startUp(bool isOsStartup);
