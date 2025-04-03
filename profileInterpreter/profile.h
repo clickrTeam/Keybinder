@@ -11,6 +11,16 @@ public:
     QString value;  // The key value (e.g., "w")
     QString type;   // The key type (e.g., "tap")
 };
+class TimedKey {
+  public:
+    struct KeyTimePair {
+        QString keyValue;   // The key value (e.g., "w")
+        int time;           // The associated time in ms
+    };
+    bool capture;
+    bool release;
+    QVector<KeyTimePair> keyTimePairs; // Vector to store key-time pairs
+};
 class Bind {
 public:
     QString value;  // The bind value (e.g., "q")
@@ -26,6 +36,7 @@ public:
     QString layerName;  // The layer name (e.g., "Gaming Layer")
     QList<Keybind> keybinds;  // List of keybinds in this layer
     QMap<int, int> tapKeyBinds;
+    QMap<int, int> timedKeyBinds;
 };
 class Profile {
 public:

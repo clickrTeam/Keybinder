@@ -55,17 +55,16 @@ Layer readLayer(QJsonObject layer) {
 
     const QJsonArray keybinds = layer.value(LAYER_KEYBINDS).toArray();
     for (const QJsonValue& keybindValue : keybinds) {
-        Keybind kybnd;
         QJsonObject keybind = keybindValue.toObject();
         QJsonObject key = keybind.value(KEYBIND_KEY).toObject();
-        kybnd.key = readKey(key);
+        QString keyType = key.value(TYPE).toString();
         QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
-        kybnd.bind = readBind(bind);
-        lyr.keybinds.append(kybnd);
-    }
-    for (const Keybind &keybind: std::as_const(lyr.keybinds)) {
-        if (keybind.key.type == "tap")
-            lyr.tapKeyBinds[stringToKey(keybind.key.value)] = stringToKey(keybind.bind.value);
+        if (keyType == TAP) {
+            qDebug() << "Key" << key;
+            int vk = stringToKey(key.value(VALUE).toString());
+            lyr.tapKeyBinds[vk] = stringToKey(bind.value(VALUE).toString());
+        } else if (keyType == TIMED)
+            continue;
     }
     return lyr;
 }
@@ -96,7 +95,7 @@ Bind readBind(QJsonObject bind) {
     return bnd;
 }
 
-int stringToKey(QString keyString){
+int stringToKey(QString keyString) {
     // Look up the key string in the QMap
     if (keyMap.contains(keyString)) {
         return keyMap.value(keyString);
