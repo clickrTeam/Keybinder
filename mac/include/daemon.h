@@ -6,7 +6,7 @@ class Daemon : public AbstractDaemon {
     ~Daemon();
 
     // Override abstract class methods
-    void start_daemon() override;
+    void start() override;
     void cleanup() override;
     void send_key() override;
 };
