@@ -44,6 +44,12 @@ bool mapKeyDownToBind(int virtualKey) {
             qDebug() << "Starting Progress";
             timedKeyProgress[first_key] = 1;
         }
+        if (timedKeyProgress[first_key] == 1 && thenRelease) { // If starting a diffrent timed
+            qDebug() << "Stopping CnR";
+            thenRelease = false; // stop capture and release
+            press(capture_and_release_key);
+        }
+
 
         if (timedKeyProgress[first_key] == kybnd.keyTimePairs.count()) {
             qDebug() << "Finished Progress";
@@ -53,7 +59,6 @@ bool mapKeyDownToBind(int virtualKey) {
             timedKeyProgress[first_key] = 0;
             return true;
         } else {
-            stopCnR();
             qDebug() << "Setting next key" << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyValue;
             next_key = kybnd.keyTimePairs[timedKeyProgress[first_key]].keyValue;
         }
@@ -61,10 +66,9 @@ bool mapKeyDownToBind(int virtualKey) {
         if (kybnd.capture && kybnd.release) {
             qDebug() << "Capture & Realeasing key";
             capture_and_release_key = virtualKey;
-            int bind = capture_and_release_key;
             thenRelease = true;
-            QTimer::singleShot(1000, [bind]() {
-                captureAndRelease(bind);
+            QTimer::singleShot(1000, []() {
+                captureAndRelease();
             });
             return true;
         } else if (kybnd.capture) {
@@ -76,7 +80,7 @@ bool mapKeyDownToBind(int virtualKey) {
         } else
             qCritical() << "FELL THROUGH CAPTURE AND RELEASE!" << kybnd.capture << kybnd.release;
     } else
-        stopCnR();
+        captureAndRelease();
     // TAP
     if (activeLayer.tapKeyBinds.contains(virtualKey)) {
         qDebug() << "Tap";
@@ -91,12 +95,8 @@ bool mapKeyUpToBind(int virtualKey) {
     // TODO
 }
 
-void captureAndRelease(int bind) {
-    stopCnR();
+void captureAndRelease() {
     timedKeyProgress[first_key] = 0;
-}
-
-void stopCnR() {
     if (thenRelease) {
         qDebug() << "Stopping CnR";
         thenRelease = false; // stop capture and release
