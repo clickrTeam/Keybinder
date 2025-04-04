@@ -1,6 +1,5 @@
-#ifndef DEAMON_H
-#define DEAMON_H
-#include "../profileInterpreter/profile.h"
+#pragma once
+#include "profile.h"
 #include <QDebug>
 #include <qglobalstatic.h>
 #include <windows.h>
@@ -122,5 +121,3 @@ const QMap<WORD, QString> vkToStringMap = []() {
     }
     return map;
 }();
-
-#endif // DEAMON_H

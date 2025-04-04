@@ -1,4 +1,6 @@
-// #include "startup.h"
+// This each OS should have this daemon.h file in their include path so that
+// the compiler will just use the right implementation at runtime.
+// See mac/include/daemon.h for an example
 #include "daemon.h"
 #include <QCoreApplication>
 #include <QDebug>
@@ -9,15 +11,9 @@ int main(int argc, char *argv[]) {
     // windows registery with exe location.
     QCoreApplication a(argc, argv);
     QStringList arguments = QCoreApplication::arguments();
+    Daemon d;
+    d.start();
 
-#ifdef _WIN32
-
-#include "daemon.h"
-#elifdef __linux__
-#elifdef __APPLE__
-#else
-#error "Platform not supported"
-#endif
     bool isOsStartup = arguments.contains("--osstartup");
 
     if (isOsStartup) {
@@ -25,6 +21,5 @@ int main(int argc, char *argv[]) {
     } else {
         qDebug() << "App started manually.";
     }
-    startUp(isOsStartup);
     return a.exec();
 }
