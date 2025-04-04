@@ -1,44 +1,37 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-project(Keybinder LANGUAGES CXX)
+project(keybinder LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
 
 qt_standard_project_setup()
 
-qt_add_executable(Keybinder
-    WIN32 MACOSX_BUNDLE
-    main.cpp
-    win/deamon.cpp win/deamon.h
-    startup.h startup.cpp
-    profileInterpreter/readprofile.h profileInterpreter/readprofile.cpp
-    profileInterpreter/profile.h
-    ubuntu/learning/SimpleRemap.cpp
-    ubuntu/learning/SimpleRemap.h
-    ubuntu/linux_configure.h
-    ubuntu/linux_deamon.h
-)
+# Conditionally add the platform-specific directory.
+set(COMMON_SOURCES "")
+set(COMMON_HEADER_PATHS "")
+add_subdirectory(common)
 
-target_link_libraries(Keybinder
-    PRIVATE
-        Qt::Core
-)
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(Keybinder PRIVATE evdev)
+set(PLATFORM_SOURCES "")
+set(PLATFORM_HEADER_PATHS "")
+set(PLATFORM_LIBS "")
+if (WIN32)
+    add_subdirectory(win)
+elseif (APPLE)
+    add_subdirectory(mac)
+elseif (UNIX)
+    add_subdirectory(linux)
 endif()
 
-include(GNUInstallDirs)
-
-install(TARGETS Keybinder
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+qt_add_executable(keybinder
+    WIN32 
+    ${COMMON_SOURCES}
+    ${PLATFORM_SOURCES}
 )
 
-qt_generate_deploy_app_script(
-    TARGET Keybinder
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
+target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})
+
+target_link_libraries(keybinder
+    PRIVATE
+        Qt::Core
+        ${PLATFORM_LIBS}
 )
-install(SCRIPT ${deploy_script})
