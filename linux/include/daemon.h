@@ -1,8 +1,21 @@
-#ifdef __linux__
-#ifndef LINUX_DEAMON_H
-#define LINUX_DEAMON_H
-#include "../profileInterpreter/profile.h"
+#pragma once
 
+#include "abstract_daemon.h"
+#include "profile.h"
+
+class Daemon : public AbstractDaemon {
+  public:
+    // Constructor and Destructor
+    Daemon();
+    ~Daemon();
+
+    // Override abstract class methods
+    void start() override;
+    void cleanup() override;
+    void send_key() override;
+};
+
+// You will likley want to add these as method to the daemon object
 ///
 /// \brief Opens the uinput device to send key events.
 /// \return fd associated with uinput device.
@@ -23,8 +36,7 @@ void send_key_event(int fd, int keycode);
 void linux_start_deamon(Profile activeProfile);
 
 ///
-/// \brief Closes all fds and cleans up the deamon in order for the keyboard to return to normal function.
+/// \brief Closes all fds and cleans up the deamon in order for the keyboard to
+/// return to normal function.
 ///
 void cleanup();
-#endif // LINUX_DEAMON_H
-#endif //__linux__
