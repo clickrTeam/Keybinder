@@ -92,9 +92,7 @@ bool mapKeyUpToBind(int virtualKey) {
 }
 
 void captureAndRelease(int bind) {
-    if (!thenRelease)
-        return;
-    press(bind);
+    stopCnR();
     timedKeyProgress[first_key] = 0;
 }
 
