@@ -55,67 +55,47 @@ Layer readLayer(QJsonObject layer) {
 
     const QJsonArray keybinds = layer.value(LAYER_KEYBINDS).toArray();
     for (const QJsonValue& keybindValue : keybinds) {
+        // Foreach keybind
         QJsonObject keybind = keybindValue.toObject();
         QJsonObject key = keybind.value(KEYBIND_KEY).toObject();
         QString keyType = key.value(TYPE).toString();
         QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
+
         if (keyType == TAP) {
             qDebug() << "TapKey" << key;
-            int vk = stringToKey(key.value(VALUE).toString());
-            lyr.tapKeyBinds[vk] = stringToKey(bind.value(VALUE).toString());
+
+            int keyVk = stringToKey(key.value(VALUE).toString());
+            int bindVk = stringToKey(bind.value(VALUE).toString());
+
+            lyr.tapKeyBinds[keyVk] = bindVk;
         } else if (keyType == TIMED) {
             qDebug() << "TimedKey" << key;
+
             TimedKeyBind timedKey;
             QJsonArray keyTimePairs = key.value(KEY_TIME_PAIRS).toArray();
-            qDebug() << "JkeyTimePairS" << keyTimePairs;
+            // qDebug() << "JkeyTimePairS" << keyTimePairs;
+            timedKey.capture = key.value(CAPTURE).toBool();
+            timedKey.release = key.value(RELEASE).toBool();
 
             for (const QJsonValue &JkeyTimePairValue : keyTimePairs) {
+                // Foreach key & time pair.
                 QJsonObject JkeyTimePair = JkeyTimePairValue.toObject();
-                qDebug() << "JkeyTimePair" << JkeyTimePair;
+                // qDebug() << "JkeyTimePair" << JkeyTimePair;
                 TimedKeyBind::KeyTimePair keyTimePair;
 
-                keyTimePair.keyValue = stringToKey(JkeyTimePair.value(VALUE).toString());
+                keyTimePair.keyVk = stringToKey(JkeyTimePair.value(VALUE).toString());
                 keyTimePair.time = JkeyTimePair.value(TIME).toInt(100);
 
                 timedKey.keyTimePairs.append(keyTimePair);
             }
 
-            timedKey.capture = key.value(CAPTURE).toBool();
-            timedKey.release = key.value(RELEASE).toBool();
-
             timedKey.bind = stringToKey(bind.value(VALUE).toString());
-            lyr.timedKeyBinds[timedKey.keyTimePairs.first().keyValue] = timedKey;
+            lyr.timedKeyBinds[timedKey.keyTimePairs.first().keyVk] = timedKey;
         }
     }
     qDebug() << "Tap keybinds:" << lyr.tapKeyBinds.count();
     qDebug() << "Timed keybinds:" << lyr.timedKeyBinds.count();
     return lyr;
-}
-
-Key readKey(QJsonObject key) {
-    QString keyType = key.value(TYPE).toString();
-    QString keyValue = key.value(VALUE).toString();
-    Key ky;
-    ky.type = keyType;
-    ky.value = keyValue;
-
-    // Output key information
-    qDebug() << "Key Type:" << keyType;
-    qDebug() << "Key Value:" << keyValue;
-    return ky;
-}
-
-Bind readBind(QJsonObject bind) {
-    QString bindType = bind.value(TYPE).toString();
-    QString bindValue = bind.value(VALUE).toString();
-    Bind bnd;
-    bnd.type = bindType;
-    bnd.value = bindValue;
-
-    // Output bind information
-    qDebug() << "Bind Type:" << bindType;
-    qDebug() << "Bind Value:" << bindValue;
-    return bnd;
 }
 
 int stringToKey(QString keyString) {

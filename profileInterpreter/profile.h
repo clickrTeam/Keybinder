@@ -13,7 +13,7 @@ public:
 };
 struct TimedKeyBind {
     struct KeyTimePair {
-        int keyValue;   // The key value (e.g., "w")
+        int keyVk;   // The key value (e.g., "w")
         int time;           // The associated time in ms
     };
     bool capture;

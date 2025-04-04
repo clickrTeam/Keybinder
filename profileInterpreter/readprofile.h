@@ -31,8 +31,6 @@ Profile proccessProfile(const QString &profileFilePath);
 
 Profile readProfile(QJsonObject profile);
 Layer readLayer(QJsonObject layer);
-Key readKey(QJsonObject key);
-Bind readBind(QJsonObject bind);
 
 int stringToKey(QString keyString);
 

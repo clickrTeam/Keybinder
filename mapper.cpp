@@ -65,8 +65,8 @@ bool mapKeyDownToBind(int virtualKey) {
             timedKeyProgress[first_key] = 0;
             return true;
         } else {
-            qDebug() << "Setting next key" << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyValue;
-            next_key = kybnd.keyTimePairs[timedKeyProgress[first_key]].keyValue;
+            qDebug() << "Setting next key" << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
+            next_key = kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
         }
 
         // Capture and Release logic
