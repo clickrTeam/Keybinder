@@ -19,7 +19,12 @@
 #define TYPE "type"
 
 #define TAP "tap"
+
 #define TIMED "timed"
+#define TIME "time"
+#define KEY_TIME_PAIRS "keyTimePairs"
+#define CAPTURE "capture"
+#define RELEASE "release"
 
 // functions
 Profile proccessProfile(const QString &profileFilePath);
