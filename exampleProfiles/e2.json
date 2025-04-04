@@ -48,11 +48,11 @@
                     "key": {
                         "keyTimePairs": [
                             {
-                                "time": 100,
+                                "time": 9999,
                                 "value": "T"
                             },
                             {
-                                "time": 100,
+                                "time": 350,
                                 "value": "T"
                             }
                         ],
