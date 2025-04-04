@@ -19,24 +19,22 @@ void setProfile(Profile loaded) {
     qDebug() << activeLayer.tapKeyBinds.keys();
 }
 
+// Timed varibles
 QMap<int, int> timedKeyProgress;
 int next_key;
 int first_key;
+bool thenRelease;
+int capture_and_release_bind;
 
 bool mapKeyDownToBind(int virtualKey) {
     qDebug() << virtualKey;
 
-    if (activeLayer.tapKeyBinds.contains(virtualKey)) {
-        qDebug() << "Tap";
-        press(activeLayer.tapKeyBinds[virtualKey]);
-        return true;
-    }
-    else if (activeLayer.timedKeyBinds.contains(virtualKey) || next_key == virtualKey) {
-        if (activeLayer.timedKeyBinds.contains(virtualKey))
-            first_key = virtualKey;
-        else if (next_key == virtualKey) {
+    // Timed
+    if (activeLayer.timedKeyBinds.contains(virtualKey) || next_key == virtualKey) {
+        if (next_key == virtualKey)
             virtualKey = first_key;
-        }
+        else if (activeLayer.timedKeyBinds.contains(virtualKey)) // this goes second, to ensure a key can be mapped to mapped key
+            first_key = virtualKey;
         TimedKeyBind kybnd = activeLayer.timedKeyBinds[virtualKey];
 
         if (timedKeyProgress.contains(virtualKey)) {
@@ -45,6 +43,10 @@ bool mapKeyDownToBind(int virtualKey) {
             timedKeyProgress[virtualKey] = 1;
         }
         if (timedKeyProgress[virtualKey] == kybnd.keyTimePairs.count()) {
+            if (thenRelease) {
+                thenRelease = false;
+                press(capture_and_release_bind);
+            }
             // last keybind activate
             press(kybnd.bind);
             timedKeyProgress[virtualKey] = 0;
@@ -54,14 +56,26 @@ bool mapKeyDownToBind(int virtualKey) {
         }
 
         if (kybnd.capture && kybnd.release) {
-            QTimer::singleShot(100, [arg1, arg2]() {
-                delayedFunction(arg1, arg2);
+            capture_and_release_bind = kybnd.bind;
+            int bind = capture_and_release_bind;
+            thenRelease = true;
+            QTimer::singleShot(100, [bind]() {
+                captureAndRelease(bind);
             });
         } else if (kybnd.capture) {
             return true;
         } else if (kybnd.release) {
             return false;
         }
+    } else if (thenRelease) {
+        thenRelease = false; // stop capture and release
+        press(capture_and_release_bind);
+    }
+    // TAP
+    if (activeLayer.tapKeyBinds.contains(virtualKey)) {
+        qDebug() << "Tap";
+        press(activeLayer.tapKeyBinds[virtualKey]);
+        return true;
     }
     return false;
 }
@@ -69,4 +83,10 @@ bool mapKeyDownToBind(int virtualKey) {
 bool mapKeyUpToBind(int virtualKey) {
     return false;
     // TODO
+}
+
+void captureAndRelease(int bind) {
+    if (!thenRelease)
+        return;
+    press(bind);
 }

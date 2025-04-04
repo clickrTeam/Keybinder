@@ -9,4 +9,6 @@ void setProfile(Profile loaded);
 bool mapKeyDownToBind(int virtualKey);
 bool mapKeyUpToBind(int virtualKey);
 
+void captureAndRelease(int bind);
+
 #endif // MAPPER_H
