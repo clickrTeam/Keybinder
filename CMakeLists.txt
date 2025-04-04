@@ -18,6 +18,9 @@ qt_add_executable(Keybinder
     ubuntu/linux_configure.h
     ubuntu/linux_deamon.h
     ubuntu/linux_configure.cpp
+    ubuntu/linux_deamon.cpp
+    keymap.h
+    keymap.cpp
 )
 
 target_link_libraries(Keybinder
