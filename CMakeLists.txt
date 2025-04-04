@@ -7,7 +7,6 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
 qt_standard_project_setup()
 
 # Conditionally add the platform-specific directory.
-
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")
 add_subdirectory(common)
@@ -29,11 +28,10 @@ qt_add_executable(keybinder
     ${PLATFORM_SOURCES}
 )
 
-target_include_directories(keybinder  PRIVATE  ${COMMON_HEADERS_PATHS} ${PLATFORM_HEADER_PATHS})
+target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})
 
 target_link_libraries(keybinder
     PRIVATE
         Qt::Core
         ${PLATFORM_LIBS}
 )
-
