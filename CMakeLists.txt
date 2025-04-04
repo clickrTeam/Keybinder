@@ -35,4 +35,3 @@ target_link_libraries(keybinder
         Qt::Core
         ${PLATFORM_LIBS}
 )
-
