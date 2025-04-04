@@ -10,5 +10,6 @@ bool mapKeyDownToBind(int virtualKey);
 bool mapKeyUpToBind(int virtualKey);
 
 void captureAndRelease(int bind);
+void stopCnR();
 
 #endif // MAPPER_H
