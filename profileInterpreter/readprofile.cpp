@@ -63,8 +63,26 @@ Layer readLayer(QJsonObject layer) {
             qDebug() << "Key" << key;
             int vk = stringToKey(key.value(VALUE).toString());
             lyr.tapKeyBinds[vk] = stringToKey(bind.value(VALUE).toString());
-        } else if (keyType == TIMED)
-            continue;
+        } else if (keyType == TIMED) {
+            TimedKeyBind timedKey;
+            QJsonArray keyTimePairs = key.value(KEY_TIME_PAIRS).toArray();
+
+            for (const QJsonValue& JkeyTimePairValue : keyTimePairs) {
+                QJsonObject JkeyTimePair = keybindValue.toObject();
+                TimedKeyBind::KeyTimePair keyTimePair;
+
+                keyTimePair.keyValue = stringToKey(JkeyTimePair.value(VALUE).toString());
+                keyTimePair.time = JkeyTimePair.value(TIME).toInt(100);
+
+                timedKey.keyTimePairs.append(keyTimePair);
+            }
+
+            timedKey.capture = key.value(CAPTURE).toBool();
+            timedKey.release = key.value(RELEASE).toBool();
+
+            timedKey.bind = stringToKey(bind.value(VALUE).toString());
+            lyr.timedKeyBinds[timedKey.keyTimePairs.first().keyValue] = timedKey;
+        }
     }
     return lyr;
 }
