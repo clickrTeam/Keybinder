@@ -10,4 +10,4 @@ void Daemon::start() { std::cout << "Daemon started" << std::endl; }
 
 void Daemon::cleanup() { std::cout << "Daemon cleaned up" << std::endl; }
 
-void Daemon::send_key() { std::cout << "Key sent" << std::endl; }
+void Daemon::send_key(int vk) { std::cout << "Key sent" << std::endl; }

@@ -1,6 +1,8 @@
 // This each OS should have this daemon.h file in their include path so that
 // the compiler will just use the right implementation at runtime.
 // See mac/include/daemon.h for an example
+#include "abstract_daemon.h"
+#include "readprofile.h"
 #include "daemon.h"
 #include <QCoreApplication>
 #include <QDebug>
@@ -22,6 +24,8 @@ int main(int argc, char *argv[]) {
 
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit, [&]() { d.cleanup(); });
+
+    Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
 
     bool isOsStartup = arguments.contains("--osstartup");
 
