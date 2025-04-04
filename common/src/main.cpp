@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
+#include <QThread>
 
 int main(int argc, char *argv[]) {
     // TODO: We need to add this argument to startup locations. i.e. add to
@@ -12,7 +13,15 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     QStringList arguments = QCoreApplication::arguments();
     Daemon d;
-    d.start();
+
+    // I am not sure we will want to use qthreads in this context. A std::thread
+    // may be better as it does not run an event loop which I could imagine
+    // causing slowdowns
+    QThread *daemon_thread = QThread::create([&] { d.start(); });
+    daemon_thread->start(QThread::Priority::TimeCriticalPriority);
+
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit, [&]() { d.cleanup(); });
 
     bool isOsStartup = arguments.contains("--osstartup");
 
