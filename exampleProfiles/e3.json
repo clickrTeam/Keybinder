@@ -1,0 +1,51 @@
+{
+    "name": "Default Profile",
+    "layers": [
+        {
+            "layer_name": "Test Layer",
+            "keybinds": [
+                {
+                    "key": {
+                        "value": "A",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "Z",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
+                        "value": "B",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "Y",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
+                        "value": "C",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "X",
+                        "type": "tap"
+                    }
+                },
+                {
+                    "key": {
+                        "value": "D",
+                        "type": "tap"
+                    },
+                    "bind": {
+                        "value": "W",
+                        "type": "tap"
+                    }
+                }
+            ]
+        }
+    ]
+}
+    
