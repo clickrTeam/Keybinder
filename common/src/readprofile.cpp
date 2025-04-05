@@ -55,19 +55,57 @@ Layer readLayer(QJsonObject layer) {
 
     const QJsonArray keybinds = layer.value(LAYER_KEYBINDS).toArray();
     for (const QJsonValue& keybindValue : keybinds) {
-        Keybind kybnd;
+        // Foreach keybind
         QJsonObject keybind = keybindValue.toObject();
         QJsonObject key = keybind.value(KEYBIND_KEY).toObject();
-        kybnd.key = readKey(key);
+        QString keyType = key.value(TYPE).toString();
         QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
-        kybnd.bind = readBind(bind);
-        lyr.keybinds.append(kybnd);
+
+        if (keyType == TAP) {
+            qDebug() << "TapKey" << key;
+
+            int keyVk = stringToKey(key.value(VALUE).toString());
+            int bindVk = stringToKey(bind.value(VALUE).toString());
+
+            lyr.tapKeyBinds[keyVk] = bindVk;
+        } else if (keyType == TIMED) {
+            qDebug() << "TimedKey" << key;
+
+            TimedKeyBind timedKey;
+            QJsonArray keyTimePairs = key.value(KEY_TIME_PAIRS).toArray();
+            // qDebug() << "JkeyTimePairS" << keyTimePairs;
+            timedKey.capture = key.value(CAPTURE).toBool();
+            timedKey.release = key.value(RELEASE).toBool();
+
+            for (const QJsonValue &JkeyTimePairValue : keyTimePairs) {
+                // Foreach key & time pair.
+                QJsonObject JkeyTimePair = JkeyTimePairValue.toObject();
+                // qDebug() << "JkeyTimePair" << JkeyTimePair;
+                TimedKeyBind::KeyTimePair keyTimePair;
+
+                keyTimePair.keyVk = stringToKey(JkeyTimePair.value(VALUE).toString());
+                keyTimePair.time = JkeyTimePair.value(TIME).toInt(100);
+
+                timedKey.keyTimePairs.append(keyTimePair);
+            }
+
+            timedKey.bind = stringToKey(bind.value(VALUE).toString());
+            lyr.timedKeyBinds[timedKey.keyTimePairs.first().keyVk] = timedKey;
+        }
     }
-    for (const Keybind &keybind: std::as_const(lyr.keybinds)) {
-        if (keybind.key.type == "tap")
-            lyr.tapKeyBinds[keybind.key.value] = keybind.bind.value;
-    }
+    qDebug() << "Tap keybinds:" << lyr.tapKeyBinds.count();
+    qDebug() << "Timed keybinds:" << lyr.timedKeyBinds.count();
     return lyr;
+}
+
+int stringToKey(QString keyString) {
+    // Look up the key string in the QMap
+    if (keyMap.contains(keyString)) {
+        return keyMap.value(keyString);
+    }
+    qCritical() << "KeyMapWin missing following key:" << keyString;
+    return 0;  // Return 0 if the key is not found in the map
+
 }
 
 Key readKey(QJsonObject key) {

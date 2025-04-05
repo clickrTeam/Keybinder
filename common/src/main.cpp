@@ -4,6 +4,7 @@
 #include "abstract_daemon.h"
 #include "readprofile.h"
 #include "daemon.h"
+#include "mapper.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
@@ -15,6 +16,7 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     QStringList arguments = QCoreApplication::arguments();
     Daemon d;
+    setDaemon(&d);
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
@@ -26,6 +28,7 @@ int main(int argc, char *argv[]) {
                      &QCoreApplication::aboutToQuit, [&]() { d.cleanup(); });
 
     Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
+    setProfile(activeProfile);
 
     bool isOsStartup = arguments.contains("--osstartup");
 

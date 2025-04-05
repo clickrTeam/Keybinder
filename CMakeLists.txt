@@ -26,6 +26,7 @@ qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
+    common/src/mapper.cpp
 )
 
 target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})

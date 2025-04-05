@@ -43,6 +43,27 @@
                         "value": "R",
                         "type": "tap"
                     }
+                },
+                {
+                    "key": {
+                        "keyTimePairs": [
+                            {
+                                "time": 9999,
+                                "value": "T"
+                            },
+                            {
+                                "time": 350,
+                                "value": "T"
+                            }
+                        ],
+                        "capture": true,
+                        "release": true,
+                        "type": "timed"
+                    },
+                    "bind": {
+                        "value": "R",
+                        "type": "tap"
+                    }
                 }
             ]
         }

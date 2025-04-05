@@ -20,6 +20,16 @@ class Key {
     QString value; // The key value (e.g., "w")
     QString type;  // The key type (e.g., "tap")
 };
+struct TimedKeyBind {
+    struct KeyTimePair {
+        int keyVk;   // The key value (e.g., "w")
+        int time;           // The associated time in ms
+    };
+    bool capture;
+    bool release;
+    QList<KeyTimePair> keyTimePairs; // Vector to store key-time pairs
+    int bind;
+};
 class Bind {
   public:
     QString value; // The bind value (e.g., "q")
@@ -34,7 +44,8 @@ class Layer {
   public:
     QString layerName;       // The layer name (e.g., "Gaming Layer")
     QList<Keybind> keybinds; // List of keybinds in this layer
-    QMap<QString, QString> tapKeyBinds;
+    QMap<int, int> tapKeyBinds;
+    QMap<int, TimedKeyBind> timedKeyBinds; // First int is the first key in the array
 };
 class Profile {
   public:
