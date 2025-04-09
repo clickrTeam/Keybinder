@@ -9,28 +9,46 @@ Tim Blamires
 
 ## Architecture
 ```
-Keybinder
-│
-├── CMakeLists.txt            # CMake build file
-│
-├── main.cpp                  # Main entry point of the application
-│
-├── startup.cpp               # Startup initialization logic
-│
-├── ProfileInterpreter
-│   └── readProfile.cpp       # Reads and processes profiles
-│
-├── Win
-│   └── daemon.cpp            # Windows-specific daemon
-│
-├── Linux
-│   └── daemon.cpp            # Linux-specific daemon
-│
-├── Mac
-│   └── daemon.cpp            # Mac-specific daemon
-│
-└── ProfileExamples
-    └── e1.json               # Example profile in JSON format
-    └── e2.json               # Another example profile in JSON format
-    └── ...                   # More JSON profiles
+.
+├── CMakeLists.txt
+├── README.md
+├── common
+│   ├── CMakeLists.txt
+│   ├── include
+│   │   ├── abstract_daemon.h
+│   │   ├── mapper.h
+│   │   ├── profile.h
+│   │   └── readprofile.h
+│   └── src
+│       ├── main.cpp
+│       ├── mapper.cpp
+│       └── readprofile.cpp
+├── exampleProfiles
+│   ├── e1.json
+│   └── ...
+├── linux
+│   ├── CMakeLists.txt
+│   ├── include
+│   │   ├── daemon.h
+│   │   └── linux_configure.h
+│   ├── learning
+│   │   ├── Detection.cpp
+│   │   ├── README.md
+│   │   ├── SimpleRemap.cpp
+│   │   └── SimpleRemap.h
+│   └── src
+│       └── daemon.cpp
+├── mac
+│   ├── CMakeLists.txt
+│   ├── include
+│   │   └── daemon.h
+│   └── src
+│       └── daemon.cpp
+├── startup.cpp
+└── win
+    ├── CMakeLists.txt
+    ├── include
+    │   └── daemon.h
+    └── src
+        └── daemon.cpp
 ```
