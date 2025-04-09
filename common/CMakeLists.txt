@@ -4,6 +4,7 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/readprofile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/socket.cpp
     PARENT_SCOPE
 )
 set(COMMON_HEADER_PATHS

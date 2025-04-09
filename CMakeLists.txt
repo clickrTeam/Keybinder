@@ -33,5 +33,6 @@ target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM
 target_link_libraries(keybinder
     PRIVATE
         Qt::Core
+        Qt::Network
         ${PLATFORM_LIBS}
 )
