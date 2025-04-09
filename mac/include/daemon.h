@@ -1,3 +1,4 @@
+#pragma once
 #include "abstract_daemon.h"
 class Daemon : public AbstractDaemon {
   public:
