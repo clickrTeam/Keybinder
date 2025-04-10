@@ -8,3 +8,8 @@ set(PLATFORM_HEADER_PATHS
     PARENT_SCOPE
 )
 
+set(PLATFORM_LIBS 
+  "-framework IOKit" 
+  "-framework CoreFoundation"
+    PARENT_SCOPE
+)
