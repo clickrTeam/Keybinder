@@ -11,12 +11,8 @@
 #include <QThread>
 
 #include <QLocalServer>
-#include <QLocalSocket>
 #include <QByteArray>
-
-
 #include <QLocalSocket>
-#include <QTextStream>
 #include <QDebug>
 
 int main(int argc, char *argv[]) {
