@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(keybinder LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
 
 qt_standard_project_setup()
 
