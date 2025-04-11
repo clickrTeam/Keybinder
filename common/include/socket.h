@@ -1,25 +1,56 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+// // #ifndef SOCKET_H
+// // #define SOCKET_H
 
-#include <QObject>
-#include <QLocalServer>
-#include <QLocalSocket>
-#include <QByteArray>
+// // #include <QObject>
+// // #include <QLocalServer>
+// // #include <QLocalSocket>
+// // #include <QByteArray>
+// // #include <QDebug>
 
-class MyServer : public QObject
-{
-    Q_OBJECT
+// // class MyServer : public QObject {
+// //     Q_OBJECT
 
-  public:
-    MyServer(QObject *parent = nullptr);
-    ~MyServer();
+// //   public:
+// //     MyServer();
+// //     ~MyServer();
 
-  public slots:
-    void handleConnection();
-    void handleReadyRead();
+// //     void start();
+// //     void stop();
+// //     void onConnect(QLocalSocket* socket);
+// //     void onRead();
 
-  private:
-    QLocalServer *server;
-};
+// //   private slots:
+// //     void handleNewConnection();
 
-#endif // SOCKET_H
+// //   private:
+// //     QLocalServer* server;
+// // };
+
+// // #endif // SOCKET_H
+// #ifndef SOCKET_H
+// #define SOCKET_H
+
+// #include <QObject>
+// #include <QLocalSocket>
+
+// class Client : public QObject
+// {
+//     Q_OBJECT
+
+//   public:
+//     Client(QObject *parent = nullptr);
+//     ~Client() {
+
+//     };
+
+//   public slots:
+//     void onConnected();
+//     void onReadyRead();
+//     void onDisconnected();
+//     void onErrorOccurred(QLocalSocket::LocalSocketError error);
+
+//   private:
+//     QLocalSocket *socket;
+// };
+
+// #endif // SOCKET_H
