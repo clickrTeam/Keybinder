@@ -39,31 +39,17 @@ int main(int argc, char *argv[]) {
     Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
     setProfile(activeProfile);
 
-    /*MyServer electronAppListener;
-    electronAppListener.start();*/
-
-    // QLocalServer server;
-    // if (server.listen("my_socket")) {
-    //     qDebug() << "Server listening on socket 'my_socket'";
-    //     QObject::connect(&server, &QLocalServer::newConnection, [&server]() {
-    //         QLocalSocket* socket = server.nextPendingConnection();
-    //         QObject::connect(socket, &QLocalSocket::readyRead, [socket]() {
-    //             QByteArray data = socket->readAll();
-    //             qDebug() << "Received from Electron:" << data;
-    //             socket->write("Hello from Qt!");
-    //         });
-    //     });
-    // }
-
 #ifdef WIN32
     const QString PIPE_NAME = "mypipe";
     const QString PIPE_PATH = QString("\\\\.\\pipe\\%1").arg(PIPE_NAME);
+    // Can ensure pipe server created with PS cmd:
+    // (get-childitem \\.\pipe\).FullName
 #else
     const QString PIPE_PATH = "/tmp/myapp-socket";
 #endif
     QLocalServer server;
     if (server.listen(PIPE_PATH)) {
-        qDebug() << "Server listening on pipe '\\\\\\.\\pipe\\my_pipe'";
+        qDebug() << "Server listening on pipe '\\\\\\.\\pipe\\my_pipe' or ipc socket '/tmp/myapp-socket'";
         QObject::connect(&server, &QLocalServer::newConnection, [&server]() {
             qDebug() << "new connection";
             QLocalSocket* socket = server.nextPendingConnection();
@@ -74,7 +60,6 @@ int main(int argc, char *argv[]) {
             });
         });
     }
-    // Client c;
 
     bool isOsStartup = arguments.contains("--osstartup");
 
