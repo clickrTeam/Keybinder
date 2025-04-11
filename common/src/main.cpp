@@ -5,7 +5,6 @@
 #include "readprofile.h"
 #include "daemon.h"
 #include "mapper.h"
-#include "socket.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
