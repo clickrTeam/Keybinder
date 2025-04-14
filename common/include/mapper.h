@@ -1,5 +1,4 @@
 #pragma once
-#include "daemon.h"
 #include "event.h"
 #include "profile.h"
 #include <QDebug>
@@ -7,15 +6,19 @@
 
 using std::size_t;
 
+// Forward declaration needed due to circular dependency
+class Daemon;
+
 class Mapper {
   public:
-    Mapper(Profile &, Daemon &);
+    Mapper(Profile &);
     ~Mapper();
+    void set_daemon(Daemon *d);
     bool mapInput(InputEvent);
 
   private:
     void captureAndRelease();
-    Daemon &daemon;
+    Daemon *daemon = nullptr;
     Profile &profile;
     size_t cur_layer;
     QMap<int, int>

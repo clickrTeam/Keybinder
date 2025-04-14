@@ -8,8 +8,8 @@
 #include <qdebug.h>
 
 // Constructor: initialize member variables.
-Daemon::Daemon()
-    : matching_dictionary(nullptr),
+Daemon::Daemon(Mapper &m)
+    : mapper(m), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
     matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
     UInt32 generic_desktop = kHIDPage_GenericDesktop;
@@ -24,6 +24,7 @@ Daemon::Daemon()
                          usage_number);
     CFRelease(page_number);
     CFRelease(usage_number);
+    std::cout << "Daemon created" << std::endl;
 }
 
 // Destructor: clean up resources.
@@ -62,7 +63,8 @@ void Daemon::start() {
     CFRelease(matchingDict);
 
     // Register a device-matching callback.
-    // For each device found, our staticDeviceMatchingCallback will be invoked.
+    // For each device found, our staticDeviceMatchingCallback will be
+    // invoked.
     IOHIDManagerRegisterDeviceMatchingCallback(
         hidManager, Daemon::device_matching_callback, this);
 
