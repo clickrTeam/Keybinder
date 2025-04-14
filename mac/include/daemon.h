@@ -28,6 +28,8 @@ class Daemon : public AbstractDaemon {
     // Helper: create a matching dictionary for keyboards
     CFDictionaryRef create_keyboard_matching_dictionary();
 
+    void handle_input_event(uint64_t value, uint32_t page, uint32_t code);
+
     // Callback for input events (called when an input value changes)
     static void input_event_callback(void *context, IOReturn result,
                                      void *sender, IOHIDValueRef value);

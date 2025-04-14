@@ -1,4 +1,5 @@
 #include "daemon.h"
+#include "event.h"
 #include "thread"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
@@ -70,6 +71,16 @@ void Daemon::send_key(int vk) {
     // TODO: hook up with driver
 }
 
+void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
+
+    std::cout << "Key " << code << (value ? " pressed" : " released")
+              << std::endl;
+
+    mapper.mapInput(InputEvent{
+        .keycode = static_cast<int>(code),
+        .type = value ? KeyEventType::Press : KeyEventType::Relase,
+    });
+}
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
                                   IOHIDValueRef value) {
     Daemon *self = reinterpret_cast<Daemon *>(context);
@@ -77,9 +88,9 @@ void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
     IOHIDElementRef element = IOHIDValueGetElement(value);
     if (!element)
         return;
-
-    uint32_t usagePage = IOHIDElementGetUsagePage(element);
-    uint32_t usage = IOHIDElementGetUsage(element);
+    self->handle_input_event(IOHIDValueGetIntegerValue(value),
+                             IOHIDElementGetUsagePage(element),
+                             IOHIDElementGetUsage(element));
 
     // Process only keyboard events (usage page 0x07)
     if (usagePage == 0x07) {
