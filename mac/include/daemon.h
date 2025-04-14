@@ -6,14 +6,7 @@
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
-#include <condition_variable>
-#include <errno.h>
-#include <filesystem>
-#include <iostream>
 #include <mach/mach_error.h>
-#include <map>
-#include <mutex>
-#include <thread>
 #include <unistd.h>
 
 class Daemon : public AbstractDaemon {
@@ -42,4 +35,9 @@ class Daemon : public AbstractDaemon {
     // Callback for when a matching device is found
     static void device_matching_callback(void *context, IOReturn result,
                                          void *sender, IOHIDDeviceRef device);
+    // void start_monitoring_loop();
+
+    // Helper methods
+    static CFStringRef get_property(mach_port_t item, const char *property);
+    static CFStringRef from_cstr(const char *str);
 };

@@ -1,4 +1,5 @@
 #include "daemon.h"
+#include "thread"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
@@ -7,7 +8,6 @@
 #include <iostream>
 #include <qdebug.h>
 
-// Constructor: initialize member variables.
 Daemon::Daemon(Mapper &m)
     : mapper(m), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
@@ -24,10 +24,10 @@ Daemon::Daemon(Mapper &m)
                          usage_number);
     CFRelease(page_number);
     CFRelease(usage_number);
-    std::cout << "Daemon created" << std::endl;
+
+    qDebug() << "Daemon created";
 }
 
-// Destructor: clean up resources.
 Daemon::~Daemon() { cleanup(); }
 
 void Daemon::start() {
@@ -35,68 +35,34 @@ void Daemon::start() {
     CFRetain(matching_dictionary);
     IOServiceGetMatchingServices(kIOMainPortDefault, matching_dictionary,
                                  &iter);
-    for (mach_port_t curr = IOIteratorNext(iter); curr;
-         curr = IOIteratorNext(iter)) {
+    for (mach_port_t device = IOIteratorNext(iter); device;
+         device = IOIteratorNext(iter)) {
+        CFStringRef karabiner = from_cstr(
+            "Karabiner"); // Karabiner DriverKit VirtualHIDKeyboard 1.7.0
+        CFStringRef device_key = get_property(device, kIOHIDProductKey);
+        if (!device_key ||
+            CFStringFind(karabiner, device_key, kCFCompareCaseInsensitive)
+                    .location != kCFNotFound) {
+            continue;
+        }
+
+        IOHIDDeviceRef dev = IOHIDDeviceCreate(kCFAllocatorDefault, device);
+        // source_devices[device] = dev;
+        IOHIDDeviceRegisterInputValueCallback(dev, input_event_callback, this);
+        kern_return_t kr = IOHIDDeviceOpen(dev, kIOHIDOptionsTypeSeizeDevice);
+        if (kr != kIOReturnSuccess) {
+            qDebug() << "Error opening device";
+            exit(1);
+        }
+        IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetCurrent(),
+                                       kCFRunLoopDefaultMode);
     }
 
     IOObjectRelease(iter);
-
-    // Build a matching dictionary for keyboards:
-    //   Generic Desktop (0x01) and Keyboard (0x06)
-    int page = 0x01;
-    int usage = 0x06;
-    CFNumberRef pageNumber =
-        CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &page);
-    CFNumberRef usageNumber =
-        CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
-    const void *keys[] = {CFSTR(kIOHIDDeviceUsagePageKey),
-                          CFSTR(kIOHIDDeviceUsageKey)};
-    const void *values[] = {pageNumber, usageNumber};
-    CFDictionaryRef matchingDict = CFDictionaryCreate(
-        kCFAllocatorDefault, keys, values, 2, &kCFTypeDictionaryKeyCallBacks,
-        &kCFTypeDictionaryValueCallBacks);
-    CFRelease(pageNumber);
-    CFRelease(usageNumber);
-
-    // Set the matching criteria.
-    IOHIDManagerSetDeviceMatching(hidManager, matchingDict);
-    CFRelease(matchingDict);
-
-    // Register a device-matching callback.
-    // For each device found, our staticDeviceMatchingCallback will be
-    // invoked.
-    IOHIDManagerRegisterDeviceMatchingCallback(
-        hidManager, Daemon::device_matching_callback, this);
-
-    // Schedule the HID manager on the current run loop.
-    IOHIDManagerScheduleWithRunLoop(hidManager, CFRunLoopGetCurrent(),
-                                    kCFRunLoopDefaultMode);
-
-    // Open the HID manager.
-    IOReturn ret = IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
-    if (ret != kIOReturnSuccess) {
-        std::cerr << "Error: Unable to open IOHIDManager (error: 0x" << std::hex
-                  << ret << ")" << std::endl;
-        return;
-    }
-
-    std::cout << "Daemon started: Keyboard devices are seized and key events "
-                 "will be captured."
-              << std::endl;
-
     CFRunLoopRun();
 }
 
-void Daemon::cleanup() {
-    if (hidManager) {
-        IOHIDManagerUnscheduleFromRunLoop(hidManager, CFRunLoopGetCurrent(),
-                                          kCFRunLoopDefaultMode);
-        IOHIDManagerClose(hidManager, kIOHIDOptionsTypeNone);
-        CFRelease(hidManager);
-        hidManager = nullptr;
-    }
-    std::cout << "Daemon cleaned up." << std::endl;
-}
+void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_key(int vk) {
     std::cout << "send_key called with key code: " << vk << std::endl;
@@ -122,6 +88,8 @@ void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
     }
 }
 
+// TODO: not used currently but should be used in the future to allow for users
+// to connect keyboards to the system without a restart
 void Daemon::device_matching_callback(void *context, IOReturn result,
                                       void *sender, IOHIDDeviceRef device) {
     Daemon *self = reinterpret_cast<Daemon *>(context);
@@ -142,4 +110,14 @@ void Daemon::device_matching_callback(void *context, IOReturn result,
     // Schedule the device on the current run loop.
     IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetCurrent(),
                                    kCFRunLoopDefaultMode);
+}
+
+CFStringRef Daemon::get_property(mach_port_t item, const char *property) {
+    return (CFStringRef)IORegistryEntryCreateCFProperty(
+        item, from_cstr(property), kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+}
+
+CFStringRef Daemon::from_cstr(const char *str) {
+    return CFStringCreateWithCString(kCFAllocatorDefault, str,
+                                     CFStringGetSystemEncoding());
 }
