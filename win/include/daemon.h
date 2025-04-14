@@ -15,7 +15,11 @@ class Daemon : public AbstractDaemon {
     void start() override;
     void cleanup() override;
     void send_key(int vk) override;
-    LRESULT CALLBACK KeyboardHook(int nCode, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK Trampoline(int nCode, WPARAM wParam, LPARAM lParam) {
+        KeyboardHook* instance = reinterpret_cast<KeyboardHook*>(GetWindowLongPtr(GetCurrentWindow(), GWLP_USERDATA));
+        return instance->HookProc(nCode, wParam, lParam);
+    }
+    LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
     HHOOK kbd = NULL; // Global hook handle
   private:
