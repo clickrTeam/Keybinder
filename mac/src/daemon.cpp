@@ -30,6 +30,7 @@ Daemon::Daemon(Mapper &m)
 
 Daemon::~Daemon() { cleanup(); }
 
+// Heavily based on https://github.com/psych3r/driverkit
 void Daemon::start() {
     io_iterator_t iter = IO_OBJECT_NULL;
     CFRetain(matching_dictionary);
