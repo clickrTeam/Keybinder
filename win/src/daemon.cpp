@@ -6,11 +6,13 @@
 #include <winuser.h>
 
 HHOOK kbd = NULL; // Global hook handle
+Mapper* mapper = nullptr;
 // TODO: fill this in
-Daemon::Daemon(Mapper &m) : mapper(m) {
+Daemon::Daemon(Mapper &m) {
+    mapper = &m;
     qDebug() << "Daemon created";
     qDebug() << "Starting Win systems";
-    kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &Daemon::KeyboardHook, 0, 0);
+    kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &Daemon::HookProc, 0, 0);
     if (!kbd) {
         qCritical() << "Failed to install keyboard hook!";
         return;
@@ -71,7 +73,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     KBDLLHOOKSTRUCT* kbdStruct = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam); // reinterpret_cast is c++ style casting instead of c style (KBDLLHOOKSTRUCT)lParam
     // lParam has vkCode which is the virtual key code while scanCode is the hardware key code which can be diffrent for the same keys
 
-           // Ignore sythesized Inputs
+    // Ignore sythesized Inputs
     if (kbdStruct->flags & LLKHF_INJECTED) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
@@ -82,7 +84,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = kbdStruct->vkCode;
         e.type = KeyEventType::Press;
-            if (mapper.mapInput(e))
+            if (mapper->mapInput(e))
             return 1; // Suppress keypress
         break;
     }
