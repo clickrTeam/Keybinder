@@ -9,6 +9,11 @@
 #include <QStringList>
 #include <QThread>
 
+#include <QLocalServer>
+#include <QByteArray>
+#include <QLocalSocket>
+#include <QDebug>
+
 int main(int argc, char *argv[]) {
     // TODO: We need to add this argument to startup locations. i.e. add to
     // windows registery with exe location.
@@ -30,6 +35,28 @@ int main(int argc, char *argv[]) {
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit,
                      [&]() { daemon.cleanup(); });
+
+#ifdef WIN32
+    const QString PIPE_NAME = "mypipe";
+    const QString PIPE_PATH = QString("\\\\.\\pipe\\%1").arg(PIPE_NAME);
+    // Can ensure pipe server created with PS cmd:
+    // (get-childitem \\.\pipe\).FullName
+#else
+    const QString PIPE_PATH = "/tmp/myapp-socket";
+#endif
+    QLocalServer server;
+    if (server.listen(PIPE_PATH)) {
+        qDebug() << "Server listening on pipe '\\\\\\.\\pipe\\my_pipe' or ipc socket '/tmp/myapp-socket'";
+        QObject::connect(&server, &QLocalServer::newConnection, [&server]() {
+            qDebug() << "new connection";
+            QLocalSocket* socket = server.nextPendingConnection();
+            QObject::connect(socket, &QLocalSocket::readyRead, [socket]() {
+                QByteArray data = socket->readAll();
+                qDebug() << "Received from Electron:" << data;
+                socket->write("Hello from Qt!");
+            });
+        });
+    }
 
     bool isOsStartup = arguments.contains("--osstartup");
 
