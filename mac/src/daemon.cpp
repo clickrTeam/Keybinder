@@ -1,29 +1,44 @@
 #include "daemon.h"
 #include <CoreFoundation/CoreFoundation.h>
-#include <IOKit/hid/IOHIDKeys.h>
-#include <IOKit/hid/IOHIDManager.h>
+#include <IOKit/hid/IOHIDLib.h>
+#include <IOKit/hidsystem/IOHIDShared.h>
+#include <MacTypes.h>
+#include <QTimer>
 #include <iostream>
 #include <qdebug.h>
 
 // Constructor: initialize member variables.
-Daemon::Daemon() : hidManager(nullptr) {}
+Daemon::Daemon()
+    : matching_dictionary(nullptr),
+      notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
+    matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
+    UInt32 generic_desktop = kHIDPage_GenericDesktop;
+    UInt32 gd_keyboard = kHIDUsage_GD_Keyboard;
+    CFNumberRef page_number = CFNumberCreate(
+        kCFAllocatorDefault, kCFNumberSInt32Type, &generic_desktop);
+    CFNumberRef usage_number =
+        CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &gd_keyboard);
+    CFDictionarySetValue(matching_dictionary, CFSTR(kIOHIDDeviceUsagePageKey),
+                         page_number);
+    CFDictionarySetValue(matching_dictionary, CFSTR(kIOHIDDeviceUsageKey),
+                         usage_number);
+    CFRelease(page_number);
+    CFRelease(usage_number);
+}
 
 // Destructor: clean up resources.
 Daemon::~Daemon() { cleanup(); }
 
-// start():
-//   - Creates the HID Manager.
-//   - Sets a matching dictionary for keyboards (Generic Desktop: usage page
-//   0x01, usage: 0x06).
-//   - Registers a device-matching callback (to seize each keyboard).
-//   - Opens the HID Manager and starts the run loop.
 void Daemon::start() {
-    // Create the HID manager.
-    hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-    if (!hidManager) {
-        std::cerr << "Error: Unable to create IOHIDManager" << std::endl;
-        return;
+    io_iterator_t iter = IO_OBJECT_NULL;
+    CFRetain(matching_dictionary);
+    IOServiceGetMatchingServices(kIOMainPortDefault, matching_dictionary,
+                                 &iter);
+    for (mach_port_t curr = IOIteratorNext(iter); curr;
+         curr = IOIteratorNext(iter)) {
     }
+
+    IOObjectRelease(iter);
 
     // Build a matching dictionary for keyboards:
     //   Generic Desktop (0x01) and Keyboard (0x06)
@@ -67,12 +82,9 @@ void Daemon::start() {
                  "will be captured."
               << std::endl;
 
-    // Run the CFRunLoop to process events (this call blocks indefinitely).
     CFRunLoopRun();
 }
 
-// cleanup():
-//   Unschedule and close the HID manager, then release resources.
 void Daemon::cleanup() {
     if (hidManager) {
         IOHIDManagerUnscheduleFromRunLoop(hidManager, CFRunLoopGetCurrent(),
@@ -84,8 +96,6 @@ void Daemon::cleanup() {
     std::cout << "Daemon cleaned up." << std::endl;
 }
 
-// send_key():
-//   In this basic example, we simply log the key code that would be sent.
 void Daemon::send_key(int vk) {
     std::cout << "send_key called with key code: " << vk << std::endl;
     // TODO: hook up with driver
@@ -94,7 +104,7 @@ void Daemon::send_key(int vk) {
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
                                   IOHIDValueRef value) {
     Daemon *self = reinterpret_cast<Daemon *>(context);
-    //  TODO use self to call some non static method
+    // TODO: use self to call some non static method
     IOHIDElementRef element = IOHIDValueGetElement(value);
     if (!element)
         return;
@@ -116,8 +126,7 @@ void Daemon::device_matching_callback(void *context, IOReturn result,
     if (!self)
         return;
 
-    // Attempt to open the device with the 'seize' flag so that its key events
-    // are not passed along.
+    // This for some reason does not actaully sieze the device
     IOReturn ret = IOHIDDeviceOpen(device, kIOHIDOptionsTypeSeizeDevice);
     if (ret != kIOReturnSuccess) {
         qDebug() << "Failed to open device with seize flag.";
