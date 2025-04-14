@@ -7,7 +7,7 @@
 
 HHOOK kbd = NULL; // Global hook handle
 // TODO: fill this in
-Daemon::Daemon() {
+Daemon::Daemon(Mapper &m) : mapper(m) {
     qDebug() << "Daemon created";
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &KeyboardHook, 0, 0);
