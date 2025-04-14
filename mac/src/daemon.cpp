@@ -1,8 +1,9 @@
 #include "daemon.h"
 #include <iostream>
 
-// TODO: fill this in
-Daemon::Daemon() { std::cout << "Daemon created" << std::endl; }
+Daemon::Daemon(Mapper &m) : mapper(m) {
+    std::cout << "Daemon created" << std::endl;
+}
 
 Daemon::~Daemon() { std::cout << "Daemon destroyed" << std::endl; }
 

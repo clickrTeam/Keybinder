@@ -4,6 +4,7 @@
 #include <QTimer>
 
 Mapper::Mapper(Profile &profile) : profile(profile) { this->cur_layer = 0; }
+Mapper::~Mapper() {}
 
 void Mapper::set_daemon(Daemon *d) { daemon = d; }
 

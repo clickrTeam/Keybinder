@@ -1,11 +1,13 @@
 #pragma once
-#include "daemon.h"
 #include "event.h"
 #include "profile.h"
 #include <QDebug>
 #include <cstddef>
 
 using std::size_t;
+
+// Forward declaration needed due to circular dependency
+class Daemon;
 
 class Mapper {
   public:
