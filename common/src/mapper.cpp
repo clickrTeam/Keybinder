@@ -1,11 +1,11 @@
 #include "mapper.h"
+#include "daemon.h"
 #include "event.h"
 #include <QTimer>
 
-Mapper::Mapper(Profile &profile, Daemon &daemon)
-    : daemon(daemon), profile(profile) {
-    this->cur_layer = 0;
-}
+Mapper::Mapper(Profile &profile) : profile(profile) { this->cur_layer = 0; }
+
+void Mapper::set_daemon(Daemon *d) { daemon = d; }
 
 bool Mapper::mapInput(InputEvent e) {
     Layer &activeLayer = this->profile.layers[this->cur_layer];
@@ -43,7 +43,7 @@ bool Mapper::mapInput(InputEvent e) {
             thenRelease) { // If starting a diffrent timed
             qDebug() << "Stopping CnR";
             thenRelease = false; // stop capture and release
-            daemon.send_key(capture_and_release_key);
+            daemon->send_key(capture_and_release_key);
         }
 
         // Finished proggress or setup next
@@ -51,7 +51,7 @@ bool Mapper::mapInput(InputEvent e) {
             qDebug() << "Finished Progress";
             thenRelease = false;
             // last keybind activate
-            daemon.send_key(kybnd.bind);
+            daemon->send_key(kybnd.bind);
             timedKeyProgress[first_key] = 0;
             return true;
         } else {
@@ -83,7 +83,7 @@ bool Mapper::mapInput(InputEvent e) {
     // TAP
     if (activeLayer.tapKeyBinds.contains(virtualKey)) {
         qDebug() << "Tap";
-        daemon.send_key(activeLayer.tapKeyBinds[virtualKey]);
+        daemon->send_key(activeLayer.tapKeyBinds[virtualKey]);
         return true;
     }
     return false;
@@ -92,8 +92,8 @@ bool Mapper::mapInput(InputEvent e) {
 void Mapper::captureAndRelease() {
     timedKeyProgress[first_key] = 0; // reset progress
     if (thenRelease) {
-        thenRelease = false;                      // stop capture and release
-        daemon.send_key(capture_and_release_key); // release captured key
+        thenRelease = false;                       // stop capture and release
+        daemon->send_key(capture_and_release_key); // release captured key
         qDebug() << "Stopping CnR";
     }
 }
