@@ -1,30 +1,22 @@
 #include "mapper.h"
+#include "daemon.h"
+#include "event.h"
 #include <QTimer>
 
-Profile activeProfile;
-Layer activeLayer;
+Mapper::Mapper(Profile &profile) : profile(profile) { this->cur_layer = 0; }
+Mapper::~Mapper() {}
 
-// Timed varibles
-QMap<int, int> timedKeyProgress; // represents progress towards finish the timed macro.
-int next_key; // the next expected key in a timed macro. Never includes the first.
-int first_key; // the first key in a expected macro.
+void Mapper::set_daemon(Daemon *d) { daemon = d; }
 
-bool thenRelease; // true if some key is captured to release.
-int capture_and_release_key; // the key captured to release.
+bool Mapper::mapInput(InputEvent e) {
+    Layer &activeLayer = this->profile.layers[this->cur_layer];
 
-void setProfile(Profile loaded) {
-    activeProfile = loaded;
-    activeLayer = activeProfile.layers[0];
-    qDebug() << activeLayer.tapKeyBinds.keys();
-}
+    if (e.type == KeyEventType::Relase) {
+        // TODO
+        return false;
+    }
+    int virtualKey = e.keycode;
 
-Daemon* d;
-void setDaemon(Daemon* deamon) {
-    d = deamon;
-}
-
-
-bool mapKeyDownToBind(int virtualKey) {
     qDebug() << virtualKey;
 
     // Timed
@@ -32,9 +24,11 @@ bool mapKeyDownToBind(int virtualKey) {
     if (isAFirstKey || next_key == virtualKey) {
         qDebug() << "Timed";
         if (next_key != virtualKey && isAFirstKey && first_key != virtualKey) {
-            // Starting a diffrent timed since firstKey is diffrent, and is not nextkey.
+            // Starting a diffrent timed since firstKey is diffrent, and is not
+            // nextkey.
             captureAndRelease(); // starting a diffrent timed
-            first_key = virtualKey; // this lets us use timed keys with other keys
+            first_key =
+                virtualKey; // this lets us use timed keys with other keys
         }
         TimedKeyBind kybnd = activeLayer.timedKeyBinds[first_key];
 
@@ -46,10 +40,11 @@ bool mapKeyDownToBind(int virtualKey) {
             qDebug() << "Starting Progress";
             timedKeyProgress[first_key] = 1;
         }
-        if (timedKeyProgress[first_key] == 1 && thenRelease) { // If starting a diffrent timed
+        if (timedKeyProgress[first_key] == 1 &&
+            thenRelease) { // If starting a diffrent timed
             qDebug() << "Stopping CnR";
             thenRelease = false; // stop capture and release
-            d->send_key(capture_and_release_key);
+            daemon->send_key(capture_and_release_key);
         }
 
         // Finished proggress or setup next
@@ -57,11 +52,12 @@ bool mapKeyDownToBind(int virtualKey) {
             qDebug() << "Finished Progress";
             thenRelease = false;
             // last keybind activate
-            d->send_key(kybnd.bind);
+            daemon->send_key(kybnd.bind);
             timedKeyProgress[first_key] = 0;
             return true;
         } else {
-            qDebug() << "Setting next key" << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
+            qDebug() << "Setting next key"
+                     << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
             next_key = kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
         }
 
@@ -71,9 +67,7 @@ bool mapKeyDownToBind(int virtualKey) {
             capture_and_release_key = virtualKey;
             thenRelease = true;
             int ms = kybnd.keyTimePairs[timedKeyProgress[first_key]].time;
-            QTimer::singleShot(ms, []() {
-                captureAndRelease();
-            });
+            QTimer::singleShot(ms, [&]() { this->captureAndRelease(); });
             return true;
         } else if (kybnd.capture) {
             qDebug() << "Capturing key";
@@ -82,31 +76,25 @@ bool mapKeyDownToBind(int virtualKey) {
             qDebug() << "Releasing key";
             return false;
         } else
-            qCritical() << "FELL THROUGH CAPTURE AND RELEASE!" << kybnd.capture << kybnd.release;
+            qCritical() << "FELL THROUGH CAPTURE AND RELEASE!" << kybnd.capture
+                        << kybnd.release;
     } else
         captureAndRelease(); // Cancel capture and release if bind is broken.
 
     // TAP
     if (activeLayer.tapKeyBinds.contains(virtualKey)) {
         qDebug() << "Tap";
-        d->send_key(activeLayer.tapKeyBinds[virtualKey]);
+        daemon->send_key(activeLayer.tapKeyBinds[virtualKey]);
         return true;
     }
     return false;
 }
 
-
-bool mapKeyUpToBind(int virtualKey) {
-    return false;
-    // TODO
-}
-
-
-void captureAndRelease() {
+void Mapper::captureAndRelease() {
     timedKeyProgress[first_key] = 0; // reset progress
     if (thenRelease) {
-        thenRelease = false; // stop capture and release
-        d->send_key(capture_and_release_key); // release captured key
+        thenRelease = false;                       // stop capture and release
+        daemon->send_key(capture_and_release_key); // release captured key
         qDebug() << "Stopping CnR";
     }
 }

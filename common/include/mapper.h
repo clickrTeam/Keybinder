@@ -1,16 +1,32 @@
-#ifndef MAPPER_H
-#define MAPPER_H
+#pragma once
+#include "event.h"
 #include "profile.h"
-#include "daemon.h"
 #include <QDebug>
+#include <cstddef>
 
-void setProfile(Profile loaded);
-void setDaemon(Daemon* deamon);
+using std::size_t;
 
-// if False let key go through as it's not mapped.
-bool mapKeyDownToBind(int virtualKey);
-bool mapKeyUpToBind(int virtualKey);
+// Forward declaration needed due to circular dependency
+class Daemon;
 
-void captureAndRelease();
+class Mapper {
+  public:
+    Mapper(Profile &);
+    ~Mapper();
+    void set_daemon(Daemon *d);
+    bool mapInput(InputEvent);
 
-#endif // MAPPER_H
+  private:
+    void captureAndRelease();
+    Daemon *daemon = nullptr;
+    Profile &profile;
+    size_t cur_layer;
+    QMap<int, int>
+        timedKeyProgress; // represents progress towards finish the timed macro.
+    int next_key = -1; // the next expected key in a timed macro. Never includes
+                       // the first.
+    int first_key = -1; // the first key in a expected macro.
+
+    bool thenRelease = false; // true if some key is captured to release.
+    int capture_and_release_key = -1; // the key captured to release.
+};
