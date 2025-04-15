@@ -133,10 +133,14 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
 
-    mapper.mapInput(InputEvent{
+    auto event = InputEvent{
         .keycode = static_cast<int>(code),
         .type = value ? KeyEventType::Press : KeyEventType::Relase,
-    });
+    };
+
+    if (!mapper.mapInput(event)) {
+        send_key(event);
+    }
 }
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
                                   IOHIDValueRef value) {
