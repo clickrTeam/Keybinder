@@ -1,7 +1,7 @@
 #pragma once
 enum class KeyEventType {
     Press,
-    Relase,
+    Release,
 };
 
 struct InputEvent {

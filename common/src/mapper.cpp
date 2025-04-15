@@ -11,7 +11,7 @@ void Mapper::set_daemon(Daemon *d) { daemon = d; }
 bool Mapper::mapInput(InputEvent e) {
     Layer &activeLayer = this->profile.layers[this->cur_layer];
 
-    if (e.type == KeyEventType::Relase) {
+    if (e.type == KeyEventType::Release) {
         // TODO
         return false;
     }
