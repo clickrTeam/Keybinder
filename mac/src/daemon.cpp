@@ -121,9 +121,10 @@ void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_key(InputEvent e) {
 
-    pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
-        keyboard_input report;
-    report.keys.insert(vk);
+    if (e.type == KeyEventType::Press)
+        report.keys.insert(e.keycode);
+    else if (e.type == KeyEventType::Relase)
+        report.keys.erase(e.keycode);
 
     client->async_post_report(report);
 }

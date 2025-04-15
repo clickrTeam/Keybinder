@@ -33,6 +33,9 @@ class Daemon : public AbstractDaemon {
         pqrs::karabiner::driverkit::virtual_hid_device_service::client>
         client;
 
+    pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
+        keyboard_input report;
+
     // Helper: create a matching dictionary for keyboards
     CFDictionaryRef create_keyboard_matching_dictionary();
 
