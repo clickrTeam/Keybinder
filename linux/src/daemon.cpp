@@ -1,9 +1,12 @@
 #include "daemon.h"
 #include "linux_configure.h"
+#include "mapper.h"
 
+Mapper* mapper = nullptr;
 //TODO: Need to move over linux_configure.cpp after merging
-Daemon::Daemon()
+Daemon::Daemon(Mapper &m)
 {
+    mapper = &m;
     //TODO: Possibly update with config file path
     event_keyb_path = retrieve_eventX();
 
@@ -64,7 +67,7 @@ void Daemon::start()
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0)
         {
 
-            if (event.type == EV_KEY && event.value == 1)
+            if (event.type == EV_KEY)
             {
                 //TODO: Send key code to mapper.cpp and have it determine which key / combo to output.
 //                if (event.code == KEY_ESC)
@@ -81,6 +84,17 @@ void Daemon::start()
 //                        send_key_event(uinp_fd, map.getKey(bind.key.value));
 //                    }
 //                }
+                InputEvent e;
+                e.keycode = event.code;
+                e.type = (event.value == 1) ? KeyEventType::Press : KeyEventType::Release;
+
+                if (e.type == KeyEventType::Press && mapper->mapInput(e)) {
+                    // Suppressed by the mapper (i.e. replaced/mapped to something else)
+                    continue;
+                }
+
+                       // Inject original key if not mapped
+                send_key(event.code);
             }
         }
     }

@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include <QDebug>
+#include <mapper.h>
 using std::cout;
 using std::endl;
 using std::cerr;
@@ -27,7 +28,7 @@ class Daemon : public AbstractDaemon {
     QString event_keyb_path = "";
   public:
     // Constructor and Destructor
-    Daemon();
+    Daemon(Mapper &m);
     ~Daemon();
 
     // Override abstract class methods
