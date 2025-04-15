@@ -87,7 +87,7 @@ const QMap<QString, WORD> keyMap = {
 #elif defined(__APPLE__)
 const QMap<QString, int> keyMap = {};
 #elif defined(__linux__)
-const QMap<QString, WORD> keyMap = {};
+const QMap<QString, int> keyMap = {};
 #else
 #error "Unknown operating system"
 #endif
