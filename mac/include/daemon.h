@@ -6,8 +6,12 @@
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
+#include <filesystem>
 #include <mach/mach_error.h>
 #include <unistd.h>
+
+#include "virtual_hid_device_driver.hpp"
+#include "virtual_hid_device_service.hpp"
 
 class Daemon : public AbstractDaemon {
   public:

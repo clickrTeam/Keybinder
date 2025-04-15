@@ -1,11 +1,9 @@
 #include "daemon.h"
 #include "event.h"
-#include "thread"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <MacTypes.h>
-#include <QTimer>
 #include <iostream>
 #include <qdebug.h>
 
@@ -68,7 +66,6 @@ void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_key(int vk) {
     std::cout << "send_key called with key code: " << vk << std::endl;
-    // TODO: hook up with driver
 }
 
 void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
