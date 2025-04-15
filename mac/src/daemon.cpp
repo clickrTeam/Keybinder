@@ -91,13 +91,6 @@ void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
     self->handle_input_event(IOHIDValueGetIntegerValue(value),
                              IOHIDElementGetUsagePage(element),
                              IOHIDElementGetUsage(element));
-
-    // Process only keyboard events (usage page 0x07)
-    if (usagePage == 0x07) {
-        int pressed = IOHIDValueGetIntegerValue(value);
-        std::cout << "Key " << usage << (pressed ? " pressed" : " released")
-                  << std::endl;
-    }
 }
 
 // TODO: not used currently but should be used in the future to allow for users
