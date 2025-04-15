@@ -8,6 +8,7 @@
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <filesystem>
 #include <mach/mach_error.h>
+#include <memory>
 #include <unistd.h>
 
 #include "virtual_hid_device_driver.hpp"
@@ -28,6 +29,9 @@ class Daemon : public AbstractDaemon {
     Mapper &mapper;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
+    std::shared_ptr<
+        pqrs::karabiner::driverkit::virtual_hid_device_service::client>
+        client;
 
     // Helper: create a matching dictionary for keyboards
     CFDictionaryRef create_keyboard_matching_dictionary();
@@ -47,3 +51,8 @@ class Daemon : public AbstractDaemon {
     static CFStringRef get_property(mach_port_t item, const char *property);
     static CFStringRef from_cstr(const char *str);
 };
+
+void foo() {
+
+    pqrs::karabiner::driverkit::virtual_hid_device_service::client *client;
+}
