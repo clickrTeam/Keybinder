@@ -23,7 +23,7 @@ class Daemon : public AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_key(int vk) override;
+    void send_key(InputEvent e) override;
 
   private:
     Mapper &mapper;

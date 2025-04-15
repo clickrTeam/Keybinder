@@ -1,5 +1,6 @@
 #pragma once
 
+#include "event.h"
 class AbstractDaemon {
   public:
     virtual ~AbstractDaemon() = default;
@@ -8,5 +9,5 @@ class AbstractDaemon {
     virtual void start() = 0;
     virtual void cleanup() = 0;
     // Should take some kind of key event
-    virtual void send_key(int vk) = 0;
+    virtual void send_key(InputEvent e) = 0;
 };

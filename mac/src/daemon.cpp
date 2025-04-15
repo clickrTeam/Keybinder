@@ -119,7 +119,7 @@ void Daemon::start() {
 
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
-void Daemon::send_key(int vk) {
+void Daemon::send_key(InputEvent e) {
 
     pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
         keyboard_input report;
