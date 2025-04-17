@@ -84,7 +84,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = kbdStruct->vkCode;
         e.type = KeyEventType::Press;
-            if (mapper->mapInput(e))
+        if (mapper->mapInput(e))
             return 1; // Suppress keypress
         break;
     }

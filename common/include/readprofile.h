@@ -9,20 +9,39 @@
 #include <QJsonValue>
 
 // Define constants for each JSON key
-#define PROFILE_NAME "name"
+#define PROFILE_NAME "profile_name"
 #define PROFILE_LAYERS "layers"
+
 #define LAYER_NAME "layer_name"
-#define LAYER_KEYBINDS "keybinds"
-#define KEYBIND_KEY "key"
-#define KEYBIND_BIND "bind"
+#define LAYER_KEYBINDS "remappings"
+
+// BindType defines
+#define BIND "Bind"
+#define BINDTYPE_LINK "Link_Bind"
+#define BINDTYPE_COMBO "Combo_Bind"
+#define BINDTYPE_MACRO "Macro_Bind"
+#define BINDTYPE_TIMEDMACRO "TimedMacro_Bind"
+#define BINDTYPE_REPEAT "Repeat_Bind"
+#define BINDTYPE_SWAPLAYER "SwapLayer_Bind"
+#define BINDTYPE_APPOPEN "AppOpen_Bind"
+
+// TriggerType defines
+#define TRIGGER "Trigger"
+#define TRIGGERTYPE_LINK "Link_Trigger"
+#define TRIGGERTYPE_TIMED "Timed_Trigger"
+#define TRIGGERTYPE_HOLD "Hold_Trigger"
+#define TRIGGERTYPE_APPFOCUSED "App_Focus_Trigger"
+
+// Inner values
+#define KEY_TIME_PAIRS "key_time_pairs"
 #define VALUE "value"
-#define TYPE "type"
-
-#define TAP "tap"
-
-#define TIMED "timed"
-#define TIME "time"
-#define KEY_TIME_PAIRS "keyTimePairs"
+#define DELAY "delay"
+#define WAIT "wait"
+#define APP_NAME "app_name"
+#define LAYER_NUM "layer_num"
+#define TIME_DELAY "time_delay"
+#define TIMES_TO_EXECUTE "times_to_execute"
+#define CANCEL_TRIGGER "cancel_trigger"
 #define CAPTURE "capture"
 #define RELEASE "release"
 
@@ -31,9 +50,8 @@ Profile proccessProfile(const QString &profileFilePath);
 
 Profile readProfile(QJsonObject profile);
 Layer readLayer(QJsonObject layer);
-Key readKey(QJsonObject key);
-Bind readBind(QJsonObject bind);
 int stringToKey(QString keyString);
+Trigger parseRemapping(const QJsonObject& remapping);
 
 // String to key
 #ifdef _WIN32

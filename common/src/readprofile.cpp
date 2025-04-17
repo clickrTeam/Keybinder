@@ -50,51 +50,17 @@ Profile readProfile(QJsonObject profile) {
 
 Layer readLayer(QJsonObject layer) {
     Layer lyr;
-    qDebug() << "Layer Name:" << layer.value(LAYER_NAME).toString();
-    lyr.layerName = layer.value(LAYER_NAME).toString();
+    qDebug() << "Layer:" << layer[LAYER_NAME].toString();
 
-    const QJsonArray keybinds = layer.value(LAYER_KEYBINDS).toArray();
-    for (const QJsonValue& keybindValue : keybinds) {
-        // Foreach keybind
-        QJsonObject keybind = keybindValue.toObject();
-        QJsonObject key = keybind.value(KEYBIND_KEY).toObject();
-        QString keyType = key.value(TYPE).toString();
-        QJsonObject bind = keybind.value(KEYBIND_BIND).toObject();
-
-        if (keyType == TAP) {
-            qDebug() << "TapKey" << key;
-
-            int keyVk = stringToKey(key.value(VALUE).toString());
-            int bindVk = stringToKey(bind.value(VALUE).toString());
-
-            lyr.tapKeyBinds[keyVk] = bindVk;
-        } else if (keyType == TIMED) {
-            qDebug() << "TimedKey" << key;
-
-            TimedKeyBind timedKey;
-            QJsonArray keyTimePairs = key.value(KEY_TIME_PAIRS).toArray();
-            // qDebug() << "JkeyTimePairS" << keyTimePairs;
-            timedKey.capture = key.value(CAPTURE).toBool();
-            timedKey.release = key.value(RELEASE).toBool();
-
-            for (const QJsonValue &JkeyTimePairValue : keyTimePairs) {
-                // Foreach key & time pair.
-                QJsonObject JkeyTimePair = JkeyTimePairValue.toObject();
-                // qDebug() << "JkeyTimePair" << JkeyTimePair;
-                TimedKeyBind::KeyTimePair keyTimePair;
-
-                keyTimePair.keyVk = stringToKey(JkeyTimePair.value(VALUE).toString());
-                keyTimePair.time = JkeyTimePair.value(TIME).toInt(100);
-
-                timedKey.keyTimePairs.append(keyTimePair);
-            }
-
-            timedKey.bind = stringToKey(bind.value(VALUE).toString());
-            lyr.timedKeyBinds[timedKey.keyTimePairs.first().keyVk] = timedKey;
+    QJsonArray remappings = layer[LAYER_KEYBINDS].toArray();
+    for (const QJsonValue& remapVal : remappings) {
+        lyr.keybinds.append(parseRemapping(remapVal.toObject()));
+    }
+    foreach (Trigger trigger, lyr.keybinds) {
+        if (trigger.type == TRIGGERTYPE_LINK) {
+            lyr.tapKeyBinds[*trigger.vk] = *trigger.bind.vk;
         }
     }
-    qDebug() << "Tap keybinds:" << lyr.tapKeyBinds.count();
-    qDebug() << "Timed keybinds:" << lyr.timedKeyBinds.count();
     return lyr;
 }
 
@@ -105,33 +71,129 @@ int stringToKey(QString keyString) {
     }
     qCritical() << "KeyMapWin missing following key:" << keyString;
     return 0;  // Return 0 if the key is not found in the map
-
 }
 
-Key readKey(QJsonObject key) {
-    QString keyType = key.value(TYPE).toString();
-    QString keyValue = key.value(VALUE).toString();
-    Key ky;
-    ky.type = keyType;
-    ky.value = keyValue;
+Bind readBind(const QJsonObject& remapping, QString bind_key) {
+    Bind bind;
+    if (bind_key == BINDTYPE_LINK) {
+        qDebug() << "  Link Trigger Value:" << remapping[bind_key].toObject()[VALUE].toString();
+        bind = Bind{
+            .type = bind_key,
+            .vk = stringToKey(remapping[bind_key].toObject()[VALUE].toString())
+        };
+    } else if (bind_key == BINDTYPE_COMBO) {
+        QJsonArray combo = remapping[bind_key].toArray();
+        for (const QJsonValue& val : combo)
+            qDebug() << "  Combo Key:" << val.toString();
+    } else if (bind_key == BINDTYPE_MACRO) {
+        QJsonArray macro = remapping[bind_key].toArray();
+        for (const QJsonValue& step : macro) {
+            QJsonObject obj = step.toObject();
+            if (obj.contains(BINDTYPE_LINK)) {
+                qDebug() << "  Macro - Link:" << obj[BINDTYPE_LINK].toObject()[VALUE].toString();
+            } else if (obj.contains(BINDTYPE_COMBO)) {
+                QJsonArray combo = obj[BINDTYPE_COMBO].toArray();
+                qDebug() << "  Macro - Combo:";
+                for (const QJsonValue& k : combo)
+                    qDebug() << "   -" << k.toString();
+            }
+        }
+    } else if (bind_key == BINDTYPE_TIMEDMACRO) {
+        QJsonArray macro = remapping[bind_key].toArray();
+        for (const QJsonValue& step : macro) {
+            QJsonObject bind = step.toObject();
+            if (bind.contains(BINDTYPE_LINK)) {
+                qDebug() << "  TimedMacro - Link:" << bind[BINDTYPE_LINK].toObject()[VALUE].toString();
+                if (bind.contains(DELAY))
+                    qDebug() << "   Delay:" << bind[DELAY].toInt();
+            } else if (bind.contains(BINDTYPE_COMBO)) {
+                QJsonArray keys = bind[BINDTYPE_COMBO].toArray();
+                for (const QJsonValue& k : keys)
+                    qDebug() << "  TimedMacro - Combo:" << k.toString();
+            }
+        }
+    } else if (bind_key == BINDTYPE_REPEAT) {
+        QJsonObject repeat = remapping[bind_key].toObject();
+        qDebug() << "  Repeat Time Delay:" << repeat[TIME_DELAY].toInt();
+        qDebug() << "  Repeat Count:" << repeat[TIMES_TO_EXECUTE].toInt();
+        QJsonObject link = repeat[BINDTYPE_LINK].toObject();
+        qDebug() << "   Repeat Link:" << link[VALUE].toString();
 
-    // Output key information
-    qDebug() << "Key Type:" << keyType;
-    qDebug() << "Key Value:" << keyValue;
-    return ky;
+        if (repeat.contains(CANCEL_TRIGGER)) {
+            QJsonObject cancel = repeat[CANCEL_TRIGGER].toObject();
+            QJsonObject cancelLink = cancel[TRIGGERTYPE_LINK].toObject();
+            qDebug() << "   Cancel Trigger:" << cancelLink[VALUE].toString();
+        }
+    } else if (bind_key == BINDTYPE_SWAPLAYER) {
+        qDebug() << "  Swap to Layer:" << remapping[bind_key].toObject()[LAYER_NUM].toInt();
+    } else if (bind_key == BINDTYPE_APPOPEN) {
+        qDebug() << "  Open App:" << remapping[bind_key].toObject()[APP_NAME].toString();
+    } else {
+        qCritical() << "Unkown bind:" << bind_key;
+    }
+    return bind;
 }
 
-Bind readBind(QJsonObject bind) {
-    QString bindType = bind.value(TYPE).toString();
-    QString bindValue = bind.value(VALUE).toString();
-    Bind bnd;
-    bnd.type = bindType;
-    bnd.value = bindValue;
+Trigger readTrigger(const QJsonObject& remapping, QString trigger_key) {
+    Trigger trigger;
+    if (trigger_key == TRIGGERTYPE_LINK) {
+        QJsonObject timed = remapping[trigger_key].toObject();
+        trigger = Trigger{
+            .type = trigger_key,
+            .vk = stringToKey(remapping[trigger_key].toObject()[VALUE].toString())
+        };
+    } else if (trigger_key == TRIGGERTYPE_TIMED) {
+        QJsonArray keyTimePairs = remapping[KEY_TIME_PAIRS].toArray();
+        QList<KeyTimePair> keyTimePairsa;
+        for (const QJsonValue& pairVal : keyTimePairs) {
+            QJsonObject pair = pairVal.toObject();
+            qDebug() << "  Key:" << pair[VALUE].toString()
+                     << " Delay:" << pair.value(DELAY).toInt();
+            keyTimePairsa.append(KeyTimePair{
+                .keyVk = stringToKey(pair[VALUE].toString()),
+                .delay = pair[DELAY].toInt(0)
+            });
+        }
+        TimedKeyBind sequence{
+            .capture = remapping[CAPTURE].toBool(),
+            .release = remapping[RELEASE].toBool(),
+            .keyTimePairs = keyTimePairsa
+        };
+        trigger = Trigger{
+            .type = trigger_key,
+            .sequence = sequence
+        };
+    } else if (trigger_key == TRIGGERTYPE_HOLD) {
+        QJsonObject hold = remapping[trigger_key].toObject();
+        qDebug() << "  Hold Value:" << hold[VALUE].toString()
+                 << " Wait:" << hold[WAIT].toInt();
+    } else if (trigger_key == TRIGGERTYPE_APPFOCUSED) {
+        qDebug() << "  App Focus:" << remapping[trigger_key].toObject()[APP_NAME].toString();
+    } else {
+        qCritical() << "Unkown trigger:" << trigger_key;
+    }
+    return trigger;
+}
 
-    // Output bind information
-    qDebug() << "Bind Type:" << bindType;
-    qDebug() << "Bind Value:" << bindValue;
-    return bnd;
+Trigger parseRemapping(const QJsonObject& remapping) {
+    QString trigger_key;
+    QString bind_key;
+    for (const QString& key : remapping.keys()) {
+        qDebug() << "Remapping Type:" << key;
+        if (key.endsWith(TRIGGER)) {
+            trigger_key = key;
+        } else if (key.endsWith(BIND)) {
+            bind_key = key;
+        } else {
+            qCritical() << "Key not Trigger or Bind" << key;
+        }
+    }
+
+    Bind bind = readBind(remapping, bind_key);
+    Trigger trigger = readTrigger(remapping, trigger_key);
+
+    trigger.bind = bind;
+    return trigger;
 }
 
 // {

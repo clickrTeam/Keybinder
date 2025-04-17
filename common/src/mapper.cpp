@@ -66,7 +66,7 @@ bool Mapper::mapInput(InputEvent e) {
             qDebug() << "Capture & Realeasing key";
             capture_and_release_key = virtualKey;
             thenRelease = true;
-            int ms = kybnd.keyTimePairs[timedKeyProgress[first_key]].time;
+            int ms = kybnd.keyTimePairs[timedKeyProgress[first_key]].delay;
             QTimer::singleShot(ms, [&]() { this->captureAndRelease(); });
             return true;
         } else if (kybnd.capture) {

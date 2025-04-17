@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     // windows registery with exe location.
     QCoreApplication a(argc, argv);
     QStringList arguments = QCoreApplication::arguments();
-    Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
+    Profile activeProfile = proccessProfile("../../exampleProfiles/e4.json");
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);

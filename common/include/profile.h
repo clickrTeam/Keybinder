@@ -4,6 +4,7 @@
 #include <QList>
 #include <QMap>
 #include <QString>
+using std::optional;
 
 enum class KeyCode {
     A = 0,
@@ -13,41 +14,44 @@ enum class KeyCode {
     E = 4,
     // TOOD
 };
-
 // Class to represent the Profile structure
-class Key {
-  public:
-    QString value; // The key value (e.g., "w")
-    QString type;  // The key type (e.g., "tap")
+struct KeyTimePair {
+    int keyVk;   // The key value (e.g., "w")
+    int delay;   // The associated time in ms
+};
+//TODO repeat bind
+struct Bind {
+    QString type;  // The bind type (e.g., "tap")
+    optional<int> vk;
+    optional<QList<int>> combo;
+    optional<QList<Bind>> macro;
+    optional<QList<QPair<Bind, int>>> timedMacro;
+    optional<QString> app_name;
+    optional<int> layer_index;
 };
 struct TimedKeyBind {
-    struct KeyTimePair {
-        int keyVk;   // The key value (e.g., "w")
-        int time;           // The associated time in ms
-    };
     bool capture;
     bool release;
     QList<KeyTimePair> keyTimePairs; // Vector to store key-time pairs
-    int bind;
+    int bind; //TODO remove
 };
-class Bind {
+struct Trigger {
   public:
-    QString value; // The bind value (e.g., "q")
-    QString type;  // The bind type (e.g., "tap")
+    Bind bind;
+    QString type;  // The key type (e.g., "tap")
+    optional<int> vk;
+    optional<TimedKeyBind> sequence;
+    optional<QString> app_name;
 };
-class Keybind {
-  public:
-    Key key;   // Key object
-    Bind bind; // Bind object
-};
-class Layer {
+struct Layer {
   public:
     QString layerName;       // The layer name (e.g., "Gaming Layer")
-    QList<Keybind> keybinds; // List of keybinds in this layer
+    QList<Trigger> keybinds; // List of keybinds in this layer
+    QMap<int, Trigger> associatedKeys;
     QMap<int, int> tapKeyBinds;
     QMap<int, TimedKeyBind> timedKeyBinds; // First int is the first key in the array
 };
-class Profile {
+struct Profile {
   public:
     QString name;        // The name of the profile (e.g., "Default Profile")
     QList<Layer> layers; // List of layers in the profile
