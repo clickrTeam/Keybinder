@@ -1,4 +1,5 @@
 #pragma once
+#include <QList>
 
 class AbstractDaemon {
   public:
@@ -9,4 +10,5 @@ class AbstractDaemon {
     virtual void cleanup() = 0;
     // Should take some kind of key event
     virtual void send_key(int vk) = 0;
+    virtual void send_keys(QList<int> vk) = 0;
 };

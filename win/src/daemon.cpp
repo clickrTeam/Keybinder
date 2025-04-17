@@ -64,6 +64,34 @@ void Daemon::send_key(int vk) {
     qDebug() << "Key sent";
 }
 
+void Daemon::send_keys(QList<int> vk) {
+    qDebug() << "Sending" << vk.count() << "keys";
+
+    QVector<INPUT> inputs;
+    inputs.resize(vk.count() * 2); // Press + Release for each key
+
+    for (int i = 0; i < vk.count(); ++i) {
+        int v = vk[i];
+
+        // Press
+        inputs[i].type = INPUT_KEYBOARD;
+        inputs[i].ki.wVk = v;
+        inputs[i].ki.dwFlags = 0;
+
+        // Release
+        inputs[i + vk.count()].type = INPUT_KEYBOARD;
+        inputs[i + vk.count()].ki.wVk = v;
+        inputs[i + vk.count()].ki.dwFlags = KEYEVENTF_KEYUP;
+    }
+
+    UINT sent = SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
+    if (sent != inputs.size()) {
+        qWarning() << "SendInput failed. Sent" << sent << "of" << inputs.size();
+    } else {
+        qDebug() << "Keys sent!";
+    }
+}
+
 LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // Ignore system call - I believe if nCode < 0 then its a system call and we should always ignore it.
     if (nCode < 0) {

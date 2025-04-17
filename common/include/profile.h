@@ -14,6 +14,28 @@ enum class KeyCode {
     E = 4,
     // TOOD
 };
+
+// Short enums for internal use (Bind Types)
+enum BT {
+    B_LINK,
+    COMBO,
+    MACRO,
+    TIMEDMACRO,
+    REPEAT,
+    SWAPLAYER,
+    APPOPEN,
+    B_UNKOWN
+};
+
+// Short enums for internal use (Trigger Types)
+enum TT {
+    T_LINK,
+    TIMED,
+    HOLD,
+    APPFOCUSED,
+    T_UNKOWN
+};
+
 // Class to represent the Profile structure
 struct KeyTimePair {
     int keyVk;   // The key value (e.g., "w")
@@ -21,7 +43,7 @@ struct KeyTimePair {
 };
 //TODO repeat bind
 struct Bind {
-    QString type;  // The bind type (e.g., "tap")
+    BT type;  // The bind type (e.g., "tap")
     optional<int> vk;
     optional<QList<int>> combo;
     optional<QList<Bind>> macro;
@@ -33,12 +55,11 @@ struct TimedKeyBind {
     bool capture;
     bool release;
     QList<KeyTimePair> keyTimePairs; // Vector to store key-time pairs
-    int bind; //TODO remove
 };
 struct Trigger {
   public:
     Bind bind;
-    QString type;  // The key type (e.g., "tap")
+    TT type;  // The key type (e.g., "tap")
     optional<int> vk;
     optional<TimedKeyBind> sequence;
     optional<QString> app_name;
@@ -49,7 +70,7 @@ struct Layer {
     QList<Trigger> keybinds; // List of keybinds in this layer
     QMap<int, Trigger> associatedKeys;
     QMap<int, int> tapKeyBinds;
-    QMap<int, TimedKeyBind> timedKeyBinds; // First int is the first key in the array
+    QMap<int, Trigger> timedKeyBinds; // First int is the first key in the array
 };
 struct Profile {
   public:

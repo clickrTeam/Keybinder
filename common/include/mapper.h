@@ -17,7 +17,10 @@ class Mapper {
     bool mapInput(InputEvent);
 
   private:
+    void activateBind(Bind bind);
+
     void captureAndRelease();
+
     Daemon *daemon = nullptr;
     Profile &profile;
     size_t cur_layer;

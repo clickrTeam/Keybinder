@@ -4,23 +4,23 @@
     {
       "layer_name": "default",
       "remappings": [
-      {
-        "Link_Trigger": {
-            "value": "A"
+        {
+          "Link_Trigger": {
+              "value": "A"
+          },
+          "Link_Bind": {
+              "value": "B"
+          }
         },
-        "Link_Bind": {
-            "value": "B"
-        }
-      },
         {
           "Timed_Trigger": {
             "key_time_pairs": [
               {
-                "value": "F1",
+                "value": "W",
                 "delay": 350
               },
               {
-                "value": "F1"
+                "value": "W"
               }
             ],
             "capture": true,

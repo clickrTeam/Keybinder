@@ -30,7 +30,8 @@ bool Mapper::mapInput(InputEvent e) {
             first_key =
                 virtualKey; // this lets us use timed keys with other keys
         }
-        TimedKeyBind kybnd = activeLayer.timedKeyBinds[first_key];
+        Trigger trigger = activeLayer.timedKeyBinds[first_key];
+        TimedKeyBind kybnd = *trigger.sequence;
 
         // Progress
         if (timedKeyProgress.contains(first_key)) {
@@ -52,7 +53,7 @@ bool Mapper::mapInput(InputEvent e) {
             qDebug() << "Finished Progress";
             thenRelease = false;
             // last keybind activate
-            daemon->send_key(kybnd.bind);
+            activateBind(trigger.bind);
             timedKeyProgress[first_key] = 0;
             return true;
         } else {
@@ -66,7 +67,8 @@ bool Mapper::mapInput(InputEvent e) {
             qDebug() << "Capture & Realeasing key";
             capture_and_release_key = virtualKey;
             thenRelease = true;
-            int ms = kybnd.keyTimePairs[timedKeyProgress[first_key]].delay;
+            // ms is the delay on the current key pressed.
+            int ms = kybnd.keyTimePairs[timedKeyProgress[first_key] - 1].delay;
             QTimer::singleShot(ms, [&]() { this->captureAndRelease(); });
             return true;
         } else if (kybnd.capture) {
@@ -89,6 +91,46 @@ bool Mapper::mapInput(InputEvent e) {
     }
     return false;
 }
+
+void Mapper::activateBind(Bind bind) {
+    switch (bind.type) {
+    case B_LINK:
+        daemon->send_key(*bind.vk);
+        break;
+
+    case COMBO:
+        daemon->send_keys(*bind.combo);
+        break;
+
+    case MACRO:
+        for (const Bind& other_bind : *bind.macro) {
+            activateBind(other_bind);
+        }
+        break;
+
+    case TIMEDMACRO:
+        // Handle Timed Macro Bind
+        break;
+
+    case REPEAT:
+        // Handle Repeat Bind
+        break;
+
+    case SWAPLAYER:
+        // Handle Swap Layer Bind
+        break;
+
+    case APPOPEN:
+        // Handle App Open Bind
+        break;
+
+    default:
+        qCritical() << "Unkown bind type in mapper:" << bind.type;
+        // Optional: handle unknown type
+        break;
+    }
+}
+
 
 void Mapper::captureAndRelease() {
     timedKeyProgress[first_key] = 0; // reset progress
