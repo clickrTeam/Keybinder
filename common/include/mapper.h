@@ -13,6 +13,7 @@ class Mapper {
   public:
     Mapper(Profile &);
     ~Mapper();
+    void set_profile(Profile *p);
     void set_daemon(Daemon *d);
     bool mapInput(InputEvent);
 

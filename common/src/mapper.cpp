@@ -156,3 +156,11 @@ void Mapper::captureAndRelease() {
         qDebug() << "Stopping CnR";
     }
 }
+
+void Mapper::set_profile(Profile *p) {
+    if (p->isNull) {
+        qCritical() << "Null profiled tried to load";
+        return;
+    }
+    profile = *p;
+}

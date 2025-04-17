@@ -25,18 +25,19 @@ Profile proccessProfile(const QString &profileFilePath) {
     profileFile.close();
 
     // Parse JSON
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData);
+    return readProfile(QJsonDocument::fromJson(jsonData));
+}
+
+Profile readProfile(QJsonDocument jsonDoc) {
     if (jsonDoc.isNull() || !jsonDoc.isObject()) {
         qCritical() << "Invalid JSON!";
         return Profile();
     }
     qDebug() << "Profile json read";
 
-    return readProfile(jsonDoc.object());
-}
-
-Profile readProfile(QJsonObject profile) {
+    QJsonObject profile = jsonDoc.object();
     Profile pro;
+    qDebug() << profile;
     qDebug() << "Profile Name:" << profile.value(PROFILE_NAME).toString();
     pro.name = profile.value(PROFILE_NAME).toString();
 

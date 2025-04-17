@@ -48,7 +48,7 @@
 // functions
 Profile proccessProfile(const QString &profileFilePath);
 
-Profile readProfile(QJsonObject profile);
+Profile readProfile(QJsonDocument jsonDoc);
 Layer readLayer(QJsonObject layer);
 int stringToKey(QString keyString);
 Trigger parseRemapping(const QJsonObject& remapping);

@@ -47,13 +47,21 @@ int main(int argc, char *argv[]) {
     QLocalServer server;
     if (server.listen(PIPE_PATH)) {
         qDebug() << "Server listening on pipe '\\\\\\.\\pipe\\my_pipe' or ipc socket '/tmp/myapp-socket'";
-        QObject::connect(&server, &QLocalServer::newConnection, [&server]() {
+        QObject::connect(&server, &QLocalServer::newConnection, [&server, &mapper]() {
             qDebug() << "new connection";
             QLocalSocket* socket = server.nextPendingConnection();
-            QObject::connect(socket, &QLocalSocket::readyRead, [socket]() {
+            QObject::connect(socket, &QLocalSocket::readyRead, [socket, &mapper]() {
                 QByteArray data = socket->readAll();
                 qDebug() << "Received from Electron:" << data;
-                socket->write("Hello from Qt!");
+                if (data.startsWith("start")) {
+                    qDebug() << "ERR: daemon already started";
+                    socket->write("ERR: daemon already started");
+                    return;
+                } else if (data.startsWith("load:")) {
+                    data.remove(0, 5); // Remove load:
+                    Profile p = readProfile(QJsonDocument::fromJson(data));
+                    mapper.set_profile(&p);
+                }
             });
         });
     }
