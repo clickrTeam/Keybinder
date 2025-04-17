@@ -45,7 +45,16 @@ bool Mapper::mapInput(InputEvent e) {
             thenRelease) { // If starting a diffrent timed
             qDebug() << "Stopping CnR";
             thenRelease = false; // stop capture and release
-            daemon->send_key(capture_and_release_key);
+            daemon->send_key(QList{
+                InputEvent{
+                    .keycode = capture_and_release_key,
+                    .type = KeyEventType::Press
+                },
+                InputEvent{
+                   .keycode = capture_and_release_key,
+                    .type = KeyEventType::Relase
+                }
+            });
         }
 
         // Finished proggress or setup next
@@ -86,7 +95,8 @@ bool Mapper::mapInput(InputEvent e) {
     // TAP
     if (activeLayer.tapKeyBinds.contains(virtualKey)) {
         qDebug() << "Tap";
-        daemon->send_key(activeLayer.tapKeyBinds[virtualKey]);
+        activateBind(activeLayer.tapKeyBinds[virtualKey].bind);
+
         return true;
     }
     return false;
@@ -95,11 +105,8 @@ bool Mapper::mapInput(InputEvent e) {
 void Mapper::activateBind(Bind bind) {
     switch (bind.type) {
     case B_LINK:
-        daemon->send_key(*bind.vk);
-        break;
-
     case COMBO:
-        daemon->send_keys(*bind.combo);
+        daemon->send_key(*bind.vks);
         break;
 
     case MACRO:
@@ -136,7 +143,16 @@ void Mapper::captureAndRelease() {
     timedKeyProgress[first_key] = 0; // reset progress
     if (thenRelease) {
         thenRelease = false;                       // stop capture and release
-        daemon->send_key(capture_and_release_key); // release captured key
+        daemon->send_key(QList{
+            InputEvent{
+                .keycode = capture_and_release_key,
+                .type = KeyEventType::Press
+            },
+            InputEvent{
+                .keycode = capture_and_release_key,
+                .type = KeyEventType::Relase
+            }
+        }); // release captured key
         qDebug() << "Stopping CnR";
     }
 }

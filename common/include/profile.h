@@ -4,6 +4,7 @@
 #include <QList>
 #include <QMap>
 #include <QString>
+#include "event.h"
 using std::optional;
 
 enum class KeyCode {
@@ -44,8 +45,7 @@ struct KeyTimePair {
 //TODO repeat bind
 struct Bind {
     BT type;  // The bind type (e.g., "tap")
-    optional<int> vk;
-    optional<QList<int>> combo;
+    optional<QList<InputEvent>> vks;
     optional<QList<Bind>> macro;
     optional<QList<QPair<Bind, int>>> timedMacro;
     optional<QString> app_name;
@@ -68,8 +68,7 @@ struct Layer {
   public:
     QString layerName;       // The layer name (e.g., "Gaming Layer")
     QList<Trigger> keybinds; // List of keybinds in this layer
-    QMap<int, Trigger> associatedKeys;
-    QMap<int, int> tapKeyBinds;
+    QMap<int, Trigger> tapKeyBinds;
     QMap<int, Trigger> timedKeyBinds; // First int is the first key in the array
 };
 struct Profile {

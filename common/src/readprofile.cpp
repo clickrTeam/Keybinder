@@ -78,7 +78,7 @@ Layer readLayer(QJsonObject layer) {
     for (const Trigger& trigger : lyr.keybinds) {
         qDebug() << trigger.type;
         if (trigger.type == T_LINK) {
-            lyr.tapKeyBinds[*trigger.vk] = *trigger.bind.vk;
+            lyr.tapKeyBinds[*trigger.vk] = trigger;
         } else if (trigger.type == TIMED) {
             TimedKeyBind tkb = *trigger.sequence;
             qCritical() << "No keyTimePairs in trigger" << tkb.keyTimePairs.count();
@@ -96,7 +96,7 @@ int stringToKey(QString keyString) {
         return keyMap.value(keyString);
     }
     qCritical() << "KeyMapWin missing following key:" << keyString;
-    return 0;  // Return 0 if the key is not found in the map
+    return -1;  // Return -1 if the key is not found in the map
 }
 
 Bind readBind(const QJsonObject& remapping, QString bind_key) {
@@ -105,18 +105,38 @@ Bind readBind(const QJsonObject& remapping, QString bind_key) {
         qDebug() << "  Link Trigger Value:" << remapping[bind_key].toObject()[VALUE].toString();
         bind = Bind{
             .type = B_LINK,
-            .vk = stringToKey(remapping[bind_key].toObject()[VALUE].toString())
+            .vks = QList{
+                InputEvent{
+                    .keycode = stringToKey(remapping[bind_key].toObject()[VALUE].toString()),
+                    .type = KeyEventType::Press
+                },
+                InputEvent{
+                    .keycode = stringToKey(remapping[bind_key].toObject()[VALUE].toString()),
+                    .type = KeyEventType::Press
+                }
+            }
         };
     } else if (bind_key == BINDTYPE_COMBO) {
         QJsonArray combo = remapping[bind_key].toArray();
-        QList<int> keys;
+        QList<InputEvent> keys;
         for (const QJsonValue& val : combo) {
             qDebug() << "  Combo Key:" << val.toString();
-            keys.append(stringToKey(val.toString()));
+            keys.append(
+                InputEvent{
+                    .keycode = stringToKey(val.toString()),
+                    .type = KeyEventType::Press
+                });
+        }
+        for (const QJsonValue& val : combo) {
+            keys.append(
+                InputEvent{
+                    .keycode = stringToKey(val.toString()),
+                    .type = KeyEventType::Relase
+                });
         }
         bind = Bind{
             .type = COMBO,
-            .combo = keys
+            .vks = keys
         };
     } else if (bind_key == BINDTYPE_MACRO) {
         QJsonArray macro = remapping[bind_key].toArray();
