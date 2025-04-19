@@ -97,35 +97,20 @@ const QMap<QString, WORD> string_to_key_code = {
 #elif defined(__APPLE__)
 // Chat gpt generated need to verify
 const QMap<QString, int> string_to_key_code = {
-    // Letters
-    {"A", 0}, {"S", 1}, {"D", 2}, {"F", 3}, {"H", 4},
-    {"G", 5}, {"Z", 6}, {"X", 7}, {"C", 8}, {"V", 9},
-    {"B", 11}, {"Q", 12}, {"W", 13}, {"E", 14}, {"R", 15},
-    {"Y", 16}, {"T", 17}, {"1", 18}, {"2", 19}, {"3", 20},
-    {"4", 21}, {"6", 22}, {"5", 23}, {"Equal", 24}, {"9", 25},
-    {"7", 26}, {"Minus", 27}, {"8", 28}, {"0", 29}, {"RightBracket", 30},
-    {"O", 31}, {"U", 32}, {"LeftBracket", 33}, {"I", 34}, {"P", 35},
-    {"L", 37}, {"J", 38}, {"Quote", 39}, {"K", 40}, {"Semicolon", 41},
-    {"Backslash", 42}, {"Comma", 43}, {"Slash", 44}, {"N", 45}, {"M", 46},
-    {"Period", 47}, {"Grave", 50},
-
-    // Special keys
-    {"Return", 36}, {"Tab", 48}, {"Space", 49}, {"Delete", 51}, {"Escape", 53},
-
-    // Modifier keys
-    {"Command", 55}, {"Shift", 56}, {"CapsLock", 57}, {"Option", 58}, {"Control", 59},
-    {"RightShift", 60}, {"RightOption", 61}, {"RightControl", 62}, {"Function", 63},
-
-    // Arrow keys
-    {"F17", 64}, {"VolumeUp", 72}, {"VolumeDown", 73}, {"Mute", 74},
-    {"F18", 79}, {"F19", 80}, {"F20", 90},
-    {"F5", 96}, {"F6", 97}, {"F7", 98}, {"F3", 99}, {"F8", 100}, {"F9", 101},
-    {"F11", 103}, {"F13", 105}, {"F16", 106}, {"F14", 107}, {"F10", 109},
-    {"F12", 111}, {"F15", 113}, {"Help", 114}, {"Home", 115}, {"PageUp", 116},
-    {"ForwardDelete", 117}, {"F4", 118}, {"End", 119}, {"F2", 120},
-    {"PageDown", 121}, {"F1", 122}, {"LeftArrow", 123}, {"RightArrow", 124},
-    {"DownArrow", 125}, {"UpArrow", 126}
+  // Letters A–Z starting at 4
+  {"A", 4},  {"B", 5},  {"C", 6},  {"D", 7},  {"E", 8},
+  {"F", 9},  {"G", 10}, {"H", 11}, {"I", 12}, {"J", 13},
+  {"K", 14}, {"L", 15}, {"M", 16}, {"N", 17}, {"O", 18},
+  {"P", 19}, {"Q", 20}, {"R", 21}, {"S", 22}, {"T", 23},
+  {"U", 24}, {"V", 25}, {"W", 26}, {"X", 27}, {"Y", 28},
+  {"Z", 29},
+  
+  // Numbers 1–9 starting at 30
+  {"1", 30}, {"2", 31}, {"3", 32}, {"4", 33}, {"5", 34},
+  {"6", 35}, {"7", 36}, {"8", 37}, {"9", 38}, {"0" ,39}
+// TODO:  symbols, function keys, arrows, modifiers, etc.
 };
+
 
 // reverse the map
 const QMap<int, QString> key_code_to_string = []() {
