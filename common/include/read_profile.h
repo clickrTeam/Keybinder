@@ -1,6 +1,4 @@
-#ifndef READPROFILE_H
-#define READPROFILE_H
-#include "profile.h"
+#pragma once
 #include <QDebug>
 #include <QFile>
 #include <QJsonArray>
@@ -144,4 +142,3 @@ const QMap<QString, WORD> keyMap = {};
 #error "Unknown operating system"
 #endif
 
-#endif // READPROFILE_H
