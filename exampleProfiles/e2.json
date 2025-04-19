@@ -1,72 +1,57 @@
 {
-    "name": "Default Profile",
-    "layers": [
+  "profile_name": "TEST PROFILE",
+  "layer_count": 2,
+  "layers": [
+    {
+      "layer_name": "TEST_LAYER",
+      "layer_number": 1,
+      "remappings": [
         {
-            "layer_name": "Gaming Layer",
-            "keybinds": [
-                {
-                    "key": {
-                        "value": "Tab",
-                        "type": "tap"
-                    },
-                    "bind": {
-                        "value": "E",
-                        "type": "tap"
-                    }
-                },
-                {
-                    "key": {
-                        "value": "Alt",
-                        "type": "tap"
-                    },
-                    "bind": {
-                        "value": "W",
-                        "type": "tap"
-                    }
-                },
-                {
-                    "key": {
-                        "value": "W",
-                        "type": "tap"
-                    },
-                    "bind": {
-                        "value": "Q",
-                        "type": "tap"
-                    }
-                },
-                {
-                    "key": {
-                        "value": "Cmd",
-                        "type": "tap"
-                    },
-                    "bind": {
-                        "value": "R",
-                        "type": "tap"
-                    }
-                },
-                {
-                    "key": {
-                        "keyTimePairs": [
-                            {
-                                "time": 9999,
-                                "value": "T"
-                            },
-                            {
-                                "time": 350,
-                                "value": "T"
-                            }
-                        ],
-                        "capture": true,
-                        "release": true,
-                        "type": "timed"
-                    },
-                    "bind": {
-                        "value": "R",
-                        "type": "tap"
-                    }
-                }
-            ]
+          "trigger": {
+            "type": "key_press",
+            "value": "A"
+          },
+          "bind": {
+            "type": "press_key",
+            "value": "B"
+          }
+        },
+        {
+          "trigger": {
+            "type": "key_release",
+            "value": "A"
+          },
+          "bind": {
+            "type": "release_key",
+            "value": "B"
+          }
+        },
+        {
+          "trigger": {
+            "type": "tap_sequence",
+            "key_time_pairs": [
+              [
+                "Q",
+                300
+              ],
+              [
+                "Q",
+                300
+              ]
+            ],
+            "behavior": "default"
+          },
+          "bind": {
+            "type": "tap_key",
+            "value": "T"
+          }
         }
-    ]
+      ]
+    },
+    {
+      "layer_name": "layer 0",
+      "layer_number": 0,
+      "remappings": []
+    }
+  ]
 }
-    
