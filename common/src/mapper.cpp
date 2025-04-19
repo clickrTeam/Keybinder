@@ -152,9 +152,9 @@ void Mapper::perform_binds(const QList<Bind> &binds) {
                     events.push_back(
                         {InputEvent{bind.key_code, KeyEventType::Relase}});
                 } else if constexpr (std::is_same_v<T, TapKey>) {
-                    daemon->send_keys(
-                        {InputEvent{bind.key_code, KeyEventType::Relase},
-                         InputEvent{bind.key_code, KeyEventType::Press}});
+                    events.append(
+                        {InputEvent{bind.key_code, KeyEventType::Press},
+                         InputEvent{bind.key_code, KeyEventType::Relase}});
 
                 } else if constexpr (std::is_same_v<T, SwapLayer>) {
                     set_layer_inner(bind.new_layer);
