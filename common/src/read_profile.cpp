@@ -110,7 +110,15 @@ void warn_extra_properties(const QJsonObject &obj,
     }
 }
 
-KeyCode str_to_keycode(const QString &str) { return 0; };
+KeyCode str_to_keycode(const QString &str) {
+    if (!string_to_key_code.contains(str)) {
+        throw std::invalid_argument(
+            ("The string '" + str.toStdString() + "' is not a valid key.")
+                .c_str());
+    }
+
+    return string_to_key_code[str];
+};
 
 // KeyPress
 KeyPress KeyPress::from_json(const QJsonObject &obj) {
