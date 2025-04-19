@@ -22,11 +22,29 @@ class LocalServer : public QObject {
     bool start();
 
   private slots:
-    void handleNewConnection();
+    void handle_new_connection();
 
   private:
     void handleSocketData(QLocalSocket *socket);
 
     QLocalServer server;
     Mapper &mapper;
+};
+
+class ClientConnection : public QObject {
+    Q_OBJECT
+
+  public:
+    ClientConnection(QLocalSocket *socket, Mapper &mapper,
+                     QObject *parent = nullptr);
+
+  private slots:
+    void read_data();
+
+  private:
+    void send_response(const QString &status, const QString &error = QString());
+
+    QLocalSocket *socket;
+    Mapper &mapper;
+    QByteArray buffer;
 };
