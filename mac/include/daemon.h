@@ -6,8 +6,13 @@
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
+#include <filesystem>
 #include <mach/mach_error.h>
+#include <memory>
 #include <unistd.h>
+
+#include "virtual_hid_device_driver.hpp"
+#include "virtual_hid_device_service.hpp"
 
 class Daemon : public AbstractDaemon {
   public:
@@ -18,12 +23,18 @@ class Daemon : public AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_key(int vk) override;
+    void send_key(InputEvent e) override;
 
   private:
     Mapper &mapper;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
+    std::shared_ptr<
+        pqrs::karabiner::driverkit::virtual_hid_device_service::client>
+        client;
+
+    pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
+        keyboard_input report;
 
     // Helper: create a matching dictionary for keyboards
     CFDictionaryRef create_keyboard_matching_dictionary();
@@ -43,3 +54,8 @@ class Daemon : public AbstractDaemon {
     static CFStringRef get_property(mach_port_t item, const char *property);
     static CFStringRef from_cstr(const char *str);
 };
+
+void foo() {
+
+    pqrs::karabiner::driverkit::virtual_hid_device_service::client *client;
+}

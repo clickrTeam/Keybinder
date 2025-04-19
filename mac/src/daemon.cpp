@@ -1,14 +1,13 @@
 #include "daemon.h"
 #include "event.h"
-#include "thread"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <MacTypes.h>
-#include <QTimer>
 #include <iostream>
 #include <qdebug.h>
 
+// Heavily based on https://github.com/psych3r/driverkit
 Daemon::Daemon(Mapper &m)
     : mapper(m), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
@@ -26,12 +25,66 @@ Daemon::Daemon(Mapper &m)
     CFRelease(page_number);
     CFRelease(usage_number);
 
-    qDebug() << "Daemon created";
+    // Seting up driver client
+    // pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
+    //     keyboard_input report;
+    client = std::make_shared<
+        pqrs::karabiner::driverkit::virtual_hid_device_service::client>();
+    auto copy = client;
+
+    client->connected.connect([copy] {
+        qDebug() << "connected to karabiner driver";
+        pqrs::karabiner::driverkit::virtual_hid_device_service::
+            virtual_hid_keyboard_parameters parameters;
+        parameters.set_country_code(pqrs::hid::country_code::us);
+        copy->async_virtual_hid_keyboard_initialize(parameters);
+    });
+
+    client->connect_failed.connect([](auto &&error_code) {
+        std::cout << "connect failed: " << error_code;
+        exit(1);
+    });
+
+    client->closed.connect(
+        [] { qDebug() << "connection to karabiner driver closed"; });
+
+    client->error_occurred.connect([](auto &&error_code) {
+        qDebug() << "error occurred: " << error_code;
+        // TODO: should be exit here?
+        exit(1);
+    });
+
+    client->driver_activated.connect([](auto &&driver_activated) {
+        static std::optional<bool> previous_value;
+        if (previous_value != driver_activated) {
+            qDebug() << "driver activated: " << driver_activated;
+            previous_value = driver_activated;
+        }
+    });
+
+    client->driver_connected.connect([](auto &&driver_connected) {
+        static std::optional<bool> previous_value;
+        if (previous_value != driver_connected) {
+            qDebug() << "driver connected: " << driver_connected;
+            previous_value = driver_connected;
+        }
+    });
+
+    client->driver_version_mismatched.connect(
+        [](auto &&driver_version_mismatched) {
+            static std::optional<bool> previous_value;
+            if (previous_value != driver_version_mismatched) {
+                qDebug() << "driver_version_mismatched "
+                         << driver_version_mismatched << std::endl;
+                previous_value = driver_version_mismatched;
+            }
+        });
+
+    client->async_start();
 }
 
 Daemon::~Daemon() { cleanup(); }
 
-// Heavily based on https://github.com/psych3r/driverkit
 void Daemon::start() {
     io_iterator_t iter = IO_OBJECT_NULL;
     CFRetain(matching_dictionary);
@@ -66,20 +119,28 @@ void Daemon::start() {
 
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
-void Daemon::send_key(int vk) {
-    std::cout << "send_key called with key code: " << vk << std::endl;
-    // TODO: hook up with driver
+void Daemon::send_key(InputEvent e) {
+
+    if (e.type == KeyEventType::Press)
+        report.keys.insert(e.keycode);
+    else if (e.type == KeyEventType::Relase)
+        report.keys.erase(e.keycode);
+
+    client->async_post_report(report);
 }
 
 void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
-
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
 
-    mapper.mapInput(InputEvent{
+    auto event = InputEvent{
         .keycode = static_cast<int>(code),
         .type = value ? KeyEventType::Press : KeyEventType::Relase,
-    });
+    };
+
+    if (!mapper.mapInput(event)) {
+        send_key(event);
+    }
 }
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
                                   IOHIDValueRef value) {
@@ -91,13 +152,6 @@ void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
     self->handle_input_event(IOHIDValueGetIntegerValue(value),
                              IOHIDElementGetUsagePage(element),
                              IOHIDElementGetUsage(element));
-
-    // Process only keyboard events (usage page 0x07)
-    if (usagePage == 0x07) {
-        int pressed = IOHIDValueGetIntegerValue(value);
-        std::cout << "Key " << usage << (pressed ? " pressed" : " released")
-                  << std::endl;
-    }
 }
 
 // TODO: not used currently but should be used in the future to allow for users
