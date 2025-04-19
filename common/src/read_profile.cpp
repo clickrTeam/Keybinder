@@ -20,6 +20,22 @@ QJsonObject get_value_as_object(const QJsonValue &value) {
     return value.toObject();
 }
 
+QJsonArray get_value_as_array(const QJsonValue &value) {
+    if (!value.isArray()) {
+        throw std::invalid_argument("expected array");
+    }
+
+    return value.toArray();
+}
+
+QString get_value_as_string(const QJsonValue &value) {
+    if (!value.isString()) {
+        throw std::invalid_argument("expected string");
+    }
+
+    return value.toString();
+}
+
 QJsonObject get_property_as_object(const QJsonObject &obj, const QString &key) {
     if (!obj.contains(key)) {
         throw std::invalid_argument(
@@ -133,10 +149,32 @@ KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     return KeyRelease{str_to_keycode(get_property_as_string(obj, "value"))};
 }
 
+//   "type": "tap_sequence",
+//   "key_time_pairs": [
+//     [
+//       "Q",
+//       300
+//     ],
+//     [
+//       "Q",
+//       300
+//     ]
+//   ],
+//   "behavior": "default"
+// },
 // TapSequence
 TapSequence TapSequence::from_json(const QJsonObject &obj) {
-    // TODO: not sure exacty what this looks like
-    return TapSequence{};
+    QList<KeyCode> key_sequence;
+    warn_extra_properties(obj, {"type", "key_time_pairs", "behavior"});
+    for (const QJsonValue &val : get_property_as_array(obj, "key_time_pairs")) {
+        auto pair = get_value_as_array(val);
+        key_sequence.push_back(str_to_keycode(get_value_as_string(pair.at(0))));
+        // TODO: use the timeout which is the second element in this array
+    }
+
+    auto behavior = parse_behavior(get_property_as_string(obj, "behavior"));
+
+    return TapSequence{key_sequence, behavior};
 }
 
 TimedTriggerBehavior parse_behavior(const QString &str) {
@@ -230,8 +268,10 @@ Layer Layer::from_json(const QJsonObject &obj) {
 Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
     QString profile_name = get_property_as_string(obj, "profile_name");
-    // TODO: check cast
-    size_t default_layer = (size_t)get_property_as_number(obj, "default_layer");
+    // TODO: probably should have some kind of default layer beyond just always
+    // the first size_t default_layer = (size_t)get_property_as_number(obj,
+    // "default_layer");
+    size_t default_layer = 0;
     QList<Layer> layers;
 
     for (const QJsonValue &remapping : get_property_as_array(obj, "layers")) {
