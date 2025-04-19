@@ -128,6 +128,7 @@ void Daemon::start() {
     CFRunLoopRun();
 }
 
+/// TODO: fill this in not exactly sure how to unsieze devices
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_keys(const QList<InputEvent> &events) {

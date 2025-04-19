@@ -17,7 +17,7 @@
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
 
-    // TODO: use the first are for prototype
+    // TODO: use the first arg as profile for prototype
     Profile activeProfile = Profile::from_file("../exampleProfiles/e1.json");
 
     // Hacky workaround for circular reference

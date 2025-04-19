@@ -2,165 +2,147 @@
 #include "daemon.h"
 #include "event.h"
 #include <QTimer>
+#include <mutex>
+#include <optional>
+#include <profile.h>
 
-Mapper::Mapper(Profile &profile) : profile(profile) { this->cur_layer = 0; }
+Mapper::Mapper(Profile profile) { set_profile(profile); }
+
 Mapper::~Mapper() {}
 
-void Mapper::set_daemon(Daemon *d) { daemon = d; }
+void Mapper::set_daemon(Daemon *d) {
+    std::lock_guard lock_guard(mtx);
+    daemon = d;
+}
 
-bool Mapper::mapInput(InputEvent e) {
-    Layer &activeLayer = this->profile.layers[this->cur_layer];
+void Mapper::set_profile(Profile p) {
+    std::lock_guard lock_guard(mtx);
+    profile = p;
+    qDebug() << "Profile layer is: " << profile.default_layer;
+    set_layer_inner(profile.default_layer);
+}
 
-    if (e.type == KeyEventType::Relase) {
-        // TODO
+bool Mapper::set_layer(size_t new_layer) {
+    std::lock_guard lock_guard(mtx);
+    if (new_layer >= this->profile.layers.size()) {
         return false;
     }
-    int virtualKey = e.keycode;
+    set_layer_inner(new_layer);
+    return true;
+}
 
-    qDebug() << virtualKey;
+// must be called with mtx aquired
+void Mapper::set_layer_inner(size_t new_layer) {
+    cur_layer = new_layer;
 
-    // Timed
-    bool isAFirstKey = activeLayer.timedKeyBinds.contains(virtualKey);
-    if (isAFirstKey || next_key == virtualKey) {
-        qDebug() << "Timed";
-        if (next_key != virtualKey && isAFirstKey && first_key != virtualKey) {
-            // Starting a diffrent timed since firstKey is diffrent, and is not
-            // nextkey.
-            captureAndRelease(); // starting a diffrent timed
-            first_key =
-                virtualKey; // this lets us use timed keys with other keys
-        }
-        Trigger trigger = activeLayer.timedKeyBinds[first_key];
-        TimedKeyBind kybnd = *trigger.sequence;
-
-        // Progress
-        if (timedKeyProgress.contains(first_key)) {
-            qDebug() << "Incrementing Progress";
-            timedKeyProgress[first_key]++;
-        } else {
-            qDebug() << "Starting Progress";
-            timedKeyProgress[first_key] = 1;
-        }
-        if (timedKeyProgress[first_key] == 1 &&
-            thenRelease) { // If starting a diffrent timed
-            qDebug() << "Stopping CnR";
-            thenRelease = false; // stop capture and release
-            daemon->send_key(QList{
-                InputEvent{
-                    .keycode = capture_and_release_key,
-                    .type = KeyEventType::Press
-                },
-                InputEvent{
-                   .keycode = capture_and_release_key,
-                    .type = KeyEventType::Relase
+    qDebug() << "Cur Layer: " << cur_layer
+             << " Lenght = " << profile.layers.size();
+    for (const auto &pair : profile.layers[cur_layer].remappings) {
+        Trigger trigger = pair.first;
+        Bind bind = pair.second;
+        // trigger and bind are now copies
+        std::visit(
+            [this, bind](auto &&trigger) {
+                using T = std::decay_t<decltype(trigger)>;
+                if constexpr (std::is_same_v<T, KeyPress>) {
+                    key_press_triggers.insert(trigger.key_code, bind);
+                } else if constexpr (std::is_same_v<T, KeyRelease>) {
+                    key_release_triggers.insert(trigger.key_code, bind);
+                } else if constexpr (std::is_same_v<T, TapSequence>) {
+                    tap_sequence_starts[trigger.key_sequence.at(0)] =
+                        std::make_pair(trigger, bind);
                 }
-            });
-        }
-
-        // Finished proggress or setup next
-        if (timedKeyProgress[first_key] == kybnd.keyTimePairs.count()) {
-            qDebug() << "Finished Progress";
-            thenRelease = false;
-            // last keybind activate
-            activateBind(trigger.bind);
-            timedKeyProgress[first_key] = 0;
-            return true;
-        } else {
-            qDebug() << "Setting next key"
-                     << kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
-            next_key = kybnd.keyTimePairs[timedKeyProgress[first_key]].keyVk;
-        }
-
-        // Capture and Release logic
-        if (kybnd.capture && kybnd.release) {
-            qDebug() << "Capture & Realeasing key";
-            capture_and_release_key = virtualKey;
-            thenRelease = true;
-            // ms is the delay on the current key pressed.
-            int ms = kybnd.keyTimePairs[timedKeyProgress[first_key] - 1].delay;
-            QTimer::singleShot(ms, [&]() { this->captureAndRelease(); });
-            return true;
-        } else if (kybnd.capture) {
-            qDebug() << "Capturing key";
-            return true;
-        } else if (kybnd.release) {
-            qDebug() << "Releasing key";
-            return false;
-        } else
-            qCritical() << "FELL THROUGH CAPTURE AND RELEASE!" << kybnd.capture
-                        << kybnd.release;
-    } else
-        captureAndRelease(); // Cancel capture and release if bind is broken.
-
-    // TAP
-    if (activeLayer.tapKeyBinds.contains(virtualKey)) {
-        qDebug() << "Tap";
-        activateBind(activeLayer.tapKeyBinds[virtualKey].bind);
-
-        return true;
-    }
-    return false;
-}
-
-void Mapper::activateBind(Bind bind) {
-    switch (bind.type) {
-    case B_LINK:
-    case COMBO:
-        daemon->send_key(*bind.vks);
-        break;
-
-    case MACRO:
-        for (const Bind& other_bind : *bind.macro) {
-            activateBind(other_bind);
-        }
-        break;
-
-    case TIMEDMACRO:
-        // Handle Timed Macro Bind
-        break;
-
-    case REPEAT:
-        // Handle Repeat Bind
-        break;
-
-    case SWAPLAYER:
-        // Handle Swap Layer Bind
-        break;
-
-    case APPOPEN:
-        // Handle App Open Bind
-        break;
-
-    default:
-        qCritical() << "Unkown bind type in mapper:" << bind.type;
-        // Optional: handle unknown type
-        break;
-    }
-}
-
-
-void Mapper::captureAndRelease() {
-    timedKeyProgress[first_key] = 0; // reset progress
-    if (thenRelease) {
-        thenRelease = false;                       // stop capture and release
-        daemon->send_key(QList{
-            InputEvent{
-                .keycode = capture_and_release_key,
-                .type = KeyEventType::Press
             },
-            InputEvent{
-                .keycode = capture_and_release_key,
-                .type = KeyEventType::Relase
-            }
-        }); // release captured key
-        qDebug() << "Stopping CnR";
+            trigger);
     }
 }
 
-void Mapper::set_profile(Profile *p) {
-    if (p->isNull) {
-        qCritical() << "Null profiled tried to load";
-        return;
+bool Mapper::map_input(InputEvent e) {
+    std::lock_guard lock_guard(mtx);
+
+    if (current_tap_sequence == std::nullopt && e.type == KeyEventType::Press &&
+        tap_sequence_starts.contains(e.keycode)) {
+        const auto &[new_tap_sequence, bind] = tap_sequence_starts[e.keycode];
+        current_tap_sequence = std::make_tuple(
+            std::ref(new_tap_sequence), std::ref(bind), 0, KeyEventType::Press);
     }
-    profile = *p;
+
+    // Handle tap sequences
+    if (current_tap_sequence.has_value()) {
+        auto &[tap_sequence, bind, current_key, current_state] =
+            *current_tap_sequence;
+
+        KeyCode expected_key = tap_sequence.key_sequence[current_key];
+        // Got the next key
+        if (expected_key == e.keycode && e.type == current_state) {
+
+            if (current_state == KeyEventType::Press) {
+                current_state = KeyEventType::Relase;
+            } else {
+                current_state = KeyEventType::Press;
+                current_key++;
+            }
+
+            // TOOD Start a timer to expire. For now I can't as qtimers rely on
+            // an event loop running on the current thread which is not
+            // happening
+            current_tap_sequence =
+                std::make_tuple(tap_sequence, bind, current_key, current_state);
+
+            if (current_key == tap_sequence.key_sequence.size()) {
+                perform_bind(bind);
+                current_tap_sequence = std::nullopt;
+            }
+
+            if (tap_sequence.behavior == TimedTriggerBehavior::Capture) {
+                return true;
+            }
+        } else if (tap_sequence.behavior == TimedTriggerBehavior::Default) {
+            // Send out all keys now that the trigger has failed if we have
+            // capture release behavior
+            QList<Bind> binds;
+            for (size_t i = 0; i < current_key; i++) {
+                auto key_code = tap_sequence.key_sequence[i];
+                binds.push_back(PressKey{key_code});
+                binds.push_back(ReleaseKey{key_code});
+            }
+        }
+    }
+
+    // Handle simple press and releases
+    if (e.type == KeyEventType::Press &&
+        key_press_triggers.contains(e.keycode)) {
+        perform_bind(key_press_triggers[e.keycode]);
+    } else if (e.type == KeyEventType::Relase &&
+               key_release_triggers.contains(e.keycode)) {
+        perform_bind(key_release_triggers[e.keycode]);
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+void Mapper::perform_bind(Bind &bind) {
+
+    // using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer>;
+    std::visit(
+        [&](auto &&bind) {
+            using T = std::decay_t<decltype(bind)>;
+            if constexpr (std::is_same_v<T, PressKey>) {
+                daemon->send_keys(
+                    {InputEvent{bind.key_code, KeyEventType::Press}});
+            } else if constexpr (std::is_same_v<T, ReleaseKey>) {
+                daemon->send_keys(
+                    {InputEvent{bind.key_code, KeyEventType::Relase}});
+            } else if constexpr (std::is_same_v<T, TapKey>) {
+                daemon->send_keys(
+                    {InputEvent{bind.key_code, KeyEventType::Relase},
+                     InputEvent{bind.key_code, KeyEventType::Press}});
+
+            } else if constexpr (std::is_same_v<T, SwapLayer>) {
+                set_layer_inner(bind.new_layer);
+            }
+        },
+        bind);
 }
