@@ -19,6 +19,7 @@ class LocalServer : public QObject {
 
   public:
     explicit LocalServer(Mapper &mapper);
+    virtual ~LocalServer() = default;
     bool start();
 
   private slots:
@@ -37,6 +38,7 @@ class ClientConnection : public QObject {
   public:
     ClientConnection(QLocalSocket *socket, Mapper &mapper,
                      QObject *parent = nullptr);
+    virtual ~ClientConnection() = default;
 
   private slots:
     void read_data();

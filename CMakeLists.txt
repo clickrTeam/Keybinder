@@ -29,7 +29,10 @@ qt_add_executable(keybinder
     ${PLATFORM_SOURCES}
 )
 
-target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})
+target_include_directories(keybinder  PRIVATE  
+    ${COMMON_HEADER_PATHS} 
+    ${PLATFORM_HEADER_PATHS} 
+)
 
 target_link_libraries(keybinder
     PRIVATE
