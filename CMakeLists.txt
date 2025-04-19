@@ -7,6 +7,10 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
 
 qt_standard_project_setup()
 
+# usefull for debugging
+#add_compile_options(-fsanitize=address -g)
+#add_link_options(-fsanitize=address)
+
 # Conditionally add the platform-specific directory.
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")

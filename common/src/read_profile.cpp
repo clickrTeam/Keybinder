@@ -131,13 +131,13 @@ TapSequence TapSequence::from_json(const QJsonObject &obj) {
     return TapSequence{};
 }
 
-TimedBindBehavior parse_behavior(const QString &str) {
+TimedTriggerBehavior parse_behavior(const QString &str) {
     if (str == "capture") {
-        return TimedBindBehavior::Capture;
+        return TimedTriggerBehavior::Capture;
     } else if (str == "release") {
-        return TimedBindBehavior::Release;
+        return TimedTriggerBehavior::Release;
     } else if (str == "default") {
-        return TimedBindBehavior::Default;
+        return TimedTriggerBehavior::Default;
     } else {
         throw std::invalid_argument(
             ("Invalid Timed Bind Behavior: " + str.toStdString()).c_str());
@@ -186,7 +186,7 @@ Trigger parse_trigger(const QJsonObject &obj) {
 Bind parse_bind(const QJsonObject &obj) {
     QString bind_type = get_property_as_string(obj, "type");
 
-    if (bind_type == "key_key") {
+    if (bind_type == "press_key") {
         return PressKey::from_json(obj);
     } else if (bind_type == "release_key") {
         return ReleaseKey::from_json(obj);
@@ -207,10 +207,6 @@ std::pair<Trigger, Bind> parse_remapping(const QJsonObject &obj) {
     return std::make_pair(trigger, bind);
 }
 
-// Layer
-//"layer_name": "layer 0",
-//"layer_number": 0,
-//"remappings": []
 Layer Layer::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"layer_name", "layer_number", "remappings"});
     QString layer_name = get_property_as_string(obj, "layer_name");

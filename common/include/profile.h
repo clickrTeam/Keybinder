@@ -17,13 +17,13 @@
 //     // TOOD
 // };
 
-enum class TimedBindBehavior {
+enum class TimedTriggerBehavior {
     Capture,
     Release,
     Default,
 };
 
-TimedBindBehavior parse_behavior(const QString &str);
+TimedTriggerBehavior parse_behavior(const QString &str);
 
 // Type alias would make it easier to change to an enum in the future if needed
 using KeyCode = int;
@@ -40,7 +40,7 @@ struct KeyRelease {
 
 struct TapSequence {
     QList<KeyCode> key_sequence;
-    TimedBindBehavior behavior;
+    TimedTriggerBehavior behavior;
     static TapSequence from_json(const QJsonObject &obj);
 };
 
