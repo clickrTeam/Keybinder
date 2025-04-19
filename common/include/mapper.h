@@ -21,7 +21,7 @@ class Mapper {
     bool set_layer(size_t);
 
   private:
-    void perform_bind(Bind &bind);
+    void perform_binds(const QList<Bind> &bind);
     void set_layer_inner(size_t new_layer);
     // void captureAndRelease();
 

@@ -73,7 +73,10 @@ bool Mapper::map_input(InputEvent e) {
             *current_tap_sequence;
 
         KeyCode expected_key = tap_sequence.key_sequence[current_key];
-        // Got the next key
+        qDebug() << "Checking for tap sequence cur_key: " << current_key
+                 << "current_state: looking for " << expected_key;
+
+        // Key matches the next tap in the sequence
         if (expected_key == e.keycode && e.type == current_state) {
 
             if (current_state == KeyEventType::Press) {
@@ -85,64 +88,80 @@ bool Mapper::map_input(InputEvent e) {
 
             // TOOD Start a timer to expire. For now I can't as qtimers rely on
             // an event loop running on the current thread which is not
-            // happening
+            // happening. Should fix once mapper has its own thread. Also
+            // QTimers are likley not accurate enough so we should roll our own
             current_tap_sequence =
                 std::make_tuple(tap_sequence, bind, current_key, current_state);
 
             if (current_key == tap_sequence.key_sequence.size()) {
-                perform_bind(bind);
+                perform_binds({bind});
                 current_tap_sequence = std::nullopt;
+                qDebug() << "Tap Sequence Over";
             }
 
-            if (tap_sequence.behavior == TimedTriggerBehavior::Capture) {
+            if (tap_sequence.behavior != TimedTriggerBehavior::Release) {
                 return true;
             }
         } else if (tap_sequence.behavior == TimedTriggerBehavior::Default) {
             // Send out all keys now that the trigger has failed if we have
             // capture release behavior
+            qDebug() << "Tap Sequence stopped, sending out caputred keys";
             QList<Bind> binds;
             for (size_t i = 0; i < current_key; i++) {
                 auto key_code = tap_sequence.key_sequence[i];
                 binds.push_back(PressKey{key_code});
                 binds.push_back(ReleaseKey{key_code});
             }
+
+            perform_binds(binds);
+            current_tap_sequence = std::nullopt;
+        } else {
+            current_tap_sequence = std::nullopt;
         }
     }
 
     // Handle simple press and releases
     if (e.type == KeyEventType::Press &&
         key_press_triggers.contains(e.keycode)) {
-        perform_bind(key_press_triggers[e.keycode]);
+        qDebug() << "Mapping keydown of : " << e.keycode;
+        perform_binds({key_press_triggers[e.keycode]});
     } else if (e.type == KeyEventType::Relase &&
                key_release_triggers.contains(e.keycode)) {
-        perform_bind(key_release_triggers[e.keycode]);
+        qDebug() << "Mapping keyup of : " << e.keycode;
+        perform_binds({key_release_triggers[e.keycode]});
     } else {
+        qDebug() << "No mappings found for :" << e.keycode;
         return false;
     }
 
     return true;
 }
 
-void Mapper::perform_bind(Bind &bind) {
+void Mapper::perform_binds(const QList<Bind> &binds) {
 
-    // using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer>;
-    std::visit(
-        [&](auto &&bind) {
-            using T = std::decay_t<decltype(bind)>;
-            if constexpr (std::is_same_v<T, PressKey>) {
-                daemon->send_keys(
-                    {InputEvent{bind.key_code, KeyEventType::Press}});
-            } else if constexpr (std::is_same_v<T, ReleaseKey>) {
-                daemon->send_keys(
-                    {InputEvent{bind.key_code, KeyEventType::Relase}});
-            } else if constexpr (std::is_same_v<T, TapKey>) {
-                daemon->send_keys(
-                    {InputEvent{bind.key_code, KeyEventType::Relase},
-                     InputEvent{bind.key_code, KeyEventType::Press}});
+    QList<InputEvent> events;
 
-            } else if constexpr (std::is_same_v<T, SwapLayer>) {
-                set_layer_inner(bind.new_layer);
-            }
-        },
-        bind);
+    for (const Bind &bind : binds) {
+        std::visit(
+            [&](auto &&bind) {
+                using T = std::decay_t<decltype(bind)>;
+                if constexpr (std::is_same_v<T, PressKey>) {
+                    events.push_back(
+                        {InputEvent{bind.key_code, KeyEventType::Press}});
+                } else if constexpr (std::is_same_v<T, ReleaseKey>) {
+                    events.push_back(
+                        {InputEvent{bind.key_code, KeyEventType::Relase}});
+                } else if constexpr (std::is_same_v<T, TapKey>) {
+                    daemon->send_keys(
+                        {InputEvent{bind.key_code, KeyEventType::Relase},
+                         InputEvent{bind.key_code, KeyEventType::Press}});
+
+                } else if constexpr (std::is_same_v<T, SwapLayer>) {
+                    set_layer_inner(bind.new_layer);
+                }
+            },
+            bind);
+    }
+
+    daemon->send_keys(events);
 }
