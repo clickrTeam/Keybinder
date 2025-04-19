@@ -119,14 +119,17 @@ void Daemon::start() {
 
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
-void Daemon::send_key(InputEvent e) {
+void Daemon::send_keys(const QList<InputEvent> &events) {
+    // TODO: batch reports, but be carefull to send if you get the same key
+    // going up and down
+    for (const InputEvent &event : events) {
+        if (event.type == KeyEventType::Press)
+            report.keys.insert(event.keycode);
+        else if (event.type == KeyEventType::Relase)
+            report.keys.erase(event.keycode);
 
-    if (e.type == KeyEventType::Press)
-        report.keys.insert(e.keycode);
-    else if (e.type == KeyEventType::Relase)
-        report.keys.erase(e.keycode);
-
-    client->async_post_report(report);
+        client->async_post_report(report);
+    }
 }
 
 void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
@@ -139,7 +142,7 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     };
 
     if (!mapper.mapInput(event)) {
-        send_key(event);
+        send_keys({event});
     }
 }
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,

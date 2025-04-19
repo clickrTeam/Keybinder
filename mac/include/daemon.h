@@ -6,10 +6,12 @@
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
-#include <filesystem>
 #include <mach/mach_error.h>
 #include <memory>
 #include <unistd.h>
+
+// Has to come before the virtual_hid_device_* imports
+#include <filesystem>
 
 #include "virtual_hid_device_driver.hpp"
 #include "virtual_hid_device_service.hpp"
@@ -23,7 +25,7 @@ class Daemon : public AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_key(InputEvent e) override;
+    void send_keys(const QList<InputEvent> &events) override;
 
   private:
     Mapper &mapper;
@@ -54,8 +56,3 @@ class Daemon : public AbstractDaemon {
     static CFStringRef get_property(mach_port_t item, const char *property);
     static CFStringRef from_cstr(const char *str);
 };
-
-void foo() {
-
-    pqrs::karabiner::driverkit::virtual_hid_device_service::client *client;
-}
