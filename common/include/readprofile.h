@@ -51,8 +51,12 @@ Profile proccessProfile(const QString &profileFilePath);
 Profile readProfile(QJsonDocument jsonDoc);
 Layer readLayer(QJsonObject layer);
 int stringToKey(QString keyString);
-Trigger parseRemapping(const QJsonObject& remapping);
+Trigger parseRemapping(const QJsonObject &remapping);
 
+const std::span<const QString> valid_keys({"layerName", "settings", "items"},
+                                          3); // Directly initialize span
+
+// clang-format off
 // String to key
 #ifdef _WIN32
 #include "windows.h"
@@ -103,7 +107,46 @@ const QMap<QString, WORD> keyMap = {
 //     return map;
 // }();
 #elif defined(__APPLE__)
-const QMap<QString, int> keyMap = {};
+// Chat gpt generated need to verify
+const QMap<QString, int> keyMap = {
+    // Letters
+    {"A", 0}, {"S", 1}, {"D", 2}, {"F", 3}, {"H", 4},
+    {"G", 5}, {"Z", 6}, {"X", 7}, {"C", 8}, {"V", 9},
+    {"B", 11}, {"Q", 12}, {"W", 13}, {"E", 14}, {"R", 15},
+    {"Y", 16}, {"T", 17}, {"1", 18}, {"2", 19}, {"3", 20},
+    {"4", 21}, {"6", 22}, {"5", 23}, {"Equal", 24}, {"9", 25},
+    {"7", 26}, {"Minus", 27}, {"8", 28}, {"0", 29}, {"RightBracket", 30},
+    {"O", 31}, {"U", 32}, {"LeftBracket", 33}, {"I", 34}, {"P", 35},
+    {"L", 37}, {"J", 38}, {"Quote", 39}, {"K", 40}, {"Semicolon", 41},
+    {"Backslash", 42}, {"Comma", 43}, {"Slash", 44}, {"N", 45}, {"M", 46},
+    {"Period", 47}, {"Grave", 50},
+
+    // Special keys
+    {"Return", 36}, {"Tab", 48}, {"Space", 49}, {"Delete", 51}, {"Escape", 53},
+
+    // Modifier keys
+    {"Command", 55}, {"Shift", 56}, {"CapsLock", 57}, {"Option", 58}, {"Control", 59},
+    {"RightShift", 60}, {"RightOption", 61}, {"RightControl", 62}, {"Function", 63},
+
+    // Arrow keys
+    {"F17", 64}, {"VolumeUp", 72}, {"VolumeDown", 73}, {"Mute", 74},
+    {"F18", 79}, {"F19", 80}, {"F20", 90},
+    {"F5", 96}, {"F6", 97}, {"F7", 98}, {"F3", 99}, {"F8", 100}, {"F9", 101},
+    {"F11", 103}, {"F13", 105}, {"F16", 106}, {"F14", 107}, {"F10", 109},
+    {"F12", 111}, {"F15", 113}, {"Help", 114}, {"Home", 115}, {"PageUp", 116},
+    {"ForwardDelete", 117}, {"F4", 118}, {"End", 119}, {"F2", 120},
+    {"PageDown", 121}, {"F1", 122}, {"LeftArrow", 123}, {"RightArrow", 124},
+    {"DownArrow", 125}, {"UpArrow", 126}
+};
+
+// reverse the map
+const QMap<int, QString> keyCodeToStringMap = []() {
+    QMap<int, QString> map;
+    for (auto it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
+        map.insert(it.value(), it.key());  // Reverse key-value pairs
+    }
+    return map;
+}();
 #elif defined(__linux__)
 const QMap<QString, WORD> keyMap = {};
 #else
