@@ -1,81 +1,82 @@
-#ifndef PROFILE_H
-#define PROFILE_H
+#pragma once
 
+#include <QJsonObject>
 #include <QList>
 #include <QMap>
 #include <QString>
-#include "event.h"
-using std::optional;
+#include <cstddef>
+#include <utility>
+#include <variant>
 
-enum class KeyCode {
-    A = 0,
-    B = 1,
-    C = 2,
-    D = 3,
-    E = 4,
-    // TOOD
-};
+// enum class KeyCode {
+//     A = 0,
+//     B = 1,
+//     C = 2,
+//     D = 3,
+//     E = 4,
+//     // TOOD
+// };
 
-// Short enums for internal use (Bind Types)
-enum BT {
-    B_LINK,
-    COMBO,
-    MACRO,
-    TIMEDMACRO,
-    REPEAT,
-    SWAPLAYER,
-    APPOPEN,
-    B_UNKOWN
+enum class TimedBindBehavior {
+    Capture,
+    Release,
+    Default,
 };
 
-// Short enums for internal use (Trigger Types)
-enum TT {
-    T_LINK,
-    TIMED,
-    HOLD,
-    APPFOCUSED,
-    T_UNKOWN
+// Type alias would make it easier to change to an enum in the future if needed
+using KeyCode = int;
+
+struct KeyPress {
+    KeyCode keycode;
+    static KeyPress from_json(const QJsonObject &obj);
 };
 
-// Class to represent the Profile structure
-struct KeyTimePair {
-    int keyVk;   // The key value (e.g., "w")
-    int delay;   // The associated time in ms
+struct KeyRelease {
+    KeyCode keycode;
+    static KeyRelease from_json(const QJsonObject &obj);
 };
-//TODO repeat bind
-struct Bind {
-    BT type;  // The bind type (e.g., "tap")
-    optional<QList<InputEvent>> vks;
-    optional<QList<Bind>> macro;
-    optional<QList<QPair<Bind, int>>> timedMacro;
-    optional<QString> app_name;
-    optional<int> layer_index;
+
+struct TapSequence {
+    QList<KeyCode> key_sequence;
+    TimedBindBehavior behavior;
+    static TapSequence from_json(const QJsonObject &obj);
+    static TimedBindBehavior parseBehavior(const QString &str);
 };
-struct TimedKeyBind {
-    bool capture;
-    bool release;
-    QList<KeyTimePair> keyTimePairs; // Vector to store key-time pairs
+
+using Trigger = std::variant<KeyPress, KeyRelease, TapSequence>;
+
+struct PressKey {
+    KeyCode keycode;
+    static PressKey from_json(const QJsonObject &obj);
 };
-struct Trigger {
-  public:
-    Bind bind;
-    TT type;  // The key type (e.g., "tap")
-    optional<int> vk;
-    optional<TimedKeyBind> sequence;
-    optional<QString> app_name;
+
+struct ReleaseKey {
+    KeyCode keycode;
+    static ReleaseKey from_json(const QJsonObject &obj);
 };
+
+struct TapKey {
+    KeyCode keycode;
+    static TapKey from_json(const QJsonObject &obj);
+};
+
+struct SwapLayer {
+    size_t new_layer;
+    static SwapLayer from_json(const QJsonObject &obj);
+};
+
+using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer>;
+
 struct Layer {
   public:
-    QString layerName;       // The layer name (e.g., "Gaming Layer")
-    QList<Trigger> keybinds; // List of keybinds in this layer
-    QMap<int, Trigger> tapKeyBinds;
-    QMap<int, Trigger> timedKeyBinds; // First int is the first key in the array
+    QString layerName;
+    QList<std::pair<Trigger, Bind>> remappings;
+    static Layer from_json(const QJsonObject &obj);
 };
+
 struct Profile {
   public:
     QString name;        // The name of the profile (e.g., "Default Profile")
     QList<Layer> layers; // List of layers in the profile
-    bool isNull = true;
+    static Profile from_json(const QJsonObject &obj);
 };
-
-#endif // PROFILE_H
