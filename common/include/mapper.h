@@ -3,6 +3,8 @@
 #include "profile.h"
 #include <QDebug>
 #include <cstddef>
+#include <mutex>
+#include <optional>
 
 using std::size_t;
 
@@ -11,26 +13,29 @@ class Daemon;
 
 class Mapper {
   public:
-    Mapper(Profile &);
+    Mapper(Profile);
     ~Mapper();
-    void set_profile(Profile *p);
+    void set_profile(Profile p);
     void set_daemon(Daemon *d);
-    bool mapInput(InputEvent);
+    bool map_input(InputEvent);
+    bool set_layer(size_t);
 
   private:
-    void activateBind(Bind bind);
+    void perform_bind(Bind &bind);
+    void set_layer_inner(size_t new_layer);
+    // void captureAndRelease();
 
-    void captureAndRelease();
-
+    std::mutex mtx;
     Daemon *daemon = nullptr;
-    Profile &profile;
+    Profile profile;
     size_t cur_layer;
-    QMap<int, int>
-        timedKeyProgress; // represents progress towards finish the timed macro.
-    int next_key = -1; // the next expected key in a timed macro. Never includes
-                       // the first.
-    int first_key = -1; // the first key in a expected macro.
 
-    bool thenRelease = false; // true if some key is captured to release.
-    int capture_and_release_key = -1; // the key captured to release.
+    QMap<KeyCode, Bind> key_press_triggers;
+    QMap<KeyCode, Bind> key_release_triggers;
+    QMap<KeyCode, std::pair<TapSequence, Bind>> tap_sequence_starts;
+
+    // Sored the current tap sequence, the current key are we expected next
+    // the next type we are expecting (up or down)
+    std::optional<std::tuple<TapSequence, Bind, size_t, KeyEventType>>
+        current_tap_sequence;
 };
