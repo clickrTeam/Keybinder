@@ -148,6 +148,10 @@ void Daemon::send_keys(const QList<InputEvent> &events) {
 }
 
 void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
+    // TODO: be more sure about what to filter out
+    if (code > 1000 | code < 2)
+        return;
+
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
 
