@@ -1,7 +1,8 @@
-#include "readprofile.h"
+#include "read_profile.h"
+
 #include <QFileInfo>
+#include <QtLogging>
 #include <cstddef>
-#include <qdebug.h>
 
 #include "profile.h"
 #include <QJsonArray>
