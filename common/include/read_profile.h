@@ -8,59 +8,49 @@
 #include <QJsonObject>
 #include <QJsonValue>
 
-// Define constants for each JSON key
-#define PROFILE_NAME "profile_name"
-#define PROFILE_LAYERS "layers"
-
-#define LAYER_NAME "layer_name"
-#define LAYER_KEYBINDS "remappings"
-
-// BindType defines
-#define BIND "Bind"
-#define BINDTYPE_LINK "Link_Bind"
-#define BINDTYPE_COMBO "Combo_Bind"
-#define BINDTYPE_MACRO "Macro_Bind"
-#define BINDTYPE_TIMEDMACRO "TimedMacro_Bind"
-#define BINDTYPE_REPEAT "Repeat_Bind"
-#define BINDTYPE_SWAPLAYER "SwapLayer_Bind"
-#define BINDTYPE_APPOPEN "AppOpen_Bind"
-
-// TriggerType defines
-#define TRIGGER "Trigger"
-#define TRIGGERTYPE_LINK "Link_Trigger"
-#define TRIGGERTYPE_TIMED "Timed_Trigger"
-#define TRIGGERTYPE_HOLD "Hold_Trigger"
-#define TRIGGERTYPE_APPFOCUSED "App_Focus_Trigger"
-
-// Inner values
-#define KEY_TIME_PAIRS "key_time_pairs"
-#define VALUE "value"
-#define DELAY "delay"
-#define WAIT "wait"
-#define APP_NAME "app_name"
-#define LAYER_NUM "layer_num"
-#define TIME_DELAY "time_delay"
-#define TIMES_TO_EXECUTE "times_to_execute"
-#define CANCEL_TRIGGER "cancel_trigger"
-#define CAPTURE "capture"
-#define RELEASE "release"
-
-// functions
-Profile proccessProfile(const QString &profileFilePath);
-
-Profile readProfile(QJsonDocument jsonDoc);
-Layer readLayer(QJsonObject layer);
-int stringToKey(QString keyString);
-Trigger parseRemapping(const QJsonObject &remapping);
-
-const std::span<const QString> valid_keys({"layerName", "settings", "items"},
-                                          3); // Directly initialize span
+// I didn't use these but I prbably should. Can update later
+//  // Define constants for each JSON key
+//  #define PROFILE_NAME "profile_name"
+//  #define PROFILE_LAYERS "layers"
+//
+//  #define LAYER_NAME "layer_name"
+//  #define LAYER_KEYBINDS "remappings"
+//
+//  // BindType defines
+//  #define BIND "Bind"
+//  #define BINDTYPE_LINK "Link_Bind"
+//  #define BINDTYPE_COMBO "Combo_Bind"
+//  #define BINDTYPE_MACRO "Macro_Bind"
+//  #define BINDTYPE_TIMEDMACRO "TimedMacro_Bind"
+//  #define BINDTYPE_REPEAT "Repeat_Bind"
+//  #define BINDTYPE_SWAPLAYER "SwapLayer_Bind"
+//  #define BINDTYPE_APPOPEN "AppOpen_Bind"
+//
+//  // TriggerType defines
+//  #define TRIGGER "Trigger"
+//  #define TRIGGERTYPE_LINK "Link_Trigger"
+//  #define TRIGGERTYPE_TIMED "Timed_Trigger"
+//  #define TRIGGERTYPE_HOLD "Hold_Trigger"
+//  #define TRIGGERTYPE_APPFOCUSED "App_Focus_Trigger"
+//
+//  // Inner values
+//  #define KEY_TIME_PAIRS "key_time_pairs"
+//  #define VALUE "value"
+//  #define DELAY "delay"
+//  #define WAIT "wait"
+//  #define APP_NAME "app_name"
+//  #define LAYER_NUM "layer_num"
+//  #define TIME_DELAY "time_delay"
+//  #define TIMES_TO_EXECUTE "times_to_execute"
+//  #define CANCEL_TRIGGER "cancel_trigger"
+//  #define CAPTURE "capture"
+//  #define RELEASE "release"
 
 // clang-format off
 // String to key
 #ifdef _WIN32
 #include "windows.h"
-const QMap<QString, WORD> keyMap = {
+const QMap<QString, WORD> string_to_key_code = {
     // Letters
     {"A", 'A'}, {"B", 'B'}, {"C", 'C'}, {"D", 'D'}, {"E", 'E'},
     {"F", 'F'}, {"G", 'G'}, {"H", 'H'}, {"I", 'I'}, {"J", 'J'},
@@ -99,7 +89,7 @@ const QMap<QString, WORD> keyMap = {
     {"Alt", VK_LMENU}, {"Cmd", VK_LWIN}, // TODO: find fix for RWIN, RMENU, MENU
 };
 // reverse the map
-// const QMap<WORD, QString> vkToStringMap = []() {
+// const QMap<WORD, QString> key_code_to_string = []() {
 //     QMap<WORD, QString> map;
 //     for (auto it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
 //         map.insert(it.value(), it.key());  // Reverse key-value pairs
@@ -108,7 +98,7 @@ const QMap<QString, WORD> keyMap = {
 // }();
 #elif defined(__APPLE__)
 // Chat gpt generated need to verify
-const QMap<QString, int> keyMap = {
+const QMap<QString, int> string_to_key_code = {
     // Letters
     {"A", 0}, {"S", 1}, {"D", 2}, {"F", 3}, {"H", 4},
     {"G", 5}, {"Z", 6}, {"X", 7}, {"C", 8}, {"V", 9},
@@ -140,13 +130,14 @@ const QMap<QString, int> keyMap = {
 };
 
 // reverse the map
-const QMap<int, QString> keyCodeToStringMap = []() {
+const QMap<int, QString> key_code_to_string = []() {
     QMap<int, QString> map;
-    for (auto it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
+    for (auto it = string_to_key_code.constBegin(); it != string_to_key_code.constEnd(); ++it) {
         map.insert(it.value(), it.key());  // Reverse key-value pairs
     }
     return map;
 }();
+
 #elif defined(__linux__)
 const QMap<QString, WORD> keyMap = {};
 #else
