@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include "mapper.h"
 #include "daemon.h"
+#include "event.h"
 #include <windows.h>
 #include <winuser.h>
 
@@ -46,22 +47,31 @@ void Daemon::cleanup() {
     qDebug() << "Daemon cleaned up";
 }
 
-void Daemon::send_key(int vk) {
-    qDebug() << "press";
-    // Inject Shift+W manually
-    INPUT inputs[2] = {};
+void Daemon::send_key(const QList<InputEvent>& vk) {
+    qDebug() << "Sending" << vk.count() << "keys";
 
-    // Press x
-    inputs[0].type = INPUT_KEYBOARD;
-    inputs[0].ki.wVk = vk;
+    QVector<INPUT> inputs;
+    inputs.resize(vk.count() * 2); // Press + Release for each key
 
-    // Release x
-    inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].ki.wVk = vk;
-    inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+    for (int i = 0; i < vk.count(); ++i) {
+        InputEvent v = vk[i];
 
-    SendInput(2, inputs, sizeof(INPUT));
-    qDebug() << "Key sent";
+        // Press
+        inputs[i].type = INPUT_KEYBOARD;
+        inputs[i].ki.wVk = v.keycode;
+        if (v.type == KeyEventType::Press) {
+            inputs[i].ki.dwFlags = 0;
+        } else {
+            inputs[i].ki.dwFlags = KEYEVENTF_KEYUP;
+        }
+    }
+
+    UINT sent = SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
+    if (sent != inputs.size()) {
+        qWarning() << "SendInput failed. Sent" << sent << "of" << inputs.size();
+    } else {
+        qDebug() << "Keys sent!";
+    }
 }
 
 LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
@@ -84,7 +94,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = kbdStruct->vkCode;
         e.type = KeyEventType::Press;
-            if (mapper->mapInput(e))
+        if (mapper->mapInput(e))
             return 1; // Suppress keypress
         break;
     }

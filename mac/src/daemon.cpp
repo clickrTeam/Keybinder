@@ -1,14 +1,13 @@
 #include "daemon.h"
 #include "event.h"
-#include "thread"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <MacTypes.h>
-#include <QTimer>
 #include <iostream>
 #include <qdebug.h>
 
+// Heavily based on https://github.com/psych3r/driverkit
 Daemon::Daemon(Mapper &m)
     : mapper(m), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
@@ -26,12 +25,43 @@ Daemon::Daemon(Mapper &m)
     CFRelease(page_number);
     CFRelease(usage_number);
 
-    qDebug() << "Daemon created";
+    // Seting up driver client
+    // pqrs::karabiner::driverkit::virtual_hid_device_driver::hid_report::
+    //     keyboard_input report;
+    // client->error_occurred.connect([](auto &&error_code) {
+    //     qDebug() << "error occurred: " << error_code;
+    //     // TODO: should be exit here?
+    //     exit(1);
+    // });
+
+    // client->driver_activated.connect([](auto &&driver_activated) {
+    //     static std::optional<bool> previous_value;
+    //     if (previous_value != driver_activated) {
+    //         qDebug() << "driver activated: " << driver_activated;
+    //         previous_value = driver_activated;
+    //     }
+    // });
+    //
+    // client->driver_connected.connect([](auto &&driver_connected) {
+    //     static std::optional<bool> previous_value;
+    //     if (previous_value != driver_connected) {
+    //         qDebug() << "driver connected: " << driver_connected;
+    //         previous_value = driver_connected;
+    //     }
+    // });
+    // client->driver_version_mismatched.connect(
+    //     [](auto &&driver_version_mismatched) {
+    //         static std::optional<bool> previous_value;
+    //         if (previous_value != driver_version_mismatched) {
+    //             qDebug() << "driver_version_mismatched "
+    //                      << driver_version_mismatched << std::endl;
+    //             previous_value = driver_version_mismatched;
+    //         }
+    //     });
 }
 
 Daemon::~Daemon() { cleanup(); }
 
-// Heavily based on https://github.com/psych3r/driverkit
 void Daemon::start() {
     io_iterator_t iter = IO_OBJECT_NULL;
     CFRetain(matching_dictionary);
@@ -53,33 +83,86 @@ void Daemon::start() {
         IOHIDDeviceRegisterInputValueCallback(dev, input_event_callback, this);
         kern_return_t kr = IOHIDDeviceOpen(dev, kIOHIDOptionsTypeSeizeDevice);
         if (kr != kIOReturnSuccess) {
-            qDebug() << "Error opening device";
-            exit(1);
+            qDebug() << "Error opening device: " << mach_error_string(kr)
+                     << "dev: " << device_key;
         }
         IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetCurrent(),
                                        kCFRunLoopDefaultMode);
     }
 
+    qDebug() << "Making karabiner client";
+    pqrs::dispatcher::extra::initialize_shared_dispatcher();
+    client = std::make_shared<
+        pqrs::karabiner::driverkit::virtual_hid_device_service::client>();
+
+    client->connected.connect([this] {
+        std::cout << "connected" << std::endl;
+
+        pqrs::karabiner::driverkit::virtual_hid_device_service::
+            virtual_hid_keyboard_parameters parameters;
+        parameters.set_country_code(pqrs::hid::country_code::us);
+
+        client->async_virtual_hid_keyboard_initialize(parameters);
+    });
+
+    client->connect_failed.connect([](auto &&error_code) {
+        std::cout << "connect failed: " << error_code;
+        exit(1);
+    });
+
+    client->virtual_hid_keyboard_ready.connect([](auto &&ready) {
+        static std::optional<bool> previous_value;
+
+        if (previous_value != ready) {
+            qDebug() << "virtual HID keyboard is ready";
+            previous_value = ready;
+        }
+    });
+
+    client->closed.connect(
+        [] { qDebug() << "connection to karabiner driver closed"; });
+
+    client->async_start();
+
     IOObjectRelease(iter);
     CFRunLoopRun();
 }
 
+/// TODO: fill this in not exactly sure how to unsieze devices
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
-void Daemon::send_key(int vk) {
-    std::cout << "send_key called with key code: " << vk << std::endl;
-    // TODO: hook up with driver
+void Daemon::send_keys(const QList<InputEvent> &events) {
+    for (const InputEvent &event : events) {
+        std::cout << "SENDING KEY " << event.keycode
+                  << (event.type == KeyEventType::Press ? " pressed"
+                                                        : " released")
+                  << std::endl;
+
+        if (event.type == KeyEventType::Press)
+            report.keys.insert(event.keycode);
+        else if (event.type == KeyEventType::Relase)
+            report.keys.erase(event.keycode);
+
+        client->async_post_report(report);
+    }
 }
 
 void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
+    // TODO: be more sure about what to filter out
+    if (code > 1000 | code < 2)
+        return;
 
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
 
-    mapper.mapInput(InputEvent{
+    auto event = InputEvent{
         .keycode = static_cast<int>(code),
         .type = value ? KeyEventType::Press : KeyEventType::Relase,
-    });
+    };
+
+    if (!mapper.map_input(event)) {
+        send_keys({event});
+    }
 }
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
                                   IOHIDValueRef value) {
@@ -91,13 +174,6 @@ void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
     self->handle_input_event(IOHIDValueGetIntegerValue(value),
                              IOHIDElementGetUsagePage(element),
                              IOHIDElementGetUsage(element));
-
-    // Process only keyboard events (usage page 0x07)
-    if (usagePage == 0x07) {
-        int pressed = IOHIDValueGetIntegerValue(value);
-        std::cout << "Key " << usage << (pressed ? " pressed" : " released")
-                  << std::endl;
-    }
 }
 
 // TODO: not used currently but should be used in the future to allow for users
