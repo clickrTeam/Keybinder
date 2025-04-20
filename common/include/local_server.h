@@ -9,9 +9,9 @@
 #include <QString>
 
 #ifdef WIN32
-constexpr auto PIPE_PATH = R"(\\.\pipe\clickr-keybinder)";
+constexpr auto PIPE_PATH = R"(\\.\pipe\clickr)";
 #else
-constexpr auto PIPE_PATH = "/tmp/clickr_keybinder";
+constexpr auto PIPE_PATH = "/tmp/clickr.sock";
 #endif
 
 class LocalServer : public QObject {
