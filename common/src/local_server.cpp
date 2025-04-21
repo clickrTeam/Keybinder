@@ -60,7 +60,7 @@ void ClientConnection::read_data() {
             send_response("fail", "invalid json");
         } else {
             QJsonObject obj = doc.object();
-            const QString msg_type = obj.value("message_type").toString();
+            const QString msg_type = obj.value("type").toString();
 
             if (msg_type == "load_profile") {
                 QJsonObject profile_obj = obj.value("profile").toObject();
