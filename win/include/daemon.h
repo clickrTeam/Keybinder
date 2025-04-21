@@ -14,7 +14,7 @@ class Daemon : public AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_key(int vk) override;
+    void send_key(const QList<InputEvent>& vk) override;
     static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam);
 };
 

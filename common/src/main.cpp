@@ -2,24 +2,23 @@
 // the compiler will just use the right implementation at runtime.
 // See mac/include/daemon.h for an example
 #include "daemon.h"
+#include "local_server.h"
 #include "mapper.h"
-#include "readprofile.h"
+#include "read_profile.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
 #include <QThread>
 
-#include <QLocalServer>
 #include <QByteArray>
-#include <QLocalSocket>
 #include <QDebug>
+#include <iostream>
 
 int main(int argc, char *argv[]) {
-    // TODO: We need to add this argument to startup locations. i.e. add to
-    // windows registery with exe location.
     QCoreApplication a(argc, argv);
-    QStringList arguments = QCoreApplication::arguments();
-    Profile activeProfile = proccessProfile("../../exampleProfiles/e2.json");
+
+    // TODO: use the first arg as profile for prototype
+    Profile activeProfile = Profile::from_file("../../exampleProfiles/e2.json");
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
@@ -36,34 +35,21 @@ int main(int argc, char *argv[]) {
                      &QCoreApplication::aboutToQuit,
                      [&]() { daemon.cleanup(); });
 
-#ifdef WIN32
-    const QString PIPE_NAME = "mypipe";
-    const QString PIPE_PATH = QString("\\\\.\\pipe\\%1").arg(PIPE_NAME);
-    // Can ensure pipe server created with PS cmd:
-    // (get-childitem \\.\pipe\).FullName
-#else
-    const QString PIPE_PATH = "/tmp/myapp-socket";
-#endif
-    QLocalServer server;
-    if (server.listen(PIPE_PATH)) {
-        qDebug() << "Server listening on pipe '\\\\\\.\\pipe\\my_pipe' or ipc socket '/tmp/myapp-socket'";
-        QObject::connect(&server, &QLocalServer::newConnection, [&server]() {
-            qDebug() << "new connection";
-            QLocalSocket* socket = server.nextPendingConnection();
-            QObject::connect(socket, &QLocalSocket::readyRead, [socket]() {
-                QByteArray data = socket->readAll();
-                qDebug() << "Received from Electron:" << data;
-                socket->write("Hello from Qt!");
-            });
-        });
-    }
+    // Start the local server by calling its constructor (could add start method
+    // IDK if needed)
+    LocalServer server(mapper);
 
-    bool isOsStartup = arguments.contains("--osstartup");
-
-    if (isOsStartup) {
-        qDebug() << "App started from system startup.";
-    } else {
-        qDebug() << "App started manually.";
-    }
+    // Removing for prototype as not yet used
+    //
+    // TODO: We need to add this argument to startup locations. i.e. add to
+    // windows registery with exe location.
+    // QStringList arguments = QCoreApplication::arguments();
+    // bool isOsStartup = arguments.contains("--osstartup");
+    //
+    // if (isOsStartup) {
+    //     qDebug() << "App started from system startup.";
+    // } else {
+    //     qDebug() << "App started manually.";
+    // }
     return a.exec();
 }

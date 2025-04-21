@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set (CMAKE_CXX_STANDARD 20)
 project(keybinder LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
 
 qt_standard_project_setup()
+
+# usefull for debugging
+#add_compile_options(-fsanitize=address -g)
+#add_link_options(-fsanitize=address)
 
 # Conditionally add the platform-specific directory.
 set(COMMON_SOURCES "")
@@ -28,7 +33,10 @@ qt_add_executable(keybinder
     ${PLATFORM_SOURCES}
 )
 
-target_include_directories(keybinder  PRIVATE  ${COMMON_HEADER_PATHS} ${PLATFORM_HEADER_PATHS})
+target_include_directories(keybinder  PRIVATE  
+    ${COMMON_HEADER_PATHS} 
+    ${PLATFORM_HEADER_PATHS} 
+)
 
 target_link_libraries(keybinder
     PRIVATE

@@ -1,5 +1,32 @@
 {
-    "name": "Default Profile",
-    "layers": [
-    ]
+  "profile_name": "Default Profile",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "test",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "key_press",
+            "value": "A"
+          },
+          "bind": {
+            "type": "press_key",
+            "value": "B"
+          }
+        },
+
+        {
+          "trigger": {
+            "type": "key_release",
+            "value": "A"
+          },
+          "bind": {
+            "type": "release_key",
+            "value": "B"
+          }
+        }
+      ]
+    }
+  ]
 }
