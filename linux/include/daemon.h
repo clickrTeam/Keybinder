@@ -39,7 +39,7 @@ class Daemon : public AbstractDaemon {
     /// return to normal function.
     ///
     void cleanup() override;
-    void send_key(int vk) override;
+    void send_keys(const QList<InputEvent> &vk) override;
 
     ///
     /// \brief Starts the deamon which allows for key presses to be intercepted

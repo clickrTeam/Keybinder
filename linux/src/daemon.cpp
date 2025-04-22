@@ -60,6 +60,7 @@ void Daemon::start()
     }
 
     bool termination_condition = false; //TODO: A signal from the Electron app? Something to say 'stop the daemon'.
+    QList<InputEvent> event_list;
 
     while (!termination_condition)
     {
@@ -88,13 +89,14 @@ void Daemon::start()
                 e.keycode = event.code;
                 e.type = (event.value == 1) ? KeyEventType::Press : KeyEventType::Release;
 
-                if (e.type == KeyEventType::Press && mapper->mapInput(e)) {
+                if (e.type == KeyEventType::Press && mapper->map_input(e)) {
                     // Suppressed by the mapper (i.e. replaced/mapped to something else)
                     continue;
                 }
-
+                event_list.append(e);
                        // Inject original key if not mapped
-                send_key(event.code);
+                send_keys(event_list);
+                event_list.clear();
             }
         }
     }
@@ -112,28 +114,30 @@ void Daemon::cleanup()
     qDebug() << "Daemon cleaned up" << Qt::endl;
 }
 
-void Daemon::send_key(int vk)
+void Daemon::send_keys(const QList<InputEvent> &vk)
 {
     struct input_event event;
     memset(&event, 0, sizeof(event));
 
-           // Key press event
-    event.type = EV_KEY;
-    event.code = vk;
-    event.value = 1;
-    write(uinput_fd, &event, sizeof(event));
+    foreach (InputEvent input_event, vk) {
+        // Key press event
+        event.type = EV_KEY;
+        event.code = input_event.keycode;
+        event.value = input_event.type == KeyEventType::Press ? 1 : 0;
+        write(uinput_fd, &event, sizeof(event));
 
-           // Key release event
-    event.value = 0;
-    write(uinput_fd, &event, sizeof(event));
+               // Key release event
+        //event.value = 0;
+        //write(uinput_fd, &event, sizeof(event));
 
-           // Synchronization event
-    event.type = EV_SYN;
-    event.code = SYN_REPORT;
-    event.value = 0;
-    write(uinput_fd, &event, sizeof(event));
+               // Synchronization event
+        event.type = EV_SYN;
+        event.code = SYN_REPORT;
+        event.value = 0;
+        write(uinput_fd, &event, sizeof(event));
 
-    qDebug() << "Key sent" << Qt::endl;
+        qDebug() << "Key sent" << Qt::endl;
+    }
 }
 
 void Daemon::setup_uinput_device()
