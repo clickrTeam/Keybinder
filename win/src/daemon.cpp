@@ -47,7 +47,7 @@ void Daemon::cleanup() {
     qDebug() << "Daemon cleaned up";
 }
 
-void Daemon::send_key(const QList<InputEvent>& vk) {
+void Daemon::send_keys(const QList<InputEvent> &vk) {
     qDebug() << "Sending" << vk.count() << "keys";
 
     QVector<INPUT> inputs;
@@ -94,7 +94,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = kbdStruct->vkCode;
         e.type = KeyEventType::Press;
-        if (mapper->mapInput(e))
+        if (mapper->map_input(e))
             return 1; // Suppress keypress
         break;
     }
