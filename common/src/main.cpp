@@ -16,8 +16,7 @@
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
-    qDebug() << "Runtime working directory:" << QDir::currentPath(); //DEBUG
-    QString path = "/home/ryan/devel/clickr/keybinder/clickr/exampleProfiles/numberpad.json";
+    QString path = "../../exampleProfiles/numberpad.json";
     if (argc < 2)
     {
         qDebug() << "Not enough arguments, using default profile location." << Qt::endl;
