@@ -213,8 +213,8 @@ TapKey TapKey::from_json(const QJsonObject &obj) {
 // SwapLayer
 SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
 
-    warn_extra_properties(obj, {"type", "layer_num"});
-    return SwapLayer{(size_t)get_property_as_number(obj, "layer_num")};
+    warn_extra_properties(obj, {"type", "layer_number"});
+    return SwapLayer{(size_t)get_property_as_number(obj, "value")};
 }
 
 Trigger parse_trigger(const QJsonObject &obj) {
@@ -241,7 +241,7 @@ Bind parse_bind(const QJsonObject &obj) {
         return ReleaseKey::from_json(obj);
     } else if (bind_type == "tap_key") {
         return TapKey::from_json(obj);
-    } else if (bind_type == "swap_layer") {
+    } else if (bind_type == "switch_layer") {
         return SwapLayer::from_json(obj);
     }
 

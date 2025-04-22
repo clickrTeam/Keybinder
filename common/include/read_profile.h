@@ -107,7 +107,8 @@ const QMap<QString, int> string_to_key_code = {
   
   // Numbers 1–9 starting at 30
   {"1", 30}, {"2", 31}, {"3", 32}, {"4", 33}, {"5", 34},
-  {"6", 35}, {"7", 36}, {"8", 37}, {"9", 38}, {"0" ,39}
+  {"6", 35}, {"7", 36}, {"8", 37}, {"9", 38}, {"0" ,39},
+  {"Space", 44}
 // TODO:  symbols, function keys, arrows, modifiers, etc.
 };
 
