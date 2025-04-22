@@ -17,11 +17,19 @@
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
     qDebug() << "Runtime working directory:" << QDir::currentPath(); //DEBUG
-
+    QString path = "/home/ryan/devel/clickr/keybinder/clickr/exampleProfiles/numberpad.json";
+    if (argc < 2)
+    {
+        qDebug() << "Not enough arguments, using default profile location." << Qt::endl;
+    }
+    else
+    {
+        path = argv[1];
+    }
     // TODO: use the first arg as profile for prototype
     Profile activeProfile =
         //Profile::from_file("../../exampleProfiles/numberpad.json");
-        Profile::from_file("/home/ryan/devel/clickr/keybinder/clickr/exampleProfiles/numberpad.json");
+        Profile::from_file(path);
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
