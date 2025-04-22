@@ -41,6 +41,7 @@ bool KeyMap::contains_key_code(int keyCode) const {
 
 QList<QPair<QString, int>> KeyMap::create_list()
 {
+    // TODO: ChatGPT generated verify this
     return {
         // Letters
         {"A", 'A'}, {"B", 'B'}, {"C", 'C'}, {"D", 'D'}, {"E", 'E'},
@@ -132,6 +133,7 @@ QList<QPair<QString, int>> KeyMap::create_list()
 
 QList<QPair<QString, int>> KeyMap::create_list()
 {
+    // TODO: ChatGPT generated verify this
     return {
         // Letters A–Z starting at 4
         {"A", 4},  {"B", 5},  {"C", 6},  {"D", 7},  {"E", 8},
@@ -179,6 +181,7 @@ QList<QPair<QString, int>> KeyMap::create_list()
 #include <linux/input-event-codes.h>
 QList<QPair<QString, int>> KeyMap::create_list()
 {
+    // TODO: ChatGPT generated verify this
     return {
         // Letters
         {"A", KEY_A}, {"B", KEY_B}, {"C", KEY_C}, {"D", KEY_D}, {"E", KEY_E},
