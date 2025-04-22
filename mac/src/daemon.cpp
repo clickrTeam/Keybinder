@@ -140,7 +140,7 @@ void Daemon::send_keys(const QList<InputEvent> &events) {
 
         if (event.type == KeyEventType::Press)
             report.keys.insert(event.keycode);
-        else if (event.type == KeyEventType::Relase)
+        else if (event.type == KeyEventType::Release)
             report.keys.erase(event.keycode);
 
         client->async_post_report(report);
@@ -157,7 +157,7 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
 
     auto event = InputEvent{
         .keycode = static_cast<int>(code),
-        .type = value ? KeyEventType::Press : KeyEventType::Relase,
+        .type = value ? KeyEventType::Press : KeyEventType::Release,
     };
 
     if (!mapper.map_input(event)) {
