@@ -37,6 +37,10 @@ void Mapper::set_layer_inner(size_t new_layer) {
 
     qDebug() << "Cur Layer: " << cur_layer
              << " Lenght = " << profile.layers.size();
+    key_press_triggers.clear();
+    key_release_triggers.clear();
+    tap_sequence_starts.clear();
+    current_tap_sequence = std::nullopt;
     for (const auto &pair : profile.layers[cur_layer].remappings) {
         Trigger trigger = pair.first;
         Bind bind = pair.second;
