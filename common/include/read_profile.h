@@ -122,7 +122,7 @@ const QMap<int, QString> key_code_to_string = []() {
 }();
 
 #elif defined(__linux__)
-const QMap<QString, WORD> keyMap = {};
+const QMap<QString, int> keyMap = {};
 #else
 #error "Unknown operating system"
 #endif
