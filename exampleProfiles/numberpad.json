@@ -1,0 +1,68 @@
+{
+  "profile_name": "TEST PROFILE",
+  "layer_count": 2,
+  "layers": [
+    {
+      "layer_name": "default",
+      "layer_number": 0,
+      "remappings": [
+        {
+          "trigger": {
+            "type": "tap_sequence",
+            "key_time_pairs": [
+              ["Q", 500],
+              ["Q", 500]
+            ],
+            "behavior": "default"
+          },
+          "bind": {
+            "type": "switch_layer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "layer_name": "layer 2",
+      "layer_number": 1,
+      "remappings": [
+        {
+          "trigger": {
+            "type": "tap_sequence",
+            "key_time_pairs": [
+              ["Q", 500],
+              ["Q", 500]
+            ],
+            "behavior": "default"
+          },
+          "bind": {
+            "type": "switch_layer",
+            "value": 0
+          }
+        },
+
+        { "trigger": { "type": "key_press", "value": "Space" }, "bind": { "type": "press_key", "value": "0" } },
+        { "trigger": { "type": "key_press", "value": "B" }, "bind": { "type": "press_key", "value": "1" } },
+        { "trigger": { "type": "key_press", "value": "N" }, "bind": { "type": "press_key", "value": "2" } },
+        { "trigger": { "type": "key_press", "value": "M" }, "bind": { "type": "press_key", "value": "3" } },
+        { "trigger": { "type": "key_press", "value": "G" }, "bind": { "type": "press_key", "value": "4" } },
+        { "trigger": { "type": "key_press", "value": "H" }, "bind": { "type": "press_key", "value": "5" } },
+        { "trigger": { "type": "key_press", "value": "J" }, "bind": { "type": "press_key", "value": "6" } },
+        { "trigger": { "type": "key_press", "value": "T" }, "bind": { "type": "press_key", "value": "7" } },
+        { "trigger": { "type": "key_press", "value": "Y" }, "bind": { "type": "press_key", "value": "8" } },
+        { "trigger": { "type": "key_press", "value": "U" }, "bind": { "type": "press_key", "value": "9" } },
+
+        { "trigger": { "type": "key_release", "value": "Space" }, "bind": { "type": "release_key", "value": "0" } },
+        { "trigger": { "type": "key_release", "value": "B" }, "bind": { "type": "release_key", "value": "1" } },
+        { "trigger": { "type": "key_release", "value": "N" }, "bind": { "type": "release_key", "value": "2" } },
+        { "trigger": { "type": "key_release", "value": "M" }, "bind": { "type": "release_key", "value": "3" } },
+        { "trigger": { "type": "key_release", "value": "G" }, "bind": { "type": "release_key", "value": "4" } },
+        { "trigger": { "type": "key_release", "value": "H" }, "bind": { "type": "release_key", "value": "5" } },
+        { "trigger": { "type": "key_release", "value": "J" }, "bind": { "type": "release_key", "value": "6" } },
+        { "trigger": { "type": "key_release", "value": "T" }, "bind": { "type": "release_key", "value": "7" } },
+        { "trigger": { "type": "key_release", "value": "Y" }, "bind": { "type": "release_key", "value": "8" } },
+        { "trigger": { "type": "key_release", "value": "U" }, "bind": { "type": "release_key", "value": "9" } }
+      ]
+    }
+  ]
+}

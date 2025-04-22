@@ -18,7 +18,8 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
 
     // TODO: use the first arg as profile for prototype
-    Profile activeProfile = Profile::from_file("../../exampleProfiles/e2.json");
+    Profile activeProfile =
+        Profile::from_file("../../exampleProfiles/numberpad.json");
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
