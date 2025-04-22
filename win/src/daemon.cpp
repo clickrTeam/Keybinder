@@ -8,7 +8,8 @@
 
 HHOOK kbd = NULL; // Global hook handle
 Mapper* mapper = nullptr;
-// TODO: fill this in
+const ULONG_PTR InfoIdentifier = 0x1234ABCD; // allowed collisions otherwise, ((ULONG_PTR)GetCurrentProcessId() << 32) | 0x1234ABCD
+
 Daemon::Daemon(Mapper &m) {
     mapper = &m;
     qDebug() << "Daemon created";
@@ -59,6 +60,8 @@ void Daemon::send_keys(const QList<InputEvent> &vk) {
         // Press
         inputs[i].type = INPUT_KEYBOARD;
         inputs[i].ki.wVk = v.keycode;
+        // identify key so we can ignore it.
+        inputs[i].ki.dwExtraInfo = InfoIdentifier;
         if (v.type == KeyEventType::Press) {
             inputs[i].ki.dwFlags = 0;
         } else {
@@ -77,6 +80,7 @@ void Daemon::send_keys(const QList<InputEvent> &vk) {
 LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // Ignore system call - I believe if nCode < 0 then its a system call and we should always ignore it.
     if (nCode < 0) {
+        // qDebug() << "Key ignored from system."; // - useful to debug what goes through
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
     // nCode - N/I, wParam tells us what type of event happend, lParam is the key and scan code and flags
@@ -84,7 +88,8 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // lParam has vkCode which is the virtual key code while scanCode is the hardware key code which can be diffrent for the same keys
 
     // Ignore sythesized Inputs
-    if (kbdStruct->flags & LLKHF_INJECTED) {
+    if (kbdStruct->flags & LLKHF_INJECTED && kbdStruct->dwExtraInfo == InfoIdentifier) {
+        // qDebug() << "Key ignored from injection."; // - useful to debug what goes through
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
     // Handle input
@@ -99,6 +104,11 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_KEYUP: {
+        InputEvent e;
+        e.keycode = kbdStruct->vkCode;
+        e.type = KeyEventType::Relase;
+        if (mapper->map_input(e))
+            return 1; // Suppress keypress
         break;
     }
     default: {
