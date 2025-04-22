@@ -89,7 +89,7 @@ void Daemon::start()
                 e.keycode = event.code;
                 e.type = (event.value == 1) ? KeyEventType::Press : KeyEventType::Release;
 
-                if (e.type == KeyEventType::Press && mapper->map_input(e)) {
+                if (mapper->map_input(e)) {
                     // Suppressed by the mapper (i.e. replaced/mapped to something else)
                     continue;
                 }
@@ -117,13 +117,16 @@ void Daemon::cleanup()
 void Daemon::send_keys(const QList<InputEvent> &vk)
 {
     struct input_event event;
+    bool type;
     memset(&event, 0, sizeof(event));
 
     foreach (InputEvent input_event, vk) {
+        type = input_event.type == KeyEventType::Press ? 1 : 0;
+
         // Key press event
         event.type = EV_KEY;
         event.code = input_event.keycode;
-        event.value = input_event.type == KeyEventType::Press ? 1 : 0;
+        event.value = type;
         write(uinput_fd, &event, sizeof(event));
 
                // Key release event
@@ -136,14 +139,15 @@ void Daemon::send_keys(const QList<InputEvent> &vk)
         event.value = 0;
         write(uinput_fd, &event, sizeof(event));
 
-        qDebug() << "Key sent" << Qt::endl;
+        qDebug() << "Key sent:" << input_event.keycode << ":" << type << Qt::endl;
     }
 }
 
 void Daemon::setup_uinput_device()
 {
     int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    if (uinp_fd < 0) {
+    if (uinp_fd < 0)
+    {
         cerr << "Failed to open /dev/uinput" << endl;
         return;
     }
@@ -152,20 +156,11 @@ void Daemon::setup_uinput_device()
     ioctl(uinp_fd, UI_SET_EVBIT, EV_SYN);
 
     // TODO: Should not need this part if we are handling mapping with mapper.cpp
-//    // Registers all of the keys to be remapped
-//    for (Layer layer : profile.layers) {
-//        for(Keybind bind : layer.keybinds)
-//        {
-//            if(map.containsName(bind.key.value))
-//            {
-//                ioctl(uinp_fd, UI_SET_KEYBIT, map.getKey(bind.key.value));
-//            }
-//            else
-//            {
-//                qDebug() << "UNKNOWN KEY";
-//            }
-//        }
-//    }
+   // Registers all of the keys to be remapped
+    for (int i = 0; i < 128; i++)
+    {
+        ioctl(uinp_fd, UI_SET_KEYBIT, i);
+    }
 
 
     struct uinput_setup usetup;
