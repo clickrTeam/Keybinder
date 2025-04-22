@@ -1,9 +1,12 @@
 #include "daemon.h"
 #include "linux_configure.h"
+#include "mapper.h"
 
+Mapper* mapper = nullptr;
 //TODO: Need to move over linux_configure.cpp after merging
-Daemon::Daemon()
+Daemon::Daemon(Mapper &m)
 {
+    mapper = &m;
     //TODO: Possibly update with config file path
     event_keyb_path = retrieve_eventX();
 
@@ -57,6 +60,7 @@ void Daemon::start()
     }
 
     bool termination_condition = false; //TODO: A signal from the Electron app? Something to say 'stop the daemon'.
+    QList<InputEvent> event_list;
 
     while (!termination_condition)
     {
@@ -64,7 +68,7 @@ void Daemon::start()
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0)
         {
 
-            if (event.type == EV_KEY && event.value == 1)
+            if (event.type == EV_KEY)
             {
                 //TODO: Send key code to mapper.cpp and have it determine which key / combo to output.
 //                if (event.code == KEY_ESC)
@@ -81,6 +85,18 @@ void Daemon::start()
 //                        send_key_event(uinp_fd, map.getKey(bind.key.value));
 //                    }
 //                }
+                InputEvent e;
+                e.keycode = event.code;
+                e.type = (event.value == 1) ? KeyEventType::Press : KeyEventType::Release;
+
+                if (mapper->map_input(e)) {
+                    // Suppressed by the mapper (i.e. replaced/mapped to something else)
+                    continue;
+                }
+                event_list.append(e);
+                       // Inject original key if not mapped
+                send_keys(event_list);
+                event_list.clear();
             }
         }
     }
@@ -98,34 +114,40 @@ void Daemon::cleanup()
     qDebug() << "Daemon cleaned up" << Qt::endl;
 }
 
-void Daemon::send_key(int vk)
+void Daemon::send_keys(const QList<InputEvent> &vk)
 {
     struct input_event event;
+    bool type;
     memset(&event, 0, sizeof(event));
 
-           // Key press event
-    event.type = EV_KEY;
-    event.code = vk;
-    event.value = 1;
-    write(uinput_fd, &event, sizeof(event));
+    foreach (InputEvent input_event, vk) {
+        type = input_event.type == KeyEventType::Press ? 1 : 0;
 
-           // Key release event
-    event.value = 0;
-    write(uinput_fd, &event, sizeof(event));
+        // Key press event
+        event.type = EV_KEY;
+        event.code = input_event.keycode;
+        event.value = type;
+        write(uinput_fd, &event, sizeof(event));
 
-           // Synchronization event
-    event.type = EV_SYN;
-    event.code = SYN_REPORT;
-    event.value = 0;
-    write(uinput_fd, &event, sizeof(event));
+               // Key release event
+        //event.value = 0;
+        //write(uinput_fd, &event, sizeof(event));
 
-    qDebug() << "Key sent" << Qt::endl;
+               // Synchronization event
+        event.type = EV_SYN;
+        event.code = SYN_REPORT;
+        event.value = 0;
+        write(uinput_fd, &event, sizeof(event));
+
+        qDebug() << "Key sent:" << input_event.keycode << ":" << type << Qt::endl;
+    }
 }
 
 void Daemon::setup_uinput_device()
 {
     int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    if (uinp_fd < 0) {
+    if (uinp_fd < 0)
+    {
         cerr << "Failed to open /dev/uinput" << endl;
         return;
     }
@@ -134,20 +156,11 @@ void Daemon::setup_uinput_device()
     ioctl(uinp_fd, UI_SET_EVBIT, EV_SYN);
 
     // TODO: Should not need this part if we are handling mapping with mapper.cpp
-//    // Registers all of the keys to be remapped
-//    for (Layer layer : profile.layers) {
-//        for(Keybind bind : layer.keybinds)
-//        {
-//            if(map.containsName(bind.key.value))
-//            {
-//                ioctl(uinp_fd, UI_SET_KEYBIT, map.getKey(bind.key.value));
-//            }
-//            else
-//            {
-//                qDebug() << "UNKNOWN KEY";
-//            }
-//        }
-//    }
+   // Registers all of the keys to be remapped
+    for (int i = 0; i < 128; i++)
+    {
+        ioctl(uinp_fd, UI_SET_KEYBIT, i);
+    }
 
 
     struct uinput_setup usetup;

@@ -10,6 +10,9 @@
 #include <QJsonValue>
 #include <stdexcept>
 #include <utility>
+#include "key_map.h"
+
+KeyMap key_map;
 
 // Helper method to make parsing less repetative
 QJsonObject get_value_as_object(const QJsonValue &value) {
@@ -127,13 +130,13 @@ void warn_extra_properties(const QJsonObject &obj,
 }
 
 KeyCode str_to_keycode(const QString &str) {
-    if (!string_to_key_code.contains(str)) {
+    if (!key_map.contains_string(str)) {
         throw std::invalid_argument(
             ("The string '" + str.toStdString() + "' is not a valid key.")
                 .c_str());
     }
 
-    return string_to_key_code[str];
+    return key_map.string_to_key_code(str);
 };
 
 // KeyPress
@@ -309,6 +312,8 @@ Profile Profile::from_file(const QString &filename) {
         qCritical() << "Could not open file!";
         throw std::invalid_argument("Could not open file");
     }
+
+    key_map = KeyMap();
 
     QByteArray json_data = file.readAll();
     return Profile::from_bytes(json_data);
