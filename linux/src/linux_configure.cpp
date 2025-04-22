@@ -1,4 +1,3 @@
-#ifdef __linux__
 #include "linux_configure.h"
 #include <QFile>
 #include <QDebug>
@@ -9,12 +8,14 @@
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <QDir>
 
 using std::cout;
 using std::endl;
 
 //TODO: Figure out where we want to store the config file by default
-const QString DEFAULT_CONFIG_PATH = "to be determined";
+const QString DEFAULT_CONFIG_PATH = QDir::homePath() + "/.config/clickr/config.json";
+
 
 QString retrieve_eventX(QString config_file_path)
 {
@@ -57,40 +58,52 @@ bool record_eventX(QString eventX_path, QString config_file_path)
 
     QFile config(config_file_path);
 
-    if (!config.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
+           // Check if file exists; if not, create it with a "keyboard=" line
+    if (!config.exists()) {
+        QDir configDir = QFileInfo(config_file_path).dir();
+        if (!configDir.exists()) {
+            configDir.mkpath(".");
+        }
+
+        if (config.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&config);
+            out << "keyboard=" << eventX_path << "\n";
+            config.close();
+            return true;
+        } else {
+            qCritical() << "Failed to create config file at path: " + config_file_path << Qt::endl;
+            return false;
+        }
+    }
+
+           // Read the current config
+    if (!config.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCritical() << "Could not open config file at path: " + config_file_path << Qt::endl;
-        return recorded;
+        return false;
     }
 
     QTextStream in(&config);
-    while (!in.atEnd())
-    {
+    while (!in.atEnd()) {
         QString line = in.readLine();
-
-        if(line.contains("keyboard="))
-        {
+        if (line.contains("keyboard=")) {
             no_prev_keyb = false;
             line = "keyboard=" + eventX_path;
         }
         all_lines.append(line);
     }
-
     config.close();
 
-    if (!config.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-    {
-        qCritical() << "Could not open config file at path: " + config_file_path << Qt::endl;
-        return recorded;
+           // Write the updated config
+    if (!config.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        qCritical() << "Could not open config file for writing at path: " + config_file_path << Qt::endl;
+        return false;
     }
 
     QTextStream out(&config);
-    for(const QString &line : all_lines)
-    {
+    for (const QString &line : all_lines) {
         out << line << "\n";
     }
-    if(no_prev_keyb)
-    {
+    if (no_prev_keyb) {
         out << "keyboard=" + eventX_path << "\n";
     }
 
@@ -204,6 +217,8 @@ QString detect_keyboard()
         }
     }
 
+    record_eventX(keyb_path);
+
            // Clean up all devices
     for(size_t i = 0; i < devices.size(); i++)
     {
@@ -215,4 +230,3 @@ QString detect_keyboard()
 
     return keyb_path;
 }
-#endif
