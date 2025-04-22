@@ -80,7 +80,7 @@ bool Mapper::map_input(InputEvent e) {
         if (expected_key == e.keycode && e.type == current_state) {
 
             if (current_state == KeyEventType::Press) {
-                current_state = KeyEventType::Relase;
+                current_state = KeyEventType::Release;
             } else {
                 current_state = KeyEventType::Press;
                 current_key++;
@@ -125,7 +125,7 @@ bool Mapper::map_input(InputEvent e) {
         key_press_triggers.contains(e.keycode)) {
         qDebug() << "Mapping keydown of : " << e.keycode;
         perform_binds({key_press_triggers[e.keycode]});
-    } else if (e.type == KeyEventType::Relase &&
+    } else if (e.type == KeyEventType::Release &&
                key_release_triggers.contains(e.keycode)) {
         qDebug() << "Mapping keyup of : " << e.keycode;
         perform_binds({key_release_triggers[e.keycode]});
@@ -150,11 +150,11 @@ void Mapper::perform_binds(const QList<Bind> &binds) {
                         {InputEvent{bind.key_code, KeyEventType::Press}});
                 } else if constexpr (std::is_same_v<T, ReleaseKey>) {
                     events.push_back(
-                        {InputEvent{bind.key_code, KeyEventType::Relase}});
+                        {InputEvent{bind.key_code, KeyEventType::Release}});
                 } else if constexpr (std::is_same_v<T, TapKey>) {
                     events.append(
                         {InputEvent{bind.key_code, KeyEventType::Press},
-                         InputEvent{bind.key_code, KeyEventType::Relase}});
+                         InputEvent{bind.key_code, KeyEventType::Release}});
 
                 } else if constexpr (std::is_same_v<T, SwapLayer>) {
                     set_layer_inner(bind.new_layer);
