@@ -25,9 +25,7 @@ int main(int argc, char *argv[]) {
     {
         path = argv[1];
     }
-    // TODO: use the first arg as profile for prototype
     Profile activeProfile =
-        //Profile::from_file("../../exampleProfiles/numberpad.json");
         Profile::from_file(path);
 
     // Hacky workaround for circular reference
