@@ -9,7 +9,6 @@
 #include <QDebug>
 #include <QStringList>
 #include <QThread>
-#include <QDir>
 #include <QByteArray>
 #include <QDebug>
 #include <iostream>
@@ -19,7 +18,7 @@ int main(int argc, char *argv[]) {
     QString path = "../../exampleProfiles/numberpad.json";
     if (argc < 2)
     {
-        qDebug() << "Not enough arguments, using default profile location." << Qt::endl;
+        qDebug() << "Not enough arguments, using default profile location.";
     }
     else
     {
