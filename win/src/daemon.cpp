@@ -106,7 +106,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     case WM_KEYUP: {
         InputEvent e;
         e.keycode = kbdStruct->vkCode;
-        e.type = KeyEventType::Relase;
+        e.type = KeyEventType::Release;
         if (mapper->map_input(e))
             return 1; // Suppress keypress
         break;
