@@ -116,6 +116,11 @@ bool Mapper::map_input(InputEvent e) {
                 binds.push_back(PressKey{key_code});
                 binds.push_back(ReleaseKey{key_code});
             }
+            // If we where waiting for a release then send the keydown
+            if (current_state == KeyEventType::Release) {
+                auto key_code = tap_sequence.key_sequence[current_key];
+                binds.push_back(PressKey{key_code});
+            }
 
             perform_binds(binds);
             current_tap_sequence = std::nullopt;
