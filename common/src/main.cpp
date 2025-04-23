@@ -9,17 +9,23 @@
 #include <QDebug>
 #include <QStringList>
 #include <QThread>
-
 #include <QByteArray>
 #include <QDebug>
 #include <iostream>
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
-
-    // TODO: use the first arg as profile for prototype
+    QString path = "../../exampleProfiles/numberpad.json";
+    if (argc < 2)
+    {
+        qDebug() << "Not enough arguments, using default profile location.";
+    }
+    else
+    {
+        path = argv[1];
+    }
     Profile activeProfile =
-        Profile::from_file("../../exampleProfiles/numberpad.json");
+        Profile::from_file(path);
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);

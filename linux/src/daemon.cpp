@@ -3,7 +3,6 @@
 #include "mapper.h"
 
 Mapper* mapper = nullptr;
-//TODO: Need to move over linux_configure.cpp after merging
 Daemon::Daemon(Mapper &m)
 {
     mapper = &m;
