@@ -4,13 +4,13 @@
 #include <QtLogging>
 #include <cstddef>
 
+#include "key_map.h"
 #include "profile.h"
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
 #include <stdexcept>
 #include <utility>
-#include "key_map.h"
 
 KeyMap key_map;
 
@@ -213,7 +213,7 @@ TapKey TapKey::from_json(const QJsonObject &obj) {
 // SwapLayer
 SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
 
-    warn_extra_properties(obj, {"type", "layer_number"});
+    warn_extra_properties(obj, {"type", "value"});
     return SwapLayer{(size_t)get_property_as_number(obj, "value")};
 }
 
