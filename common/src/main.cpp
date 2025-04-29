@@ -4,17 +4,33 @@
 #include "daemon.h"
 #include "local_server.h"
 #include "mapper.h"
-#include "read_profile.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
 #include <QThread>
 #include <QByteArray>
 #include <QDebug>
-#include <iostream>
+#include <QLoggingCategory>
+#include <QFile>
+#include <qfileinfo.h>
+#include <QDir>
+
+
+Q_LOGGING_CATEGORY(lcMyApp, "myapp")
+void myMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QString logFileName = "logs/keybinder_" + currentTime.toString("yyyy-MM-dd_hh-mm-ss") + ".log";
+    QFile file(logFileName);
+    file.open(QFile::Append);
+    QTextStream stream(&file);
+    stream << msg << Qt::endl;
+    file.close();
+}
 
 int main(int argc, char *argv[]) {
-    QCoreApplication a(argc, argv);
+#ifndef NDEBUG
+    // Debug build, no logging
+    // Handel args
     QString path = "../../exampleProfiles/numberpad.json";
     if (argc < 2)
     {
@@ -24,6 +40,20 @@ int main(int argc, char *argv[]) {
     {
         path = argv[1];
     }
+#else
+    // Release build, enable logging
+    // Handel args
+    QString path = "../../exampleProfiles/numberpad.json";
+    // Ensure logs file exists
+    QDir logDir("logs");
+    if (!logDir.exists()) {
+        logDir.mkpath(".");
+    }
+    // Setup logging
+    qSetMessagePattern("%{time} %{category} %{message}");
+    qInstallMessageHandler(myMessageHandler);
+#endif
+    QCoreApplication a(argc, argv);
     Profile activeProfile =
         Profile::from_file(path);
 
