@@ -4,6 +4,7 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/read_profile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/mapper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/local_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_map.cpp
 
