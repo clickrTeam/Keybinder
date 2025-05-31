@@ -1,6 +1,10 @@
 #include "logger.h"
 #include <QLoggingCategory>
 
+// hacky global varible.
+bool firstIntialize = true;
+
+// Is more of a Logger Factory, since logger is re-constructed on every logger.
 Logger::Logger() {
     initLogFile();
 }
@@ -23,6 +27,15 @@ void Logger::initLogFile() {
 
     logFile_.setFileName(LOG_DIR + "/" + LOG_FILE_NAME);
     logFile_.open(QFile::WriteOnly | QFile::Text | QFile::Append);
+
+    if (firstIntialize) {
+        firstIntialize = false;
+        this->logMessage("/0|----------------------------------START-OF-PROGRAM----------------------------------|0\\");
+    }
+}
+
+void Logger::cleanUp() {
+    this->logMessage("\\0|-----------------------------------END--OF-PROGRAM----------------------------------|0/");
 }
 
 void Logger::rollOverLogFile() {

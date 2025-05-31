@@ -15,6 +15,7 @@ class Logger {
   public:
     Logger();
     void logMessage(const QString &msg);
+    void cleanUp();
 
   private:
     void initLogFile();
