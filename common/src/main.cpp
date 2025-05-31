@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 #ifdef QT_DEBUG
     QString path = "../../exampleProfiles/numberpad.json";
 #else
-    QString path = "startup.json";
+    QString path = "empty";
 #endif
     if (argc < 2)
     {
