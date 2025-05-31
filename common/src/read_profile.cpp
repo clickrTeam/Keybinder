@@ -315,6 +315,7 @@ QJsonObject defaultProfile() {
 
 Profile Profile::from_file(const QString &filename) {
     if (filename == "empty") {
+        qDebug() << "Using empty json mapping. Intended for startup by electron app.";
         QJsonObject defaultJson = defaultProfile();
         QJsonDocument jsonDoc(defaultJson);
         QByteArray json_data = jsonDoc.toJson();
