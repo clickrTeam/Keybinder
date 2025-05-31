@@ -22,8 +22,11 @@ int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
 
     qInstallMessageHandler(myMessageHandler);
-
+#ifdef QT_DEBUG
     QString path = "../../exampleProfiles/numberpad.json";
+#else
+    QString path = "startup.json";
+#endif
     if (argc < 2)
     {
         qDebug() << "Not enough arguments, using default profile location.";
