@@ -295,7 +295,32 @@ Profile Profile::from_bytes(const QByteArray &bytes) {
     return Profile::from_json(doc.object());
 }
 
+QJsonObject defaultProfile() {
+    QJsonObject profile;
+    profile["profile_name"] = "EMPTY-STARTUP-PROFILE";
+    profile["layer_count"] = 1;
+
+    QJsonArray layers;
+    QJsonObject layer;
+    layer["layer_name"] = "default";
+    layer["layer_number"] = 0;
+    QJsonArray remappings;
+    layer["remappings"] = remappings;
+    layers.append(layer);
+
+    profile["layers"] = layers;
+
+    return profile;
+}
+
 Profile Profile::from_file(const QString &filename) {
+    if (filename == "empty") {
+        qDebug() << "Using empty json mapping. Intended for startup by electron app.";
+        QJsonObject defaultJson = defaultProfile();
+        QJsonDocument jsonDoc(defaultJson);
+        QByteArray json_data = jsonDoc.toJson();
+        return Profile::from_bytes(json_data);
+    }
 
     QFile file(filename);
 

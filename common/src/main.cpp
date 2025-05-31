@@ -3,19 +3,30 @@
 // See mac/include/daemon.h for an example
 #include "daemon.h"
 #include "local_server.h"
+#include "logger.h"
 #include "mapper.h"
-#include "read_profile.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
 #include <QThread>
 #include <QByteArray>
 #include <QDebug>
-#include <iostream>
+#include <QLoggingCategory>
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+#include <QDir>
+#include <qcoreapplication.h>
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
+
+#ifdef QT_DEBUG
     QString path = "../../exampleProfiles/numberpad.json";
+#else
+    qInstallMessageHandler(myMessageHandler);
+    QString path = "empty";
+#endif
     if (argc < 2)
     {
         qDebug() << "Not enough arguments, using default profile location.";
@@ -41,6 +52,15 @@ int main(int argc, char *argv[]) {
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit,
                      [&]() { daemon.cleanup(); });
+
+    // Somehow hope this works, many varibles can make it not. Working is not so important.
+    Logger logger;
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit,
+                     [&logger]() {
+                         logger.cleanUp();
+                     });
+
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
