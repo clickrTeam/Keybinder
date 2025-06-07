@@ -66,7 +66,15 @@ struct SwapLayer {
     static SwapLayer from_json(const QJsonObject &obj);
 };
 
-using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer>;
+struct Macro;
+
+using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer, Macro>;
+
+struct Macro
+{
+    QList<Bind> binds;
+    static Macro from_json(const QJsonObject &obj);
+};
 
 struct Layer {
     QString layer_name;

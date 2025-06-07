@@ -164,9 +164,10 @@ void Mapper::perform_binds(const QList<Bind> &binds) {
                     events.append(
                         {InputEvent{bind.key_code, KeyEventType::Press},
                          InputEvent{bind.key_code, KeyEventType::Release}});
-
                 } else if constexpr (std::is_same_v<T, SwapLayer>) {
                     set_layer_inner(bind.new_layer);
+                } else if constexpr (std::is_same_v<T, Macro>) {
+                    perform_binds(bind.binds);
                 }
             },
             bind);
