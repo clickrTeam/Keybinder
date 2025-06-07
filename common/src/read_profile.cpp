@@ -1,17 +1,5 @@
 #include "read_profile.h"
 
-#include <QFileInfo>
-#include <QtLogging>
-#include <cstddef>
-
-#include "key_map.h"
-#include "profile.h"
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <stdexcept>
-#include <utility>
-
 KeyMap key_map;
 
 // Helper method to make parsing less repetative
@@ -141,7 +129,6 @@ KeyCode str_to_keycode(const QString &str) {
 
 // KeyPress
 KeyPress KeyPress::from_json(const QJsonObject &obj) {
-
     warn_extra_properties(obj, {"type", "value"});
     return KeyPress{str_to_keycode(get_property_as_string(obj, "value"))};
 }
@@ -217,6 +204,17 @@ SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
     return SwapLayer{(size_t)get_property_as_number(obj, "value")};
 }
 
+// Macro
+Macro Macro::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "binds"});
+    QList<Bind> binds;
+    for (const QJsonValue &bindObj :
+         get_property_as_array(obj, "binds")) {
+        binds.push_back(parse_bind(get_value_as_object(bindObj)));
+    }
+    return Macro{.binds = binds};
+}
+
 Trigger parse_trigger(const QJsonObject &obj) {
     QString trigger_type = get_property_as_string(obj, "type");
 
@@ -243,6 +241,8 @@ Bind parse_bind(const QJsonObject &obj) {
         return TapKey::from_json(obj);
     } else if (bind_type == "switch_layer") {
         return SwapLayer::from_json(obj);
+    } else if (bind_type == "macro") {
+        return Macro::from_json(obj);
     }
 
     throw std::invalid_argument(
@@ -271,6 +271,7 @@ Layer Layer::from_json(const QJsonObject &obj) {
 Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
     QString profile_name = get_property_as_string(obj, "profile_name");
+    qDebug() << "Loading PROFILE_NAME:" << profile_name;
     // TODO: probably should have some kind of default layer beyond just always
     // the first size_t default_layer = (size_t)get_property_as_number(obj,
     // "default_layer");
@@ -280,6 +281,7 @@ Profile Profile::from_json(const QJsonObject &obj) {
     for (const QJsonValue &remapping : get_property_as_array(obj, "layers")) {
         layers.push_back(Layer::from_json(get_value_as_object(remapping)));
     }
+    qDebug() << "Loaded PROFILE_NAME:" << profile_name;
 
     return Profile{
         .name = profile_name, .layers = layers, .default_layer = default_layer};

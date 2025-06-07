@@ -1,10 +1,17 @@
 #pragma once
+#include "profile.h"
+#include "key_map.h"
 #include <QDebug>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+
+#include <QFileInfo>
+#include <QtLogging>
+
+Bind parse_bind(const QJsonObject &obj);
 
 // I didn't use these but I prbably should. Can update later
 //  // Define constants for each JSON key

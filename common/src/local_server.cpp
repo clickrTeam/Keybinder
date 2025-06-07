@@ -54,6 +54,7 @@ void ClientConnection::read_data() {
         // parse JSON
         QJsonParseError parse_error;
         QJsonDocument doc = QJsonDocument::fromJson(line, &parse_error);
+        qDebug() << "Loading Profile from electron:" << doc;
 
         if (parse_error.error != QJsonParseError::NoError || !doc.isObject()) {
             qWarning() << "JSON parse error:" << parse_error.errorString();
