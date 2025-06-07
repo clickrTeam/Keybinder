@@ -86,12 +86,20 @@ QList<QPair<QString, int>> KeyMap::create_list() {
             {"Esc", VK_ESCAPE},
             {"Escape", VK_ESCAPE},
             {"Tab", VK_TAB},
-            {"Shift", VK_SHIFT},
-            {"Ctrl", VK_CONTROL},
-            {"Alt", VK_MENU},
             {"Backspace", VK_BACK},
             {"Pause", VK_PAUSE},
             {"CapsLock", VK_CAPITAL},
+
+            // Special Characters with directions
+            { "Shift", VK_SHIFT },
+            { "ShiftLeft", VK_LSHIFT },
+            { "ShiftRight", VK_RSHIFT },
+            { "Ctrl", VK_CONTROL },
+            { "CtrlLeft", VK_LCONTROL },
+            { "CtrlRight", VK_RCONTROL },
+            { "Alt", VK_MENU },
+            { "AltLeft", VK_LMENU },
+            { "AltRight", VK_RMENU },
 
             // Function Keys
             {"F1", VK_F1},

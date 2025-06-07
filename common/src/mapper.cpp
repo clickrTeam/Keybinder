@@ -139,7 +139,7 @@ bool Mapper::map_input(InputEvent e) {
         qDebug() << "Mapping keyup of : " << e.keycode;
         perform_binds({key_release_triggers[e.keycode]});
     } else {
-        qDebug() << "No mappings found for :" << e.keycode;
+        // qDebug() << "No mappings found for :" << e.keycode; // Re-Enable as you please.
         return false;
     }
 
