@@ -4,6 +4,9 @@
 #include <profile.h>
 
 LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
+    // Attempt to clean up old socket if it is still there.
+    QLocalServer::removeServer(PIPE_PATH);
+
     if (!server.listen(PIPE_PATH)) {
         qFatal() << "Could not listen on: " << PIPE_PATH;
     }
@@ -11,6 +14,12 @@ LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
 
     QObject::connect(&server, &QLocalServer::newConnection, this,
                      &LocalServer::handle_new_connection);
+}
+
+LocalServer::~LocalServer()
+{
+    server.close();
+    QLocalServer::removeServer(PIPE_PATH);
 }
 
 void LocalServer::handle_new_connection() {

@@ -17,9 +17,23 @@
 #include <QDateTime>
 #include <QDir>
 #include <qcoreapplication.h>
+#include <csignal>
+
+/*
+ *  Signal handler: forward SIGINT/SIGTERM to Qt event loop.
+ *  This will end the Qt event loop, things will go out of scope as expected,
+ *  destructors will be called and resources will be cleaned up.
+ */
+void handleSignalExit(int)
+{
+    QMetaObject::invokeMethod(QCoreApplication::instance(), "quit",
+                              Qt::QueuedConnection);
+}
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
+    std::signal(SIGINT, handleSignalExit);
+    std::signal(SIGTERM, handleSignalExit);
 
 #ifdef QT_DEBUG
     QString path = "../../exampleProfiles/numberpad.json";
@@ -65,6 +79,11 @@ int main(int argc, char *argv[]) {
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
     LocalServer server(mapper);
+
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [&]() {
+        qInfo() << "Shutting down daemon";
+        // LocalServer destructor will run here
+    });
 
     // Removing for prototype as not yet used
     //
