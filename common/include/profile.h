@@ -1,5 +1,6 @@
 #pragma once
 
+#include "key_code.h"
 #include <QJsonObject>
 #include <QList>
 #include <QMap>
@@ -8,15 +9,6 @@
 #include <utility>
 #include <variant>
 
-// enum class KeyCode {
-//     A = 0,
-//     B = 1,
-//     C = 2,
-//     D = 3,
-//     E = 4,
-//     // TOOD
-// };
-
 enum class TimedTriggerBehavior {
     Capture,
     Release,
@@ -24,9 +16,6 @@ enum class TimedTriggerBehavior {
 };
 
 TimedTriggerBehavior parse_behavior(const QString &str);
-
-// Type alias would make it easier to change to an enum in the future if needed
-using KeyCode = int;
 
 struct KeyPress {
     KeyCode key_code;
