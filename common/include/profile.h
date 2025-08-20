@@ -69,6 +69,7 @@ struct SwapLayer {
 struct Macro;
 
 using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer, Macro>;
+Bind parse_bind(const QJsonObject &obj);
 
 struct Macro
 {
@@ -89,4 +90,5 @@ struct Profile {
     static Profile from_json(const QJsonObject &obj);
     static Profile from_bytes(const QByteArray &bytes);
     static Profile from_file(const QString &filename);
+    static Profile loadLatest();
 };
