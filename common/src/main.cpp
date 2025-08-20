@@ -80,11 +80,6 @@ int main(int argc, char *argv[]) {
     // IDK if needed)
     LocalServer server(mapper);
 
-    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [&]() {
-        qInfo() << "Shutting down daemon";
-        // LocalServer destructor will run here
-    });
-
     // Removing for prototype as not yet used
     //
     // TODO: We need to add this argument to startup locations. i.e. add to
