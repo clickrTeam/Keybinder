@@ -1,6 +1,16 @@
 #include "read_profile.h"
 
-KeyMap key_map;
+#include <QFileInfo>
+#include <QtLogging>
+#include <cstddef>
+
+#include "key_code.h"
+#include "profile.h"
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <stdexcept>
+#include <utility>
 
 // Helper method to make parsing less repetative
 QJsonObject get_value_as_object(const QJsonValue &value) {
@@ -117,26 +127,18 @@ void warn_extra_properties(const QJsonObject &obj,
     }
 }
 
-KeyCode str_to_keycode(const QString &str) {
-    if (!key_map.contains_string(str)) {
-        throw std::invalid_argument(
-            ("The string '" + str.toStdString() + "' is not a valid key.")
-                .c_str());
-    }
-
-    return key_map.string_to_key_code(str);
-};
-
 // KeyPress
 KeyPress KeyPress::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
-    return KeyPress{str_to_keycode(get_property_as_string(obj, "value"))};
+    return KeyPress{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // KeyRelease
 KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
-    return KeyRelease{str_to_keycode(get_property_as_string(obj, "value"))};
+    return KeyRelease{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 //   "type": "tap_sequence",
@@ -158,7 +160,8 @@ TapSequence TapSequence::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "key_time_pairs", "behavior"});
     for (const QJsonValue &val : get_property_as_array(obj, "key_time_pairs")) {
         auto pair = get_value_as_array(val);
-        key_sequence.push_back(str_to_keycode(get_value_as_string(pair.at(0))));
+        key_sequence.push_back(
+            str_to_keycode.find_forward(get_value_as_string(pair.at(0))));
         // TODO: use the timeout which is the second element in this array
     }
 
@@ -182,19 +185,22 @@ TimedTriggerBehavior parse_behavior(const QString &str) {
 
 PressKey PressKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
-    return PressKey{str_to_keycode(get_property_as_string(obj, "value"))};
+    return PressKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // ReleaseKey
 ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
-    return ReleaseKey{str_to_keycode(get_property_as_string(obj, "value"))};
+    return ReleaseKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // TapKey
 TapKey TapKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
-    return TapKey{str_to_keycode(get_property_as_string(obj, "value"))};
+    return TapKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // SwapLayer
@@ -208,8 +214,7 @@ SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
 Macro Macro::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "binds"});
     QList<Bind> binds;
-    for (const QJsonValue &bindObj :
-         get_property_as_array(obj, "binds")) {
+    for (const QJsonValue &bindObj : get_property_as_array(obj, "binds")) {
         binds.push_back(parse_bind(get_value_as_object(bindObj)));
     }
     return Macro{.binds = binds};
@@ -318,7 +323,8 @@ QJsonObject defaultProfile() {
 
 Profile Profile::from_file(const QString &filename) {
     if (filename == "empty") {
-        qDebug() << "Using empty json mapping. Intended for startup by electron app.";
+        qDebug() << "Using empty json mapping. Intended for startup by "
+                    "electron app.";
         QJsonObject defaultJson = defaultProfile();
         QJsonDocument jsonDoc(defaultJson);
         QByteArray json_data = jsonDoc.toJson();
@@ -341,8 +347,6 @@ Profile Profile::from_file(const QString &filename) {
         throw std::invalid_argument("Could not open file");
     }
 
-    key_map = KeyMap();
-
     QByteArray json_data = file.readAll();
     return Profile::from_bytes(json_data);
 }
@@ -350,23 +354,27 @@ Profile Profile::from_file(const QString &filename) {
 void saveLatestJsonProfile(const QJsonObject &obj) {
     QFile file(LATEST_PROFILE_FILE_LOCATION);
     if (!file.open(QFile::WriteOnly)) {
-        qCritical() << "Failed to save latest JSON profile: Unable to open file" << LATEST_PROFILE_FILE_LOCATION << " for writing. Error: " << file.errorString();
+        qCritical() << "Failed to save latest JSON profile: Unable to open file"
+                    << LATEST_PROFILE_FILE_LOCATION
+                    << " for writing. Error: " << file.errorString();
         return;
     }
 
     QJsonDocument doc(obj);
     if (file.write(doc.toJson()) == -1) {
-        qCritical() << "Failed to save latest JSON profile: Unable to write to file" << LATEST_PROFILE_FILE_LOCATION << ". Error:" << file.errorString();
+        qCritical()
+            << "Failed to save latest JSON profile: Unable to write to file"
+            << LATEST_PROFILE_FILE_LOCATION << ". Error:" << file.errorString();
         file.close();
         return;
     }
 
     file.close();
-    qDebug() << "Latest JSON profile saved successfully to" << LATEST_PROFILE_FILE_LOCATION;
+    qDebug() << "Latest JSON profile saved successfully to"
+             << LATEST_PROFILE_FILE_LOCATION;
 }
 
 Profile Profile::loadLatest() {
     qDebug() << "Loading latest profile";
     return Profile::from_file(LATEST_PROFILE_FILE_LOCATION);
 }
-
