@@ -14,6 +14,10 @@ qt_standard_project_setup()
 # Conditionally add the platform-specific directory.
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_subdirectory(common)
 
 set(PLATFORM_SOURCES "")
@@ -31,6 +35,7 @@ qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
+
 )
 
 target_include_directories(keybinder  PRIVATE  

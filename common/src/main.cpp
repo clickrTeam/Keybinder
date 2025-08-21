@@ -19,6 +19,10 @@
 #include <qcoreapplication.h>
 #include <csignal>
 
+// Testing pipe method
+#include <QSocketNotifier>
+#include <QTimer>
+static int sigPipeFd[2];
 /*
  *  Signal handler: forward SIGINT/SIGTERM to Qt event loop.
  *  This will end the Qt event loop, things will go out of scope as expected,
@@ -26,15 +30,25 @@
  */
 void handleSignalExit(int)
 {
-    QMetaObject::invokeMethod(QCoreApplication::instance(), "quit",
-                              Qt::QueuedConnection);
+    qDebug() << "Inside handleSignalExit";
+//    QMetaObject::invokeMethod(QCoreApplication::instance(), "quit",
+//                              Qt::QueuedConnection);
+
+    char c = 1;
+    write(sigPipeFd[1], &c, 1);
 }
+
+
+void handleSignal(QSocketNotifier* notifier, QCoreApplication* app) {
+    notifier->setEnabled(false);
+    char c;
+    ::read(sigPipeFd[0], &c, sizeof(c));
+    app->quit();
+}
+
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
-    std::signal(SIGINT, handleSignalExit);
-    std::signal(SIGTERM, handleSignalExit);
-
 #ifdef QT_DEBUG
     QString path = "../../exampleProfiles/numberpad.json";
 #else
@@ -51,6 +65,18 @@ int main(int argc, char *argv[]) {
     }
     Profile activeProfile =
         Profile::from_file(path);
+
+
+    // Create a pipe
+    if (::pipe(sigPipeFd)) {
+        qFatal("Failed to create pipe");
+    }
+
+
+
+    // Install signal handler
+    std::signal(SIGINT, handleSignalExit); // kill -2 or Ctrl+C
+
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
@@ -80,6 +106,20 @@ int main(int argc, char *argv[]) {
     // IDK if needed)
     LocalServer server(mapper);
 
+
+    /// @todo Testing pipe method, should work for linux and mac but currently does not.
+    QSocketNotifier *notifier = new QSocketNotifier(sigPipeFd[0], QSocketNotifier::Read, &a);
+
+    /// @todo This is not getting executed when the pipe is written to.
+    QObject::connect(notifier, &QSocketNotifier::activated, [&a, notifier](int) {
+        notifier->setEnabled(false);        // prevent repeated triggers
+        char c;
+        ::read(sigPipeFd[0], &c, sizeof(c)); // clear the pipe
+        qDebug() << "About to quit app, notifier has been activated";
+        a.quit();                             // gracefully exit the event loop
+    });
+
+
     // Removing for prototype as not yet used
     //
     // TODO: We need to add this argument to startup locations. i.e. add to
@@ -92,5 +132,9 @@ int main(int argc, char *argv[]) {
     // } else {
     //     qDebug() << "App started manually.";
     // }
+
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [&]() {
+        qInfo() << "aboutToQuit emitted";
+    });
     return a.exec();
 }

@@ -18,6 +18,7 @@ LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
 
 LocalServer::~LocalServer()
 {
+    qDebug() << "Entering LocalServer destructor";
     server.close();
     QLocalServer::removeServer(PIPE_PATH);
 }
