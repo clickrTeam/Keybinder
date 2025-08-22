@@ -350,7 +350,7 @@ Profile Profile::from_file(const QString &filename) {
 void saveLatestJsonProfile(const QJsonObject &obj) {
     QFile file(LATEST_PROFILE_FILE_LOCATION);
     if (!file.open(QFile::WriteOnly)) {
-        qCritical() << "Failed to save latest JSON profile: Unable to open file" << LATEST_PROFILE_FILE_LOCATION << "for writing. Error:" << file.errorString();
+        qCritical() << "Failed to save latest JSON profile: Unable to open file" << LATEST_PROFILE_FILE_LOCATION << " for writing. Error: " << file.errorString();
         return;
     }
 
