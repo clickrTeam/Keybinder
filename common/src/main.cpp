@@ -22,7 +22,8 @@
 // Testing pipe method
 #include <QSocketNotifier>
 #include <QTimer>
-static int sigPipeFd[2];
+#include "signal_handler.h"
+//static int sigPipeFd[2];
 
 
 /**
@@ -33,11 +34,11 @@ static int sigPipeFd[2];
  *        function.
  * @param The int representing the signal
  */
-void handleSignalExit(int)
-{
-    char c = 1;
-    write(sigPipeFd[1], &c, 1);
-}
+//void handleSignalExit(int)
+//{
+//    char c = 1;
+//    write(sigPipeFd[1], &c, 1);
+//}
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
@@ -58,19 +59,20 @@ int main(int argc, char *argv[]) {
     Profile activeProfile =
         Profile::from_file(path);
 
-
-    // Create a pipe
-    if (pipe(sigPipeFd)) {
-        qFatal("Failed to create pipe");
-    }
+    Signal_Handler sh;
+    sh.config_handler();
+//    // Create a pipe
+//    if (pipe(sigPipeFd)) {
+//        qFatal("Failed to create pipe");
+//    }
 
     // Install signal handler for unix based systems.
-    struct sigaction sa{};
-    sa.sa_handler   = handleSignalExit;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags     = SA_RESTART;
-    sigaction(SIGINT,  &sa, nullptr);
-    sigaction(SIGTERM, &sa, nullptr);
+//    struct sigaction sa{};
+//    sa.sa_handler   = handleSignalExit;
+//    sigemptyset(&sa.sa_mask);
+//    sa.sa_flags     = SA_RESTART;
+//    sigaction(SIGINT,  &sa, nullptr);
+//    sigaction(SIGTERM, &sa, nullptr);
 
 
     // Hacky workaround for circular reference
@@ -113,16 +115,16 @@ int main(int argc, char *argv[]) {
     LocalServer server(mapper);
 
 
-    QSocketNotifier *notifier = new QSocketNotifier(sigPipeFd[0], QSocketNotifier::Read, &a);
+//    QSocketNotifier *notifier = new QSocketNotifier(sigPipeFd[0], QSocketNotifier::Read, &a);
 
-    QObject::connect(notifier, &QSocketNotifier::activated, [&a, notifier](int) {
-        notifier->setEnabled(false);        // prevent repeated triggers
-        char c;
-        ::read(sigPipeFd[0], &c, sizeof(c)); // clear the pipe
+//    QObject::connect(notifier, &QSocketNotifier::activated, [&a, notifier](int) {
+//        notifier->setEnabled(false);        // prevent repeated triggers
+//        char c;
+//        ::read(sigPipeFd[0], &c, sizeof(c)); // clear the pipe
 
-        // Exit the event loop
-        QCoreApplication::instance()->quit();
-    });
+//        // Exit the event loop
+//        QCoreApplication::instance()->quit();
+//    });
 
 
     // Removing for prototype as not yet used
