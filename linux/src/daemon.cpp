@@ -59,11 +59,13 @@ void Daemon::start()
         return;
     }
 
-    bool termination_condition = false; //TODO: A signal from the Electron app? Something to say 'stop the daemon'.
+    bool termination_condition = false;
     QList<InputEvent> event_list;
     is_running = true;
     while (!termination_condition)
     {
+        // Check if the thread has been requested to be interrupted, if so exit the loop.
+        // Otherwise this loop will block and prevent proper termination
         termination_condition = QThread::currentThread()->isInterruptionRequested();
         struct input_event event;
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0)
@@ -108,28 +110,14 @@ void Daemon::cleanup()
 {
     if (this->is_running)
     {
-        qDebug() << "Entered cleanup()";
-
         ioctl(uinput_fd, UI_DEV_DESTROY);
-        qDebug() << "after ioctl";
         close(uinput_fd);
-        qDebug() << "after close(uinput_fd)";
         if (keyb != nullptr && keyb_fd >= 0)
         {
             libevdev_grab(keyb, LIBEVDEV_UNGRAB); // @todo crash here
-            qDebug() << "after libevdev_grab";
             libevdev_free(keyb);
-            qDebug() << "after libevdev_free";
             close(keyb_fd);
-            qDebug() << "after close(keyb_fd)";
         }
-//        libevdev_grab(keyb, LIBEVDEV_UNGRAB); // @todo crash here
-//        qDebug() << "after libevdev_grab";
-//        libevdev_free(keyb);
-//        qDebug() << "after libevdev_free";
-//        close(keyb_fd);
-//        qDebug() << "after close(keyb_fd)";
-
         qDebug() << "Daemon cleaned up" << Qt::endl;
         is_running = false;
     }

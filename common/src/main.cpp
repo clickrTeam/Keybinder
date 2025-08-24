@@ -23,32 +23,21 @@
 #include <QSocketNotifier>
 #include <QTimer>
 static int sigPipeFd[2];
-/*
- *  Signal handler: forward SIGINT/SIGTERM to Qt event loop.
- *  This will end the Qt event loop, things will go out of scope as expected,
- *  destructors will be called and resources will be cleaned up.
+
+
+/**
+ * @brief handleSignalExit This function will handle SIGINT and SIGTERM on Linux and macOS
+ *        It will write a single byte to a pipe, which is a standard and async-safe
+ *        way to signal that something needs to happen. In our case, that 'something'
+ *        is gracefully exiting the Qt event loop, which will be done in a connect
+ *        function.
+ * @param The int representing the signal
  */
 void handleSignalExit(int)
 {
-    qDebug() << "Inside handleSignalExit";
-//    QMetaObject::invokeMethod(QCoreApplication::instance(), "quit",
-//                              Qt::QueuedConnection);
-
     char c = 1;
     write(sigPipeFd[1], &c, 1);
-//    QCoreApplication::quit();
-    qDebug() << "After write to pipe in sighandler";
 }
-
-
-void handleSignal(QSocketNotifier* notifier, QCoreApplication* app) {
-    qDebug() << "Inside signal handler with notifier";
-    notifier->setEnabled(false);
-    char c;
-    ::read(sigPipeFd[0], &c, sizeof(c));
-    app->quit();
-}
-
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
@@ -75,13 +64,7 @@ int main(int argc, char *argv[]) {
         qFatal("Failed to create pipe");
     }
 
-    // 1a. Log the main thread’s ID
-    Qt::HANDLE mainTid = QThread::currentThreadId();
-    qDebug() << "[main] QThread::currentThread() =" << QThread::currentThread()
-             << " tid =" << mainTid;
-
-    // Install signal handler
-    // std::signal(SIGINT, handleSignalExit); // kill -2 or Ctrl+C
+    // Install signal handler for unix based systems.
     struct sigaction sa{};
     sa.sa_handler   = handleSignalExit;
     sigemptyset(&sa.sa_mask);
@@ -92,12 +75,6 @@ int main(int argc, char *argv[]) {
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
-    /**
-     * @todo The problem lies in the daemon. Just having this constructor called without starting the thread
-     *       will cause a crash when sigint is called instead of graceful exiting.
-     *       However, even though it will crash and the daemon destructor isn't called,
-     *       the LocalServer destructor is called and the socket is cleaned up.
-     */
     Daemon daemon(mapper);
     mapper.set_daemon(&daemon);
 
@@ -110,21 +87,16 @@ int main(int argc, char *argv[]) {
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit,
                      [&]() {
-//                         qDebug() << "Daemon about to clean up";
-//                         daemon.cleanup();
-//                         qDebug() << "daemon.cleanup() has returned";
-
-                         // 2b) request the QThread to stop (for QThread::exec-based threads)
+                         // Request the QThread to stop
                          daemon_thread->requestInterruption();
 
-                                // 2c) wait for the thread to actually finish
+                         // wait for the thread to actually finish
                          if (!daemon_thread->wait(5000)) {
                              qWarning() << "Daemon thread didn’t stop in 5s, forcing termination";
                          }
-                         qDebug() << "daemon thread terminated";
-                         qDebug() << "Daemon about to clean up";
+
+                         // Thread has stopped, clean up resources
                          daemon.cleanup();
-                         qDebug() << "daemon.cleanup() has returned";
                      });
 
     // Somehow hope this works, many varibles can make it not. Working is not so important.
@@ -141,30 +113,15 @@ int main(int argc, char *argv[]) {
     LocalServer server(mapper);
 
 
-    /// @todo Testing pipe method, should work for linux and mac but currently does not.
     QSocketNotifier *notifier = new QSocketNotifier(sigPipeFd[0], QSocketNotifier::Read, &a);
 
-    /// @todo This is not getting executed when the pipe is written to.
     QObject::connect(notifier, &QSocketNotifier::activated, [&a, notifier](int) {
         notifier->setEnabled(false);        // prevent repeated triggers
         char c;
         ::read(sigPipeFd[0], &c, sizeof(c)); // clear the pipe
-        qDebug() << "About to quit app, notifier has been activated";
-        Qt::HANDLE slotTid = QThread::currentThreadId();
-        qDebug() << "[slot] QThread::currentThread() ="
-                 << QThread::currentThread()
-                 << " tid =" << slotTid;
-        // attempt 1
-        QCoreApplication::instance()->quit();
-        //a.quit();                             // gracefully exit the event loop
-        qDebug() << "a.quit() was called in connect";
 
-        // attempt2
-//        bool was_invoked = QMetaObject::invokeMethod(&a, "quit", Qt::QueuedConnection);
-//        qDebug() << "Invoked quit method via queued connection returned " << was_invoked;
-        // attempt 3
-//        QTimer::singleShot(0, &a, &QCoreApplication::quit);
-//        qDebug() << "Invoked quit method with singleshot timer";
+        // Exit the event loop
+        QCoreApplication::instance()->quit();
     });
 
 
@@ -181,14 +138,6 @@ int main(int argc, char *argv[]) {
     //     qDebug() << "App started manually.";
     // }
 
-    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
-        qInfo() << "aboutToQuit emitted";
-    });
-
-    //return a.exec();
-    qDebug() << "Entering exec()";
     int ret = a.exec();
-    qDebug() << "Returned from exec(), code =" << ret;
-
     return ret;
 }
