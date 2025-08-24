@@ -36,10 +36,13 @@ void handleSignalExit(int)
 
     char c = 1;
     write(sigPipeFd[1], &c, 1);
+//    QCoreApplication::quit();
+    qDebug() << "After write to pipe in sighandler";
 }
 
 
 void handleSignal(QSocketNotifier* notifier, QCoreApplication* app) {
+    qDebug() << "Inside signal handler with notifier";
     notifier->setEnabled(false);
     char c;
     ::read(sigPipeFd[0], &c, sizeof(c));
@@ -68,30 +71,39 @@ int main(int argc, char *argv[]) {
 
 
     // Create a pipe
-    if (::pipe(sigPipeFd)) {
+    if (pipe(sigPipeFd)) {
         qFatal("Failed to create pipe");
     }
 
-
+    // 1a. Log the main thread’s ID
+    Qt::HANDLE mainTid = QThread::currentThreadId();
+    qDebug() << "[main] QThread::currentThread() =" << QThread::currentThread()
+             << " tid =" << mainTid;
 
     // Install signal handler
-    std::signal(SIGINT, handleSignalExit); // kill -2 or Ctrl+C
+    // std::signal(SIGINT, handleSignalExit); // kill -2 or Ctrl+C
+    struct sigaction sa{};
+    sa.sa_handler   = handleSignalExit;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags     = SA_RESTART;
+    sigaction(SIGINT,  &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
 
 
     // Hacky workaround for circular reference
-    Mapper mapper(activeProfile);
-    Daemon daemon(mapper);
-    mapper.set_daemon(&daemon);
+//    Mapper mapper(activeProfile);
+//    Daemon daemon(mapper);
+//    mapper.set_daemon(&daemon);
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
     // causing slowdowns
-    QThread *daemon_thread = QThread::create([&] { daemon.start(); });
-    daemon_thread->start(QThread::Priority::TimeCriticalPriority);
+//    QThread *daemon_thread = QThread::create([&] { daemon.start(); });
+//    daemon_thread->start(QThread::Priority::TimeCriticalPriority);
 
-    QObject::connect(QCoreApplication::instance(),
-                     &QCoreApplication::aboutToQuit,
-                     [&]() { daemon.cleanup(); });
+//    QObject::connect(QCoreApplication::instance(),
+//                     &QCoreApplication::aboutToQuit,
+//                     [&]() { daemon.cleanup(); });
 
     // Somehow hope this works, many varibles can make it not. Working is not so important.
     Logger logger;
@@ -104,7 +116,7 @@ int main(int argc, char *argv[]) {
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
-    LocalServer server(mapper);
+//    LocalServer server(mapper);
 
 
     /// @todo Testing pipe method, should work for linux and mac but currently does not.
@@ -116,7 +128,21 @@ int main(int argc, char *argv[]) {
         char c;
         ::read(sigPipeFd[0], &c, sizeof(c)); // clear the pipe
         qDebug() << "About to quit app, notifier has been activated";
-        a.quit();                             // gracefully exit the event loop
+        Qt::HANDLE slotTid = QThread::currentThreadId();
+        qDebug() << "[slot] QThread::currentThread() ="
+                 << QThread::currentThread()
+                 << " tid =" << slotTid;
+        // attempt 1
+        QCoreApplication::instance()->quit();
+        //a.quit();                             // gracefully exit the event loop
+        qDebug() << "a.quit() was called in connect";
+
+        // attempt2
+//        bool was_invoked = QMetaObject::invokeMethod(&a, "quit", Qt::QueuedConnection);
+//        qDebug() << "Invoked quit method via queued connection returned " << was_invoked;
+        // attempt 3
+//        QTimer::singleShot(0, &a, &QCoreApplication::quit);
+//        qDebug() << "Invoked quit method with singleshot timer";
     });
 
 
@@ -133,8 +159,14 @@ int main(int argc, char *argv[]) {
     //     qDebug() << "App started manually.";
     // }
 
-    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [&]() {
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
         qInfo() << "aboutToQuit emitted";
     });
-    return a.exec();
+
+    //return a.exec();
+    qDebug() << "Entering exec()";
+    int ret = a.exec();
+    qDebug() << "Returned from exec(), code =" << ret;
+
+    return ret;
 }
