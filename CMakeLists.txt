@@ -35,10 +35,6 @@ qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
-    common/include/abstract_signal_handler.h
-    linux/include/signal_handler.h
-    linux/src/signal_handler.cpp
-
 )
 
 target_include_directories(keybinder  PRIVATE  
