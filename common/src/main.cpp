@@ -91,19 +91,41 @@ int main(int argc, char *argv[]) {
 
 
     // Hacky workaround for circular reference
-//    Mapper mapper(activeProfile);
-//    Daemon daemon(mapper);
-//    mapper.set_daemon(&daemon);
+    Mapper mapper(activeProfile);
+    /**
+     * @todo The problem lies in the daemon. Just having this constructor called without starting the thread
+     *       will cause a crash when sigint is called instead of graceful exiting.
+     *       However, even though it will crash and the daemon destructor isn't called,
+     *       the LocalServer destructor is called and the socket is cleaned up.
+     */
+    Daemon daemon(mapper);
+    mapper.set_daemon(&daemon);
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
     // causing slowdowns
-//    QThread *daemon_thread = QThread::create([&] { daemon.start(); });
-//    daemon_thread->start(QThread::Priority::TimeCriticalPriority);
+    QThread *daemon_thread = QThread::create([&] { daemon.start(); });
+    daemon_thread->start(QThread::Priority::TimeCriticalPriority);
 
-//    QObject::connect(QCoreApplication::instance(),
-//                     &QCoreApplication::aboutToQuit,
-//                     [&]() { daemon.cleanup(); });
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit,
+                     [&]() {
+//                         qDebug() << "Daemon about to clean up";
+//                         daemon.cleanup();
+//                         qDebug() << "daemon.cleanup() has returned";
+
+                         // 2b) request the QThread to stop (for QThread::exec-based threads)
+                         daemon_thread->requestInterruption();
+
+                                // 2c) wait for the thread to actually finish
+                         if (!daemon_thread->wait(5000)) {
+                             qWarning() << "Daemon thread didn’t stop in 5s, forcing termination";
+                         }
+                         qDebug() << "daemon thread terminated";
+                         qDebug() << "Daemon about to clean up";
+                         daemon.cleanup();
+                         qDebug() << "daemon.cleanup() has returned";
+                     });
 
     // Somehow hope this works, many varibles can make it not. Working is not so important.
     Logger logger;
@@ -116,7 +138,7 @@ int main(int argc, char *argv[]) {
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
-//    LocalServer server(mapper);
+    LocalServer server(mapper);
 
 
     /// @todo Testing pipe method, should work for linux and mac but currently does not.

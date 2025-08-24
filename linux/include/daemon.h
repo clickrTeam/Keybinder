@@ -26,6 +26,7 @@ class Daemon : public AbstractDaemon {
     int uinput_fd = -1;
     struct libevdev *keyb;
     QString event_keyb_path = "";
+    bool is_running = false;
   public:
     // Constructor and Destructor
     Daemon(Mapper &m);

@@ -1,6 +1,7 @@
 #include "daemon.h"
 #include "linux_configure.h"
 #include "mapper.h"
+#include <QThread>
 
 Mapper* mapper = nullptr;
 Daemon::Daemon(Mapper &m)
@@ -60,9 +61,10 @@ void Daemon::start()
 
     bool termination_condition = false; //TODO: A signal from the Electron app? Something to say 'stop the daemon'.
     QList<InputEvent> event_list;
-
+    is_running = true;
     while (!termination_condition)
     {
+        termination_condition = QThread::currentThread()->isInterruptionRequested();
         struct input_event event;
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0)
         {
@@ -104,13 +106,37 @@ void Daemon::start()
 
 void Daemon::cleanup()
 {
-    ioctl(uinput_fd, UI_DEV_DESTROY);
-    close(uinput_fd);
-    libevdev_grab(keyb, LIBEVDEV_UNGRAB);
-    libevdev_free(keyb);
-    close(keyb_fd);
+    if (this->is_running)
+    {
+        qDebug() << "Entered cleanup()";
 
-    qDebug() << "Daemon cleaned up" << Qt::endl;
+        ioctl(uinput_fd, UI_DEV_DESTROY);
+        qDebug() << "after ioctl";
+        close(uinput_fd);
+        qDebug() << "after close(uinput_fd)";
+        if (keyb != nullptr && keyb_fd >= 0)
+        {
+            libevdev_grab(keyb, LIBEVDEV_UNGRAB); // @todo crash here
+            qDebug() << "after libevdev_grab";
+            libevdev_free(keyb);
+            qDebug() << "after libevdev_free";
+            close(keyb_fd);
+            qDebug() << "after close(keyb_fd)";
+        }
+//        libevdev_grab(keyb, LIBEVDEV_UNGRAB); // @todo crash here
+//        qDebug() << "after libevdev_grab";
+//        libevdev_free(keyb);
+//        qDebug() << "after libevdev_free";
+//        close(keyb_fd);
+//        qDebug() << "after close(keyb_fd)";
+
+        qDebug() << "Daemon cleaned up" << Qt::endl;
+        is_running = false;
+    }
+    else
+    {
+        qDebug() << "cleanup() called but daemon not running. Exiting function.";
+    }
 }
 
 void Daemon::send_keys(const QList<InputEvent> &vk)
