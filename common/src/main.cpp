@@ -40,7 +40,6 @@ int main(int argc, char *argv[]) {
         Profile::from_file(path);
 
     Signal_Handler sh;
-    sh.config_handler();
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
@@ -53,21 +52,7 @@ int main(int argc, char *argv[]) {
     QThread *daemon_thread = QThread::create([&] { daemon.start(); });
     daemon_thread->start(QThread::Priority::TimeCriticalPriority);
     sh.set_daemon_thread(daemon_thread);
-
-//    QObject::connect(QCoreApplication::instance(),
-//                     &QCoreApplication::aboutToQuit,
-//                     [&]() {
-//                         // Request the QThread to stop
-//                         daemon_thread->requestInterruption();
-
-//                         // wait for the thread to actually finish
-//                         if (!daemon_thread->wait(5000)) {
-//                             qWarning() << "Daemon thread didn’t stop in 5s, forcing termination";
-//                         }
-
-//                         // Thread has stopped, clean up resources
-//                         daemon.cleanup();
-//                     });
+    sh.config_handler();
 
     // Somehow hope this works, many varibles can make it not. Working is not so important.
     Logger logger;

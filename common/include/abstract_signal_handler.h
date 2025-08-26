@@ -14,7 +14,7 @@ class Abstract_Signal_Handler
 
     virtual void config_handler() = 0;
 
-    virtual void set_daemon_thread(QThread* thread);
+    virtual void set_daemon_thread(QThread* thread) = 0;
 };
 
 #endif // ABSTRACT_SIGNAL_HANDLER_H
