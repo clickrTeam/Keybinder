@@ -4,7 +4,7 @@
 #include <QMetaObject>
 #include <QDebug>
 
-// Called on Ctrl+C, window close, shutdown, etc.
+/// @todo We may want to handle closing the daemon thread explicitly on Windows but I'm not sure. We have to on Linux
 static BOOL WINAPI Signal_Handler::console_ctrl_handler(DWORD ctrlType)
 {
     auto app = QCoreApplication::instance();
@@ -41,6 +41,11 @@ static BOOL WINAPI Signal_Handler::console_ctrl_handler(DWORD ctrlType)
         Qt::DirectConnection
         );
     return TRUE;
+}
+
+void Signal_Handler::set_daemon_thread(QThread* thread)
+{
+    this->daemon_thread = thread;
 }
 
 void Signal_Handler::config_handler()

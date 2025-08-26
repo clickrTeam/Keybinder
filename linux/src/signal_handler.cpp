@@ -7,10 +7,16 @@
 
 int Signal_Handler::pipe_fds[2] = { -1, -1 };
 
+// Static method
 void Signal_Handler::handle_sig(int sig)
 {
     char c = 1;
     write(pipe_fds[1], &c, 1);
+}
+
+void Signal_Handler::set_daemon_thread(QThread* thread)
+{
+    this->daemon_thread = thread;
 }
 
 void Signal_Handler::config_handler()
@@ -38,4 +44,16 @@ void Signal_Handler::config_handler()
         // Exit the event loop
         QCoreApplication::instance()->quit();
      });
+
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit,
+                     [&]() {
+                         // Request the QThread to stop
+                         daemon_thread->requestInterruption();
+
+                                // wait for the thread to actually finish
+                         if (!daemon_thread->wait(5000)) {
+                             qWarning() << "Daemon thread didn’t stop in 5s, forcing termination";
+                         }
+                     });
 }

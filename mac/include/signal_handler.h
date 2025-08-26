@@ -17,7 +17,20 @@ class Signal_Handler: public Abstract_Signal_Handler
      */
     void config_handler() override;
 
+    /**
+     * @brief set_daemon_thread will set the pointer to a daemon_thread
+     * @param thread is the QThread object that will be referenced
+     */
+    void set_daemon_thread(QThread* thread) override;
+
   private:
+
+    /**
+     * @brief daemon_thread is a pointer to the QThread object the daemon will run on.
+     *        It will be used to connect logic to the thread.
+     */
+    QThread* daemon_thread;
+
     /**
      * @brief pipe_fds The pipe that will be written to during a signal interception
      */

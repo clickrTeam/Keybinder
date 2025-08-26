@@ -13,6 +13,12 @@ void Signal_Handler::handle_sig(int sig)
     write(pipe_fds[1], &c, 1);
 }
 
+void Signal_Handler::set_daemon_thread(QThread* thread)
+{
+    this->daemon_thread = thread;
+}
+
+/// @todo We may need to handle closing the daemon thread explicitly on macOS but I'm not sure. We have to on Linux
 void Signal_Handler::config_handler()
 {
     // Create a pipe
