@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "mapper.h"
 #include "signal_handler.h"
+#include "read_profile.h"
 #include <QCoreApplication>
 #include <QDebug>
 #include <QStringList>
@@ -22,11 +23,13 @@
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
+    QString path = "empty";
+    Profile activeProfile;
+
 #ifdef QT_DEBUG
-    QString path = "../../exampleProfiles/numberpad.json";
+    // path = "../../exampleProfiles/numberpad.json";
 #else
     qInstallMessageHandler(myMessageHandler);
-    QString path = "empty";
 #endif
     if (argc < 2)
     {
@@ -36,8 +39,12 @@ int main(int argc, char *argv[]) {
     {
         path = argv[1];
     }
-    Profile activeProfile =
-        Profile::from_file(path);
+
+    if (path == "empty") {
+        activeProfile = Profile::loadLatest();
+    } else {
+        activeProfile = Profile::from_file(path);
+    }
 
     Signal_Handler sh;
 
@@ -80,6 +87,5 @@ int main(int argc, char *argv[]) {
     //     qDebug() << "App started manually.";
     // }
 
-    int ret = a.exec();
-    return ret;
+    return a.exec();
 }

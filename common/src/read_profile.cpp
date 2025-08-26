@@ -282,6 +282,7 @@ Profile Profile::from_json(const QJsonObject &obj) {
         layers.push_back(Layer::from_json(get_value_as_object(remapping)));
     }
     qDebug() << "Loaded PROFILE_NAME:" << profile_name;
+    saveLatestJsonProfile(obj);
 
     return Profile{
         .name = profile_name, .layers = layers, .default_layer = default_layer};
@@ -345,3 +346,27 @@ Profile Profile::from_file(const QString &filename) {
     QByteArray json_data = file.readAll();
     return Profile::from_bytes(json_data);
 }
+
+void saveLatestJsonProfile(const QJsonObject &obj) {
+    QFile file(LATEST_PROFILE_FILE_LOCATION);
+    if (!file.open(QFile::WriteOnly)) {
+        qCritical() << "Failed to save latest JSON profile: Unable to open file" << LATEST_PROFILE_FILE_LOCATION << " for writing. Error: " << file.errorString();
+        return;
+    }
+
+    QJsonDocument doc(obj);
+    if (file.write(doc.toJson()) == -1) {
+        qCritical() << "Failed to save latest JSON profile: Unable to write to file" << LATEST_PROFILE_FILE_LOCATION << ". Error:" << file.errorString();
+        file.close();
+        return;
+    }
+
+    file.close();
+    qDebug() << "Latest JSON profile saved successfully to" << LATEST_PROFILE_FILE_LOCATION;
+}
+
+Profile Profile::loadLatest() {
+    qDebug() << "Loading latest profile";
+    return Profile::from_file(LATEST_PROFILE_FILE_LOCATION);
+}
+
