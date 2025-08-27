@@ -5,7 +5,7 @@
 #include "abstract_signal_handler.h"
 
 /**
- * @brief Linux specific signal handler class to ensure graceful exits of the keybinder program.
+ * @brief Unix specific signal handler class to ensure graceful exits of the keybinder program.
  */
 class Signal_Handler: public AbstractSignalHandler
 {
