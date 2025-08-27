@@ -1,5 +1,6 @@
 #include "daemon.h"
 #include "event.h"
+#include "key_code.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
@@ -8,8 +9,8 @@
 #include <qdebug.h>
 
 // Heavily based on https://github.com/psych3r/driverkit
-Daemon::Daemon(Mapper &m)
-    : mapper(m), matching_dictionary(nullptr),
+Daemon::Daemon(KeySender key_sender)
+    : key_sender(key_sender), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
     matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
     UInt32 generic_desktop = kHIDPage_GenericDesktop;
@@ -133,10 +134,10 @@ void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_keys(const QList<InputEvent> &events) {
     for (const InputEvent &event : events) {
-        std::cout << "SENDING KEY " << event.keycode
-                  << (event.type == KeyEventType::Press ? " pressed"
-                                                        : " released")
-                  << std::endl;
+        qDebug() << "SENDING KEY "
+                 << str_to_keycode.find_backward(event.keycode)
+                 << (event.type == KeyEventType::Press ? " pressed"
+                                                       : " released");
 
         if (event.type == KeyEventType::Press)
             report.keys.insert(event.keycode);
