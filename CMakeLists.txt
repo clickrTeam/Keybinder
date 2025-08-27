@@ -14,6 +14,7 @@ qt_standard_project_setup()
 # Conditionally add the platform-specific directory.
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")
+
 add_subdirectory(common)
 
 set(PLATFORM_SOURCES "")

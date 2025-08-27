@@ -5,6 +5,7 @@
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
+#include "signal_handler.h"
 #include "read_profile.h"
 #include <QCoreApplication>
 #include <QDebug>
@@ -18,6 +19,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <qcoreapplication.h>
+#include <csignal>
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
@@ -44,6 +46,8 @@ int main(int argc, char *argv[]) {
         activeProfile = Profile::from_file(path);
     }
 
+    Signal_Handler sh;
+
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
     Daemon daemon(mapper);
@@ -54,10 +58,8 @@ int main(int argc, char *argv[]) {
     // causing slowdowns
     QThread *daemon_thread = QThread::create([&] { daemon.start(); });
     daemon_thread->start(QThread::Priority::TimeCriticalPriority);
-
-    QObject::connect(QCoreApplication::instance(),
-                     &QCoreApplication::aboutToQuit,
-                     [&]() { daemon.cleanup(); });
+    sh.set_daemon_thread(daemon_thread);
+    sh.config_handler();
 
     // Somehow hope this works, many varibles can make it not. Working is not so important.
     Logger logger;
@@ -84,5 +86,6 @@ int main(int argc, char *argv[]) {
     // } else {
     //     qDebug() << "App started manually.";
     // }
+
     return a.exec();
 }
