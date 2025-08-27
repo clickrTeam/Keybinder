@@ -93,7 +93,7 @@ void Daemon::start() {
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0) {
             if (event.type == EV_KEY) {
                 InputEvent e;
-                e.keycode = event.code;
+                e.keycode = int_to_keycode.find_forward(event.code);
                 e.type = (event.value == 1) ? KeyEventType::Press
                                             : KeyEventType::Release;
 
