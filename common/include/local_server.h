@@ -19,7 +19,7 @@ class LocalServer : public QObject {
 
   public:
     explicit LocalServer(Mapper &mapper);
-    virtual ~LocalServer() = default;
+    virtual ~LocalServer();
     bool start();
 
   private slots:
