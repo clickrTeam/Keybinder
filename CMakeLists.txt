@@ -15,9 +15,6 @@ qt_standard_project_setup()
 set(COMMON_SOURCES "")
 set(COMMON_HEADER_PATHS "")
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_subdirectory(common)
 
 set(PLATFORM_SOURCES "")

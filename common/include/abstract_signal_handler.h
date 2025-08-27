@@ -7,10 +7,10 @@
  * @brief The Abstract_Signal_Handler class acts as an interface for OS specific signal handling.
  *        The purpose of this is to ensure a standardized way to gracefully exit keybinder.
  */
-class Abstract_Signal_Handler
+class AbstractSignalHandler
 {
   public:
-    virtual ~Abstract_Signal_Handler() = default;
+    virtual ~AbstractSignalHandler() = default;
 
     virtual void config_handler() = 0;
 
