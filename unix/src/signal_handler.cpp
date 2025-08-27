@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QSocketNotifier>
 #include <QMetaObject>
+#include <QDebug>
 
 int Signal_Handler::pipe_fds[2] = { -1, -1 };
 
