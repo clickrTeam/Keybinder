@@ -24,8 +24,10 @@ if (WIN32)
     add_subdirectory(win)
 elseif (APPLE)
     add_subdirectory(mac)
+    add_subdirectory(unix)
 elseif (UNIX)
     add_subdirectory(linux)
+    add_subdirectory(unix)
 endif()
 
 qt_add_executable(keybinder
