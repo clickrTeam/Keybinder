@@ -1,7 +1,6 @@
 #pragma once
 #include "abstract_daemon.h"
 #include "key_channel.h"
-#include "mapper.h"
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
