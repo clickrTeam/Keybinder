@@ -1,5 +1,7 @@
 #pragma once
+#include "daemon.h"
 #include "event.h"
+#include "key_channel.h"
 #include "profile.h"
 #include <QDebug>
 #include <cstddef>
@@ -8,25 +10,22 @@
 
 using std::size_t;
 
-// Forward declaration needed due to circular dependency
-class Daemon;
-
 class Mapper {
   public:
-    Mapper(Profile);
+    Mapper(Profile, Daemon &, KeyReceiver);
     ~Mapper();
     void set_profile(Profile p);
-    void set_daemon(Daemon *d);
-    bool map_input(InputEvent);
+    // This should be called in a seperate thread as it does not return
+    void start();
     bool set_layer(size_t);
 
   private:
     void perform_binds(const QList<Bind> &bind);
     void set_layer_inner(size_t new_layer);
-    // void captureAndRelease();
 
     std::mutex mtx;
-    Daemon *daemon = nullptr;
+    Daemon &daemon;
+    KeyReceiver key_receiver;
     Profile profile;
     size_t cur_layer;
 
