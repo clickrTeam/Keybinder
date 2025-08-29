@@ -53,7 +53,9 @@ int main(int argc, char *argv[]) {
     // may be better as it does not run an event loop which I could imagine
     // causing slowdowns
     QThread *daemon_thread = QThread::create([&] { daemon.start(); });
+    QThread *mapper_thread = QThread::create([&] { mapper.start(); });
     daemon_thread->start(QThread::Priority::TimeCriticalPriority);
+    mapper_thread->start(QThread::Priority::TimeCriticalPriority);
     sh.set_daemon_thread(daemon_thread);
     sh.config_handler();
 
