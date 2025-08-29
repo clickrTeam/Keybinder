@@ -27,12 +27,14 @@ class Daemon : public AbstractDaemon {
     struct libevdev *keyb;
     QString event_keyb_path = "";
     bool is_running = false;
+    KeySender key_sender;
+
 
     void send_keys_helper(const QList<InputEvent> &vk, int fd);
 
   public:
     // Constructor and Destructor
-    Daemon(Mapper &m);
+    Daemon(KeySender);
     ~Daemon();
 
     // Override abstract class methods

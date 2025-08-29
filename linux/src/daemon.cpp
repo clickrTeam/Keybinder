@@ -1,11 +1,10 @@
 #include "daemon.h"
-#include "device_manager.h"
-#include "mapper.h"
+#include "key_channel.h"
+#include "key_map.h"
+#include "linux_configure.h"
 #include <QThread>
 
-Mapper *mapper = nullptr;
-Daemon::Daemon(Mapper &m) {
-    mapper = &m;
+Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
     // TODO: Possibly update with config file path
     event_keyb_path = retrieve_eventX();
 
@@ -97,7 +96,7 @@ void Daemon::start() {
                 e.type = (event.value == 1) ? KeyEventType::Press
                                             : KeyEventType::Release;
 
-                if (mapper->map_input(e)) {
+                if (key_sender.send_key(e)) {
                     // Suppressed by the mapper (i.e. replaced/mapped to
                     // something else)
                     continue;
@@ -136,9 +135,43 @@ void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
         // SYN_REPORT -> Used to synchronize and separate events into packets 
         //               of input data occurring at the same moment in time.
         event.code = SYN_REPORT;
-        event.value = 0; // This value is not used but is set to 0 by convention
-        write(fd, &event, sizeof(event)); // Send the event
+        event.value = 0;
+        write(uinput_fd, &event, sizeof(event));
 
-        qDebug() << "Key sent:" << input.keycode << ":" << type;
+        qDebug() << "Key sent:"
+                 << int_to_keycode.find_backward(input_event.keycode) << ":"
+                 << type << Qt::endl;
+    }
+}
+
+void Daemon::setup_uinput_device() {
+    int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    if (uinp_fd < 0) {
+        cerr << "Failed to open /dev/uinput" << endl;
+        return;
+    }
+
+    ioctl(uinp_fd, UI_SET_EVBIT, EV_KEY);
+    ioctl(uinp_fd, UI_SET_EVBIT, EV_SYN);
+
+    // TODO: Should not need this part if we are handling mapping with
+    // mapper.cpp
+    // Registers all of the keys to be remapped
+    for (int i = 0; i < 128; i++) {
+        ioctl(uinp_fd, UI_SET_KEYBIT, i);
+    }
+
+    struct uinput_setup usetup;
+    memset(&usetup, 0, sizeof(usetup));
+    usetup.id.bustype = BUS_USB;
+    usetup.id.vendor = 0x1;
+    usetup.id.product = 0x1;
+    strcpy(usetup.name, "h_key_mapper");
+
+    if (ioctl(uinp_fd, UI_DEV_SETUP, &usetup) < 0 ||
+        ioctl(uinp_fd, UI_DEV_CREATE) < 0) {
+        cerr << "Failed to create uinput device" << endl;
+        close(uinp_fd);
+        return;
     }
 }
