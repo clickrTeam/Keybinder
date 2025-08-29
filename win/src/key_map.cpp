@@ -100,4 +100,15 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     // {VK_LWIN, "Cmd"},
     // {VK_LMENU},
     // "Alt"};
+    //
+    //-            // Special Characters with directions
+    // { "Shift", VK_SHIFT },
+    // { "ShiftLeft", VK_LSHIFT },
+    // { "ShiftRight", VK_RSHIFT },
+    // { "Ctrl", VK_CONTROL },
+    // { "CtrlLeft", VK_LCONTROL },
+    // { "CtrlRight", VK_RCONTROL },
+    // { "Alt", VK_MENU },
+    // { "AltLeft", VK_LMENU },
+    // { "AltRight", VK_RMENU },
 };
