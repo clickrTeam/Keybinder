@@ -151,14 +151,13 @@ QString detect_keyboard()
             int fd = open(event_path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
             if (fd < 0) {
                 qCritical() << "Failed to open " << event_path << Qt::endl;
-                return keyb_path;
+                continue;
             }
 
                    // Initialize the evdev device
             if (libevdev_new_from_fd(fd, &dev) < 0) {
                 qCritical() << "Failed to initialize evdev device" << Qt::endl;
-                close(fd);
-                return keyb_path;
+                continue;
             }
 
                    // If a keyboard device has spacebar and the x key, it is most likely an actual keyboard
