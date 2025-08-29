@@ -1,24 +1,22 @@
 #pragma once
 
 #include "abstract_daemon.h"
-#include "profile.h"
-#include <linux/uinput.h>  // Required for injecting events
+#include "key_channel.h"
+#include <QDebug>
+#include <dirent.h>
+#include <fcntl.h>
 #include <iostream>
 #include <libevdev-1.0/libevdev/libevdev.h>
-#include <fcntl.h>
-#include <string.h>
-#include <dirent.h>
+#include <linux/uinput.h> // Required for injecting events
+#include <map>
 #include <unistd.h>
 #include <vector>
-#include <map>
-#include <QDebug>
-#include <mapper.h>
+using std::cerr;
 using std::cout;
 using std::endl;
-using std::cerr;
+using std::map;
 using std::string;
 using std::vector;
-using std::map;
 
 class Daemon : public AbstractDaemon {
   private:
@@ -27,26 +25,22 @@ class Daemon : public AbstractDaemon {
     struct libevdev *keyb;
     QString event_keyb_path = "";
     bool is_running = false;
+    KeySender key_sender;
+
   public:
     // Constructor and Destructor
-    Daemon(Mapper &m);
+    Daemon(KeySender);
     ~Daemon();
 
     // Override abstract class methods
     void start() override;
 
     ///
-    /// \brief Closes all fds and cleans up the deamon in order for the keyboard to
-    /// return to normal function.
+    /// \brief Closes all fds and cleans up the deamon in order for the keyboard
+    /// to return to normal function.
     ///
     void cleanup() override;
     void send_keys(const QList<InputEvent> &vk) override;
-
-    ///
-    /// \brief Starts the deamon which allows for key presses to be intercepted
-    /// \param activeProfile: The profile which will be loaded into the deamon
-    ///
-    void linux_start_deamon(Profile activeProfile);
 
     ///
     /// \brief Opens the uinput device to send key events.
