@@ -1,12 +1,10 @@
 #include "daemon.h"
+#include "key_channel.h"
 #include "key_map.h"
 #include "linux_configure.h"
-#include "mapper.h"
 #include <QThread>
 
-Mapper *mapper = nullptr;
-Daemon::Daemon(Mapper &m) {
-    mapper = &m;
+Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
     // TODO: Possibly update with config file path
     event_keyb_path = retrieve_eventX();
 
@@ -92,7 +90,7 @@ void Daemon::start() {
                 e.type = (event.value == 1) ? KeyEventType::Press
                                             : KeyEventType::Release;
 
-                if (mapper->map_input(e)) {
+                if (key_sender.send_key(e)) {
                     // Suppressed by the mapper (i.e. replaced/mapped to
                     // something else)
                     continue;
@@ -106,7 +104,6 @@ void Daemon::start() {
     }
 }
 
-<<<<<<< HEAD
 void Daemon::cleanup() {
     if (this->is_running) {
         ioctl(uinput_fd, UI_DEV_DESTROY);
@@ -122,16 +119,6 @@ void Daemon::cleanup() {
         qDebug()
             << "cleanup() called but daemon not running. Exiting function.";
     }
-=======
-void Daemon::cleanup() {
-    ioctl(uinput_fd, UI_DEV_DESTROY);
-    close(uinput_fd);
-    libevdev_grab(keyb, LIBEVDEV_UNGRAB);
-    libevdev_free(keyb);
-    close(keyb_fd);
-
-    qDebug() << "Daemon cleaned up" << Qt::endl;
->>>>>>> 6c1625f (Update linux to keycode)
 }
 
 void Daemon::send_keys(const QList<InputEvent> &vk) {
@@ -158,8 +145,9 @@ void Daemon::send_keys(const QList<InputEvent> &vk) {
         event.value = 0;
         write(uinput_fd, &event, sizeof(event));
 
-        qDebug() << "Key sent:" << input_event.keycode << ":" << type
-                 << Qt::endl;
+        qDebug() << "Key sent:"
+                 << int_to_keycode.find_backward(input_event.keycode) << ":"
+                 << type << Qt::endl;
     }
 }
 
