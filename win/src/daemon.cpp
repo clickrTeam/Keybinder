@@ -1,19 +1,19 @@
 #include "daemon.h"
 #include "event.h"
+#include "key_channel.h"
 #include "key_map.h"
-#include "mapper.h"
 #include <QCoreApplication>
 #include <windows.h>
 #include <winuser.h>
 
 HHOOK kbd = NULL; // Global hook handle
-Mapper *mapper = nullptr;
+KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
     0x1234ABCD; // allowed collisions otherwise,
                 // ((ULONG_PTR)GetCurrentProcessId() << 32) | 0x1234ABCD
 
-Daemon::Daemon(Mapper &m) {
-    mapper = &m;
+Daemon::Daemon(KeySender key_sender_tmp) {
+    key_sender = key_sender_tmp;
     qDebug() << "Daemon created";
     qDebug() << "Starting Win systems";
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &Daemon::HookProc, 0, 0);
@@ -109,7 +109,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Press;
-        if (mapper->map_input(e))
+        if (key_sender.send_key(e))
             return 1; // Suppress keypress
         break;
     }
@@ -117,7 +117,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         InputEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Relase;
-        if (mapper->map_input(e))
+        if (key_sender.send_key(e))
             return 1; // Suppress keypress
         break;
     }
