@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
         activeProfile = Profile::from_file(path);
     }
 
-    Signal_Handler sh;
+    SignalHandler sh;
 
     // Hacky workaround for circular reference
     Mapper mapper(activeProfile);
