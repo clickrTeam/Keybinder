@@ -4,7 +4,7 @@
 #include <QThread>
 
 /**
- * @brief The Abstract_Signal_Handler class acts as an interface for OS specific signal handling.
+ * @brief The Abstract_SignalHandler class acts as an interface for OS specific signal handling.
  *        The purpose of this is to ensure a standardized way to gracefully exit keybinder.
  */
 class AbstractSignalHandler

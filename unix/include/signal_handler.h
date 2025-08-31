@@ -7,7 +7,7 @@
 /**
  * @brief Unix specific signal handler class to ensure graceful exits of the keybinder program.
  */
-class Signal_Handler: public AbstractSignalHandler
+class SignalHandler: public AbstractSignalHandler
 {
   public:
     /**

@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-windows
-          path: build\keybinder.exe   
+          path: build/release/keybinder.exe   
 
   build-macos:
     name: macOS Build
