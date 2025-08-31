@@ -1,0 +1,126 @@
+name: Build 
+
+on:
+  push:
+
+jobs:
+  build-linux:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python and install aqt
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Qt via aqt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt linux desktop 6.5.3 gcc_64 -O ~/Qt
+
+      - name: Install libevdev
+        run: sudo apt install libevdev-dev
+ 
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/Qt/6.5.3/gcc_64
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload keybinder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-linux
+          path: build/keybinder   # adjust path to your binary
+
+  build-windows:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python and install aqt
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Qt via aqt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt windows desktop 6.5.3 win64_msvc2019_64 -O C:\Qt
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.5.3\msvc2019_64
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload keybinder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-windows
+          path: build\keybinder.exe   
+
+  build-macos:
+    name: macOS Build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up Python and install aqt
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Qt via aqt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt mac desktop 6.5.3 clang_64 -O ~/Qt
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/Qt/6.5.3/macos
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload keybinder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-macos
+          path: build/keybinder
+
+  post-gitlab-status:
+    name: Post GitLab Status
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-macos]
+    if: always()
+    steps:
+      - name: Post GitLab commit status
+        env:
+          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TARGET_COMMIT: ${{ github.sha }}
+        run: |
+          # Determine overall workflow status
+          if [ "${{ needs.build-linux.result }}" = "success" ] && \
+             [ "${{ needs.build-windows.result }}" = "success" ] && \
+             [ "${{ needs.build-macos.result }}" = "success" ]; then
+            STATE="success"
+            DESCRIPTION="All builds succeeded"
+          else
+            STATE="failed"
+            DESCRIPTION="One or more builds failed"
+          fi
+  
+          curl --request POST \
+            --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+            --header "Content-Type: application/json" \
+            --data "{\"state\":\"$STATE\",\"description\":\"$DESCRIPTION\",\"context\":\"CI\",\"target_url\":\"$GITHUB_RUN_URL\"}" \
+            "https://capstone.cs.utah.edu/api/v4/projects/113/statuses/$TARGET_COMMIT"
