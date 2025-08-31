@@ -7,7 +7,7 @@
 /**
  * @brief Windows specific signal handler class to ensure graceful exits of the keybinder program.
  */
-class Signal_Handler: public Abstract_Signal_Handler
+class SignalHandler: public AbstractSignalHandler
 {
   public:
     /**
