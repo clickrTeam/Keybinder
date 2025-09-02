@@ -1,0 +1,106 @@
+name: Format 
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Run clang-format
+        id: format-check
+        run: |
+          FILES=$(find  -name '*.c' -o -name '*.cpp' -o -name '*.h')
+          FORMATTED=false
+          if [ -n "$FILES" ]; then
+            clang-format -i $FILES
+            if ! git diff --quiet; then
+              FORMATTED=true
+            fi
+          fi
+          echo "formatted=$FORMATTED" >> $GITHUB_OUTPUT
+
+      - name: Commit fixup
+        id: commit-fix
+        env:
+          GITLAB_PAT: ${{ secrets.gitlab_pat }}
+        run: |
+          git config user.name "none"
+          git config user.email "none"
+          git remote add gitlab https://oauth2:$GITLAB_PAT@capstone.cs.utah.edu/clickr/clickr.git
+          HASH=""
+          if [ "${{ steps.format-check.outputs.formatted }}" = "true" ]; then
+            git add .
+            git commit --fixup=HEAD
+            HASH=$(git rev-parse HEAD)
+            TMP_BRANCH="tmp-${HASH}"
+
+            git branch $TMP_BRANCH 
+            git push gitlab $TMP_BRANCH --force
+            git push gitlab --delete $TMP_BRANCH  
+          fi
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+      - name: Post GitLab commit status
+        env:
+          GITLAB_PAT: ${{ secrets.gitlab_pat }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          FORMATTED="${{ steps.format-check.outputs.formatted }}"
+
+          # If there was a fixup commit, get the parent of HEAD
+          if [ "${{ steps.format-check.outputs.formatted }}" = "true" ]; then
+              TARGET_COMMIT=$(git rev-parse HEAD^)  # parent of fixup
+          else
+              TARGET_COMMIT=$(git rev-parse HEAD)
+          fi
+
+          if [ "$FORMATTED" = "true" ]; then
+            STATE="failed"
+            DESCRIPTION="Code format issue found. To apply fix locally: \`git fetch origin ${{ steps.commit-fix.outputs.hash }} && git cherry-pick ${{ steps.commit-fix.outputs.hash }}\`"
+          else
+            STATE="success"
+            DESCRIPTION="No format issues found"
+          fi
+
+          curl --request POST \
+            --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+            --header "Content-Type: application/json" \
+            --data "{\"state\":\"$STATE\",\"description\":\"$DESCRIPTION\",\"context\":\"format\", \"target_url\":\"$GITHUB_RUN_URL\"}" \
+            "https://capstone.cs.utah.edu/api/v4/projects/113/statuses/$TARGET_COMMIT"
+
+          # Also post comment because gitlabs ui for external checks sucks
+          if [ "${{ steps.format-check.outputs.formatted }}" = "true" ]; then
+            MR_IID=$(curl --silent --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+              "https://capstone.cs.utah.edu/api/v4/projects/113/repository/commits/$TARGET_COMMIT/merge_requests" \
+              | jq '.[0].iid'
+            )
+
+            NOTES=$(curl --silent --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+              "https://capstone.cs.utah.edu/api/v4/projects/113/merge_requests/$MR_IID/notes"
+            )
+            NOTE_IDS=$(echo "$NOTES" | jq '.[] | select(.body | contains("Code format issue found.")) | .id')
+            echo $NOTE_IDS
+            for NOTE_ID in $NOTE_IDS; do
+                curl --silent --request DELETE \
+                  --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+                  "https://capstone.cs.utah.edu/api/v4/projects/113/merge_requests/$MR_IID/notes/$NOTE_ID"
+            done
+            
+
+          
+            curl --request POST \
+              --header "PRIVATE-TOKEN: $GITLAB_PAT" \
+              --header "Content-Type: application/json" \
+              --data "{\"body\":\"$DESCRIPTION\"}" \
+              "https://capstone.cs.utah.edu/api/v4/projects/113/merge_requests/$MR_IID/notes"
+          fi
