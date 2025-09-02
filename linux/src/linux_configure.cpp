@@ -150,13 +150,13 @@ QString detect_keyboard()
 
             int fd = open(event_path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
             if (fd < 0) {
-                qCritical() << "Failed to open " << event_path << Qt::endl;
+                qWarning() << "Failed to open " << event_path << Qt::endl;
                 continue;
             }
 
                    // Initialize the evdev device
             if (libevdev_new_from_fd(fd, &dev) < 0) {
-                qCritical() << "Failed to initialize evdev device" << Qt::endl;
+                qWarning() << "Failed to initialize evdev device" << Qt::endl;
                 continue;
             }
 
