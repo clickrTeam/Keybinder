@@ -6,21 +6,21 @@
 #include <QMetaObject>
 #include <QDebug>
 
-int Signal_Handler::pipe_fds[2] = { -1, -1 };
+int SignalHandler::pipe_fds[2] = { -1, -1 };
 
 // Static method
-void Signal_Handler::handle_sig(int sig)
+void SignalHandler::handle_sig(int sig)
 {
     char c = 1;
     write(pipe_fds[1], &c, 1);
 }
 
-void Signal_Handler::set_daemon_thread(QThread* thread)
+void SignalHandler::set_daemon_thread(QThread* thread)
 {
     this->daemon_thread = thread;
 }
 
-void Signal_Handler::config_handler()
+void SignalHandler::config_handler()
 {
     // Create a pipe
     if (pipe(pipe_fds)) {
