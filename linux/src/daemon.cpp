@@ -147,30 +147,34 @@ void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
 void Daemon::setup_uinput_device() {
     int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (uinp_fd < 0) {
-        cerr << "Failed to open /dev/uinput" << endl;
+        qCritical() << "Failed to open /dev/uinput" << Qt::endl;
         return;
     }
 
+    // Declare which event types the keyboard supports.
+    // EV_KEY -> This device can generate key events (keyboard keys, mouse, buttons).
     ioctl(uinp_fd, UI_SET_EVBIT, EV_KEY);
+    // EV_SYN -> Synchronization events, used to mark the end of a batch of events.
     ioctl(uinp_fd, UI_SET_EVBIT, EV_SYN);
 
-    // TODO: Should not need this part if we are handling mapping with
-    // mapper.cpp
-    // Registers all of the keys to be remapped
-    for (int i = 0; i < 128; i++) {
+    // Register all possible keys as available to be remapped
+    for (int i = 0; i <= KEY_MAX; i++) {
         ioctl(uinp_fd, UI_SET_KEYBIT, i);
     }
 
-    struct uinput_setup usetup;
-    memset(&usetup, 0, sizeof(usetup));
-    usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x1;
-    usetup.id.product = 0x1;
-    strcpy(usetup.name, "h_key_mapper");
+    // Create uinput device
+    struct uinput_setup uinput_device;
+    memset(&uinput_device, 0, sizeof(uinput_device));
+    uinput_device.id.bustype = BUS_USB; // Pretend to be a USB device
+    uinput_device.id.vendor = 0x1;      // Arbitrary
+    uinput_device.id.product = 0x1;     // Arbitrary
+    // Device name that will show up in /proc/bus/input/devices or evtest
+    strcpy(uinput_device.name, "clickr_virtual_keyboard"); 
 
-    if (ioctl(uinp_fd, UI_DEV_SETUP, &usetup) < 0 ||
-        ioctl(uinp_fd, UI_DEV_CREATE) < 0) {
-        cerr << "Failed to create uinput device" << endl;
+
+    if (ioctl(uinp_fd, UI_DEV_SETUP, &uinput_device) < 0 || // Configure the device with the provided info
+        ioctl(uinp_fd, UI_DEV_CREATE) < 0) { // Tells the kernel to create the device
+        qCritical() << "Failed to create uinput device" << Qt::endl;
         close(uinp_fd);
         return;
     }
