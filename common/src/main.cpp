@@ -2,24 +2,24 @@
 // the compiler will just use the right implementation at runtime.
 // See mac/include/daemon.h for an example
 #include "daemon.h"
+#include "key_channel.h"
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
-#include "signal_handler.h"
 #include "read_profile.h"
-#include <QCoreApplication>
-#include <QDebug>
-#include <QStringList>
-#include <QThread>
+#include "signal_handler.h"
 #include <QByteArray>
-#include <QDebug>
-#include <QLoggingCategory>
-#include <QFile>
-#include <QTextStream>
+#include <QCoreApplication>
 #include <QDateTime>
+#include <QDebug>
 #include <QDir>
-#include <qcoreapplication.h>
+#include <QFile>
+#include <QLoggingCategory>
+#include <QStringList>
+#include <QTextStream>
+#include <QThread>
 #include <csignal>
+#include <qcoreapplication.h>
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
@@ -31,12 +31,9 @@ int main(int argc, char *argv[]) {
 #else
     qInstallMessageHandler(myMessageHandler);
 #endif
-    if (argc < 2)
-    {
+    if (argc < 2) {
         qDebug() << "Not enough arguments, using default profile location.";
-    }
-    else
-    {
+    } else {
         path = argv[1];
     }
 
@@ -48,27 +45,26 @@ int main(int argc, char *argv[]) {
 
     SignalHandler sh;
 
-    // Hacky workaround for circular reference
-    Mapper mapper(activeProfile);
-    Daemon daemon(mapper);
-    mapper.set_daemon(&daemon);
+    auto [sender, receiver] = create_channel();
+    Daemon daemon(sender);
+    Mapper mapper(activeProfile, daemon, receiver);
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
     // causing slowdowns
     QThread *daemon_thread = QThread::create([&] { daemon.start(); });
+    QThread *mapper_thread = QThread::create([&] { mapper.start(); });
     daemon_thread->start(QThread::Priority::TimeCriticalPriority);
+    mapper_thread->start(QThread::Priority::TimeCriticalPriority);
     sh.set_daemon_thread(daemon_thread);
     sh.config_handler();
 
-    // Somehow hope this works, many varibles can make it not. Working is not so important.
+    // Somehow hope this works, many varibles can make it not. Working is not so
+    // important.
     Logger logger;
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit,
-                     [&logger]() {
-                         logger.cleanUp();
-                     });
-
+                     [&logger]() { logger.cleanUp(); });
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)

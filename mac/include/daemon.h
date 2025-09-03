@@ -1,6 +1,6 @@
 #pragma once
 #include "abstract_daemon.h"
-#include "mapper.h"
+#include "key_channel.h"
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
@@ -19,7 +19,7 @@
 class Daemon : public AbstractDaemon {
   public:
     // Constructor and Destructor
-    Daemon(Mapper &m);
+    Daemon(KeySender);
     ~Daemon();
 
     // Override abstract class methods
@@ -28,7 +28,7 @@ class Daemon : public AbstractDaemon {
     void send_keys(const QList<InputEvent> &events) override;
 
   private:
-    Mapper &mapper;
+    KeySender key_sender;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
     std::shared_ptr<

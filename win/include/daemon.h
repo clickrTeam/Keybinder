@@ -1,14 +1,14 @@
 #pragma once
+#include "abstract_daemon.h"
+#include "mapper.h"
 #include <QDebug>
 #include <qglobalstatic.h>
 #include <windows.h>
-#include "abstract_daemon.h"
-#include "mapper.h"
 
 class Daemon : public AbstractDaemon {
   public:
     // Constructor and Destructor
-    Daemon(Mapper &m);
+    Daemon(KeySender);
     ~Daemon();
 
     // Override abstract class methods
@@ -17,4 +17,3 @@ class Daemon : public AbstractDaemon {
     void send_keys(const QList<InputEvent> &vk) override;
     static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam);
 };
-

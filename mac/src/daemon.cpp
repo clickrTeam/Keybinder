@@ -1,15 +1,18 @@
 #include "daemon.h"
 #include "event.h"
+#include "key_code.h"
+#include "key_map.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <MacTypes.h>
+#include <QDebug>
+#include <cstdint>
 #include <iostream>
-#include <qdebug.h>
 
 // Heavily based on https://github.com/psych3r/driverkit
-Daemon::Daemon(Mapper &m)
-    : mapper(m), matching_dictionary(nullptr),
+Daemon::Daemon(KeySender key_sender)
+    : key_sender(key_sender), matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
     matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
     UInt32 generic_desktop = kHIDPage_GenericDesktop;
@@ -133,15 +136,16 @@ void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
 void Daemon::send_keys(const QList<InputEvent> &events) {
     for (const InputEvent &event : events) {
-        std::cout << "SENDING KEY " << event.keycode
-                  << (event.type == KeyEventType::Press ? " pressed"
-                                                        : " released")
-                  << std::endl;
+        qDebug() << "SENDING KEY "
+                 << str_to_keycode.find_backward(event.keycode)
+                 << (event.type == KeyEventType::Press ? " pressed"
+                                                       : " released");
 
+        uint16_t raw_keycode = int_to_keycode.find_backward(event.keycode);
         if (event.type == KeyEventType::Press)
-            report.keys.insert(event.keycode);
+            report.keys.insert(raw_keycode);
         else if (event.type == KeyEventType::Release)
-            report.keys.erase(event.keycode);
+            report.keys.erase(raw_keycode);
 
         client->async_post_report(report);
     }
@@ -156,11 +160,11 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
               << std::endl;
 
     auto event = InputEvent{
-        .keycode = static_cast<int>(code),
+        .keycode = int_to_keycode.find_forward(code),
         .type = value ? KeyEventType::Press : KeyEventType::Release,
     };
 
-    if (!mapper.map_input(event)) {
+    if (!key_sender.send_key(event)) {
         send_keys({event});
     }
 }

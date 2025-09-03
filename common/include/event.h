@@ -1,10 +1,11 @@
 #pragma once
+#include "key_code.h"
 enum class KeyEventType {
     Press,
     Release,
 };
 
 struct InputEvent {
-    int keycode;
+    KeyCode keycode;
     KeyEventType type;
 };
