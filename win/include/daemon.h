@@ -1,6 +1,6 @@
 #pragma once
 #include "abstract_daemon.h"
-#include "mapper.h"
+#include "key_channel.h"
 #include <QDebug>
 #include <qglobalstatic.h>
 #include <windows.h>
