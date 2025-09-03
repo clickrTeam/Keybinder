@@ -1,10 +1,10 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <QFile>
-#include <QTextStream>
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
+#include <QTextStream>
 
 const QString LOG_FILE_NAME = "myapp.log";
 const QString LOG_DIR = "logs";
@@ -26,6 +26,7 @@ class Logger {
     QFile logFile_;
 };
 
-void myMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+void myMessageHandler(QtMsgType type, const QMessageLogContext &context,
+                      const QString &msg);
 
 #endif // LOGGER_H

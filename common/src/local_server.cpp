@@ -16,8 +16,7 @@ LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
                      &LocalServer::handle_new_connection);
 }
 
-LocalServer::~LocalServer()
-{
+LocalServer::~LocalServer() {
     qDebug() << "Entering LocalServer destructor";
     server.close();
     QLocalServer::removeServer(PIPE_PATH);
