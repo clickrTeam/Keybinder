@@ -116,7 +116,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     case WM_KEYUP: {
         InputEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
-        e.type = KeyEventType::Relase;
+        e.type = KeyEventType::Release;
         if (key_sender.send_key(e))
             return 1; // Suppress keypress
         break;
