@@ -60,8 +60,7 @@ struct Macro;
 using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer, Macro>;
 Bind parse_bind(const QJsonObject &obj);
 
-struct Macro
-{
+struct Macro {
     QList<Bind> binds;
     static Macro from_json(const QJsonObject &obj);
 };

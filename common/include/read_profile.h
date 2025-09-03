@@ -1,6 +1,6 @@
 #pragma once
-#include "profile.h"
 #include "key_map.h"
+#include "profile.h"
 #include <QDebug>
 #include <QFile>
 #include <QJsonArray>
