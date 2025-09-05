@@ -102,6 +102,11 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         // goes through
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
+
+    // FIXME: this is not a real solution
+    if (!int_to_keycode.contains_forward(kbdStruct->vkCode))
+        return 0;
+
     // Handle input
     switch (wParam) {
     case WM_KEYDOWN:

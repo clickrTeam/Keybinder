@@ -25,12 +25,19 @@ template <typename Key, typename Value> class BiMap {
         throw std::out_of_range("Key not found in forward map.");
     }
 
+    bool contains_forward(const Key &key) const {
+        return forward_map.contains(key);
+    }
+
     Key find_backward(const Value &value) const {
         auto it = backward_map.find(value);
         if (it != backward_map.end()) {
             return *it;
         }
         throw std::out_of_range("Value not found in backward map.");
+    }
+    bool contains_backwards(const Key &key) const {
+        return backward_map.contains(key);
     }
 
   private:
