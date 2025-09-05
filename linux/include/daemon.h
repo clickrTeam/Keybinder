@@ -31,6 +31,7 @@ class Daemon : public AbstractDaemon {
 
 
     void send_keys_helper(const QList<InputEvent> &vk, int fd);
+    void send_key(int key_code, int state, int fd);
 
   public:
     // Constructor and Destructor
@@ -45,12 +46,6 @@ class Daemon : public AbstractDaemon {
     /// to return to normal function.
     ///
     void cleanup() override;
-
-    ///
-    /// \brief Starts the deamon which allows for key presses to be intercepted
-    /// \param activeProfile: The profile which will be loaded into the deamon
-    ///
-    void linux_start_deamon(Profile activeProfile);
 
     ///
     /// \brief Sends a sequence of key press and release events through the
@@ -72,7 +67,24 @@ class Daemon : public AbstractDaemon {
     ///     - value = 0 → key release
     /// - For EV_SYN events:
     ///     - value is always set to 0 (SYN_REPORT convention).
+    /// \param vk A QList of InputEvent objects, each representing a keycode and
+    ///           whether the key is pressed or released.
     ///
+    /// \param fd A uinput file descriptor of a device to send the keys to
+    ///
+    /// Behavior details:
+    /// - For EV_KEY events:
+    ///     - value = 1 → key press
+    ///     - value = 0 → key release
+    /// - For EV_SYN events:
+    ///     - value is always set to 0 (SYN_REPORT convention).
+    ///
+    /// Example:
+    ///   Passing a list with one "press A" and one "release A" event will
+    ///   generate the corresponding key press and release in the virtual
+    ///   input device.
+    ///
+    void send_keys(const QList<InputEvent> &vk) override;
     /// Example:
     ///   Passing a list with one "press A" and one "release A" event will
     ///   generate the corresponding key press and release in the virtual
