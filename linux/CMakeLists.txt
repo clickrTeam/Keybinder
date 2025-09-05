@@ -1,6 +1,6 @@
 set(PLATFORM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/linux_configure.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/device_manager.cpp
     ${CMAKE_SOURCE_DIR}/unix/src/signal_handler.cpp
     PARENT_SCOPE
 )
@@ -13,6 +13,7 @@ set(PLATFORM_HEADER_PATHS
 
 set(PLATFORM_LIBS
     evdev
+    systemd
     PARENT_SCOPE
 )
 
