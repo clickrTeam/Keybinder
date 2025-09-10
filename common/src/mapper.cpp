@@ -64,7 +64,7 @@ void Mapper::set_layer_inner(size_t new_layer) {
 // TODO: mostly temp code will move to state Machines soon
 void Mapper::start() {
     while (true) {
-        // TOOD: implemnt timouts
+        // TODO: implement timouts
         auto key_opt = this->key_receiver.wait_key(std::nullopt);
         if (!key_opt.has_value()) {
             continue;
