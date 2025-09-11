@@ -3,10 +3,12 @@
 #include "event.h"
 #include "key_channel.h"
 #include "key_code.h"
+#include "layer_indicator.h"
 #include <QTimer>
 #include <mutex>
 #include <optional>
 #include <profile.h>
+#include <QApplication>
 
 Mapper::Mapper(Profile profile, Daemon &daemon, KeyReceiver key_receiver)
     : daemon(daemon), key_receiver(key_receiver) {
@@ -28,6 +30,11 @@ bool Mapper::set_layer(size_t new_layer) {
         return false;
     }
     set_layer_inner(new_layer);
+
+    QMetaObject::invokeMethod(qApp, [layerName = profile.layers[new_layer].layer_name]() {
+        new LayerIndicator(layerName, 1000);
+    });
+
     return true;
 }
 

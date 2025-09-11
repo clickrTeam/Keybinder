@@ -4,7 +4,7 @@ set (CMAKE_CXX_STANDARD 20)
 project(keybinder LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
-
+find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup()
 
 # usefull for debugging
@@ -32,6 +32,7 @@ qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
+    common/src/layer_indicator.cpp
 )
 
 target_include_directories(keybinder  PRIVATE  
@@ -43,5 +44,6 @@ target_link_libraries(keybinder
     PRIVATE
         Qt::Core
         Qt::Network
+        Qt::Widgets
         ${PLATFORM_LIBS}
 )
