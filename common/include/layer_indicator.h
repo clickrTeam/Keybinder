@@ -11,7 +11,7 @@
  */
 class LayerIndicator : public QWidget
 {
-    //Q_OBJECT
+    Q_OBJECT
   public:
     /**
      * @brief LayerIndicator constructor for this class.
