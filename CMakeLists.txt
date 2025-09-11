@@ -33,6 +33,7 @@ qt_add_executable(keybinder
     WIN32 
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
+    common/src/layer_indicator.cpp
 )
 
 target_include_directories(keybinder  PRIVATE  
