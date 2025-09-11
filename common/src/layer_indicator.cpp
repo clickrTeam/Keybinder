@@ -11,6 +11,7 @@ LayerIndicator::LayerIndicator(const QString& layer_name, int duration_ms = 1000
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
+    setAttribute(Qt::WA_DeleteOnClose);
 
     auto* label = new QLabel(layer_name);
     label->setStyleSheet("QLabel { color: white; background-color: rgba(0, 0, 0, 180); padding: 10px; border-radius: 5px; font-size: 14pt; }");
@@ -19,10 +20,19 @@ LayerIndicator::LayerIndicator(const QString& layer_name, int duration_ms = 1000
     layout->setContentsMargins(0, 0, 0, 0);
     adjustSize();
 
-    // Place the indicator in the bottom right corner of the primary screen.
-    QRect primary_screen_geometry = QGuiApplication::primaryScreen()->geometry();
-    int x = primary_screen_geometry.width() - width() - 20;
-    int y = primary_screen_geometry.height() - height() - 40;
+    // Place the indicator in the bottom right corner of the screen where the mouse is.
+    QPoint cursor_pos = QCursor::pos();
+    QScreen* screen = QGuiApplication::screenAt(cursor_pos);
+
+    if (!screen)
+    {
+        qDebug() << "Cursor position not found, defaulting to primary screen";
+        screen = QGuiApplication::primaryScreen();
+    }
+
+    QRect screen_geometry = screen->availableGeometry();
+    int x = screen_geometry.right() - width() - 20;
+    int y = screen_geometry.bottom() - height() - 40;
     move(x, y);
 
     show();

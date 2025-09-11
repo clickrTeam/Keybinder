@@ -13,6 +13,7 @@ set(COMMON_SOURCES
 
     # For some reason it breaks without explicitly putting it here.
     ${CMAKE_CURRENT_SOURCE_DIR}/include/local_server.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/layer_indicator.h
     PARENT_SCOPE
 )
 set(COMMON_HEADER_PATHS
