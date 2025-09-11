@@ -30,13 +30,6 @@ bool Mapper::set_layer(size_t new_layer) {
         return false;
     }
     set_layer_inner(new_layer);
-
-    QMetaObject::invokeMethod(qApp, [layerName = profile.layers[new_layer].layer_name]() {
-        qDebug() << "Invoking LayerIndicator for layer:" << layerName;
-        new LayerIndicator(layerName, 1000);
-    }, Qt::QueuedConnection);
-
-
     return true;
 }
 
@@ -46,6 +39,12 @@ void Mapper::set_layer_inner(size_t new_layer) {
 
     qDebug() << "Cur Layer: " << cur_layer
              << " Length = " << profile.layers.size();
+
+    QTimer::singleShot(0, qApp, [layerName = profile.layers[new_layer].layer_name]() {
+        new LayerIndicator(layerName, 1000);
+    });
+
+
     key_press_triggers.clear();
     key_release_triggers.clear();
     tap_sequence_starts.clear();
