@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD 20)
+set(CMAKE_AUTOMOC ON)
+
 project(keybinder LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
@@ -29,15 +31,14 @@ elseif (UNIX)
 endif()
 
 qt_add_executable(keybinder
-    WIN32 
+    WIN32
     ${COMMON_SOURCES}
     ${PLATFORM_SOURCES}
-    common/src/layer_indicator.cpp
 )
 
-target_include_directories(keybinder  PRIVATE  
-    ${COMMON_HEADER_PATHS} 
-    ${PLATFORM_HEADER_PATHS} 
+target_include_directories(keybinder  PRIVATE
+    ${COMMON_HEADER_PATHS}
+    ${PLATFORM_HEADER_PATHS}
 )
 
 target_link_libraries(keybinder

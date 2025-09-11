@@ -11,7 +11,7 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/layer_indicator.cpp
 
 
-    # For some reason it breaks without explicitly putting it here. 
+    # For some reason it breaks without explicitly putting it here.
     ${CMAKE_CURRENT_SOURCE_DIR}/include/local_server.h
     PARENT_SCOPE
 )

@@ -32,8 +32,10 @@ bool Mapper::set_layer(size_t new_layer) {
     set_layer_inner(new_layer);
 
     QMetaObject::invokeMethod(qApp, [layerName = profile.layers[new_layer].layer_name]() {
+        qDebug() << "Invoking LayerIndicator for layer:" << layerName;
         new LayerIndicator(layerName, 1000);
-    });
+    }, Qt::QueuedConnection);
+
 
     return true;
 }
