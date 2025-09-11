@@ -25,7 +25,7 @@ QString retrieve_eventX(QString config_file_path)
 
     if (!config.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qCritical() << "Could not open config file at path: " + config_file_path << Qt::endl;
+        qCritical() << "Could not open config file at path: " + config_file_path;
     }
 
     QTextStream in(&config);
@@ -71,14 +71,14 @@ bool record_eventX(QString eventX_path, QString config_file_path)
             config.close();
             return true;
         } else {
-            qCritical() << "Failed to create config file at path: " + config_file_path << Qt::endl;
+            qCritical() << "Failed to create config file at path: " + config_file_path;
             return false;
         }
     }
 
            // Read the current config
     if (!config.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCritical() << "Could not open config file at path: " + config_file_path << Qt::endl;
+        qCritical() << "Could not open config file at path: " + config_file_path;
         return false;
     }
 
@@ -95,7 +95,7 @@ bool record_eventX(QString eventX_path, QString config_file_path)
 
            // Write the updated config
     if (!config.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        qCritical() << "Could not open config file for writing at path: " + config_file_path << Qt::endl;
+        qCritical() << "Could not open config file for writing at path: " + config_file_path;
         return false;
     }
 
@@ -120,82 +120,108 @@ bool record_eventX(QString eventX_path)
 
 QString detect_keyboard()
 {
-    QString keyb_path;
     sd_device_enumerator *enumerator = nullptr;
     sd_device *device = nullptr;
 
+    // Create a new enumerator object that will walk through udev's device list
     if (sd_device_enumerator_new(&enumerator) < 0) {
-        qCritical() << "Failed to create sd-device enumerator" << Qt::endl;
-        return keyb_path;
+        qCritical() << "Failed to create sd-device enumerator";
+        return "";
     }
 
-    // Limit to input subsystem
+    // Restrict enumeration to the "input" subsystem (all input devices).
+    // Pass `true` to match devices from this subsystem and its parents.
     sd_device_enumerator_add_match_subsystem(enumerator, "input", true);
+
+    // Further restrict to devices udev has identified as keyboards.
+    // Udev sets ID_INPUT_KEYBOARD=1 in its rules for actual keyboard devices.
     sd_device_enumerator_add_match_property(enumerator, "ID_INPUT_KEYBOARD", "1");
 
-    // Collect candidates
-    QVector<QString> candidates;
-    // iterate matching devices
+    // Collect device paths of all matching candidates
+    QVector<QString> device_candidates;
+    // Get the first matching device and iterate until none left
     sd_device *d = sd_device_enumerator_get_device_first(enumerator);
     for (; d != nullptr; d = sd_device_enumerator_get_device_next(enumerator)) {
         const char *devnode = nullptr;
+
+        // Preferred: use the kernel-provided device node (e.g. "/dev/input/event3")
         if (sd_device_get_devname(d, &devnode) >= 0 && devnode) {
             // copy devnode into a QString while enumerator/device is still valid
-            candidates.push_back(QString::fromUtf8(devnode));
+            device_candidates.push_back(QString::fromUtf8(devnode));
         } else {
-            // sometimes devname is missing; try sysname and construct a fallback path
+            // Fallback: if no devnode, try sysname (e.g. "event3") and construct path
             const char *sysname = nullptr;
             if (sd_device_get_sysname(d, &sysname) >= 0 && sysname) {
                 QString path = "/dev/input/" + QString::fromUtf8(sysname);
-                candidates.push_back(path);
+                device_candidates.push_back(path);
             }
         }
     }
 
+    // Free the enumerator object now that we've collected candidates
     sd_device_enumerator_unref(enumerator);
 
-    qDebug() << "Found" << candidates.size() << "keyboard candidates via sd-device.";
+    qDebug() << "Found" << device_candidates.size() << "keyboard candidates via sd-device.";
 
-    // If only one candidate, we’re done
-    if (candidates.size() == 1) {
-        keyb_path = candidates[0];
-        return keyb_path;
+    // If only one candidate was found, assume it is the keyboard
+    if (device_candidates.size() == 1) {
+        return device_candidates[0];
     }
 
-    // If multiple, refine using libevdev
-    for (const QString &path : candidates) {
+    // If no devices were found, fall back to interactive detection
+    if (device_candidates.size() == 0) {
+        qDebug() << "No keyboard devices found, falling back to spacebar detection.";
+        return detect_keyboard_fallback();
+    }
+
+    // If multiple candidates, refine using libevdev heuristics
+    // to confirm which device looks like a "full" keyboard
+    QList<QString> keyboard_candidates;
+    for (const QString &path : device_candidates) {
         int fd = open(path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
         if (fd < 0) {
-            qWarning() << "Failed to open" << path << Qt::endl;
+            qWarning() << "Failed to open" << path;
             continue;
         }
 
         struct libevdev *dev = nullptr;
+        // Initialize a libevdev device object from the fd
         if (libevdev_new_from_fd(fd, &dev) < 0) {
             close(fd);
             continue;
         }
 
+        // Run heuristic: device must support typical alphanumeric + modifier keys
         if (is_full_keyboard(dev)) {
-            keyb_path = path;
-            libevdev_free(dev);
-            close(fd);
-            break;
+            keyboard_candidates.push_back(path);
         }
 
+        // Clean up
         libevdev_free(dev);
         close(fd);
     }
 
-    if (keyb_path.isEmpty()) {
-        qDebug() << "No keyboard matched heuristics, falling back to spacebar detection.";
-        keyb_path = detect_keyboard_fallback();
+    // If multiple devices matched heuristics, fall back to interactive detection
+    if(keyboard_candidates.size() > 1)
+    {
+        qDebug() << "Multiple possible keyboards detected, falling back to spacebar detection";
+        return detect_keyboard_fallback();
     }
 
-    return keyb_path;
+    // If no device matched heuristics, fall back to interactive detection
+    if (keyboard_candidates.size() <= 0) {
+        qDebug() << "No keyboard matched heuristics, falling back to spacebar detection.";
+        return detect_keyboard_fallback();
+    }
+
+    // Only one possible keyboard was found, return it
+    return keyboard_candidates[0];
 }
 
 bool is_full_keyboard(libevdev *dev){
+    if (!dev)
+        return false;
+        
     bool looks_like_keyboard =
         libevdev_has_event_type(dev, EV_KEY) &&
         libevdev_has_event_code(dev, EV_KEY, KEY_A) &&
@@ -214,7 +240,7 @@ QString detect_keyboard_fallback()
     // Open the /dev/input/ directory
     DIR *dir = opendir("/dev/input/");
     if (!dir) {
-        qCritical() << "Failed to open /dev/input/ directory" << Qt::endl;
+        qCritical() << "Failed to open /dev/input/ directory";
         return keyb_path;
     }
 
@@ -239,13 +265,13 @@ QString detect_keyboard_fallback()
 
             int fd = open(event_path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
             if (fd < 0) {
-                qWarning() << "Failed to open " << event_path << Qt::endl;
+                qWarning() << "Failed to open " << event_path;
                 continue;
             }
 
                    // Initialize the evdev device
             if (libevdev_new_from_fd(fd, &dev) < 0) {
-                qWarning() << "Failed to initialize evdev device" << Qt::endl;
+                qWarning() << "Failed to initialize evdev device";
                 continue;
             }
 
@@ -300,7 +326,7 @@ QString detect_keyboard_fallback()
 
         if (timer.elapsed() >= timeout_seconds * 1000)
         {
-            qDebug() << timeout_seconds << " seconds have passed and a keyboard has not been detected. Exiting detection loop." << Qt::endl;
+            qDebug() << timeout_seconds << " seconds have passed and a keyboard has not been detected. Exiting detection loop.";
             break;
         }
     }
@@ -322,7 +348,7 @@ QString detect_keyboard_fallback()
 int setup_uinput_device() {
     int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (uinp_fd < 0) {
-        qCritical() << "Failed to open /dev/uinput" << Qt::endl;
+        qCritical() << "Failed to open /dev/uinput";
         return -1;
     }
 
@@ -349,7 +375,7 @@ int setup_uinput_device() {
 
     if (ioctl(uinp_fd, UI_DEV_SETUP, &uinput_device) < 0 || // Configure the device with the provided info
         ioctl(uinp_fd, UI_DEV_CREATE) < 0) { // Tells the kernel to create the device
-        qCritical() << "Failed to create uinput device" << Qt::endl;
+        qCritical() << "Failed to create uinput device";
         close(uinp_fd);
         return -1;
     }

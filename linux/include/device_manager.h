@@ -26,7 +26,22 @@ QString retrieve_eventX();
 ///
 bool record_eventX(QString eventX_path);
 
-
+///
+/// \brief Detect the system keyboard device node (/dev/input/eventX).
+///
+/// This function uses systemd's sd-device API to enumerate input devices
+/// and filter for those that udev has already marked as keyboards
+/// (ID_INPUT_KEYBOARD=1). If multiple candidate devices are found, it
+/// further refines the choice by checking with libevdev whether the
+/// device has the expected set of alphanumeric + modifier keys.
+///
+/// If no strong match is found, the function falls back to a slower
+/// interactive detection routine (`detect_keyboard_fallback()`), where
+/// the user can press the spacebar to identify the correct device.
+///
+/// \return QString Path to the detected keyboard device (e.g. "/dev/input/event3"),
+///                or an empty QString if none found.
+///
 QString detect_keyboard();
 
 ///
@@ -37,6 +52,23 @@ QString detect_keyboard();
 ///
 QString detect_keyboard_fallback();
 
+///
+/// \brief Check if an initialized libevdev device looks like a "full" keyboard.
+///
+/// Many devices expose EV_KEY events (e.g. laptop hotkey panels, remote controls,
+/// volume/mute buttons), but they are not full keyboards. This function applies
+/// a heuristic: it checks that the device supports a set of representative keys
+/// that only a real alphanumeric keyboard would have.
+///
+/// Keys checked:
+///  - KEY_A and KEY_Z  → ensures alphabetic range is present
+///  - KEY_SPACE        → ensures spacebar exists
+///  - KEY_ENTER        → ensures return/enter key exists
+///  - KEY_LEFTSHIFT    → ensures at least one modifier is present
+///
+/// \param dev Pointer to a libevdev device (already initialized).
+/// \return true if the device appears to be a full keyboard, false otherwise.
+///
 bool is_full_keyboard(libevdev *dev);
 
 ///
