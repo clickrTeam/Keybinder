@@ -14,13 +14,13 @@ Daemon::Daemon(Mapper &m) {
         event_keyb_path = detect_keyboard();
         record_eventX(event_keyb_path);
     }
-    qDebug() << "Daemon created" << Qt::endl;
+    qDebug() << "Daemon created";
     // Do stuff
 }
 
 Daemon::~Daemon() {
     cleanup();
-    qDebug() << "Daemon destroyed" << Qt::endl;
+    qDebug() << "Daemon destroyed";
 }
 
 void Daemon::cleanup() {
@@ -32,7 +32,7 @@ void Daemon::cleanup() {
             libevdev_free(keyb);
             close(keyb_fd);
         }
-        qDebug() << "Daemon cleaned up" << Qt::endl;
+        qDebug() << "Daemon cleaned up";
         is_running = false;
     } else {
         qDebug()
@@ -41,13 +41,13 @@ void Daemon::cleanup() {
 }
 
 void Daemon::start() {
-    qDebug() << "Daemon started" << Qt::endl;
+    qDebug() << "Daemon started";
 
     // Open the identified keyboard device in read-write mode
     int keyb_fd =
         open(event_keyb_path.toUtf8().constData(), O_RDWR | O_NONBLOCK);
     if (keyb_fd < 0) {
-        qCritical() << "Failed to open device: " << strerror(errno) << Qt::endl;
+        qCritical() << "Failed to open device: " << strerror(errno);
         return;
     }
 
@@ -76,7 +76,7 @@ void Daemon::start() {
     // Set up uinput for key injection
     uinput_fd = setup_uinput_device();
     if (uinput_fd < 0) {
-        qCritical() << "Failed to set up uinput" << Qt::endl;
+        qCritical() << "Failed to set up uinput";
         return;
     }
 
@@ -139,6 +139,6 @@ void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
         event.value = 0; // This value is not used but is set to 0 by convention
         write(fd, &event, sizeof(event)); // Send the event
 
-        qDebug() << "Key sent:" << input.keycode << ":" << type << Qt::endl;
+        qDebug() << "Key sent:" << input.keycode << ":" << type;
     }
 }
