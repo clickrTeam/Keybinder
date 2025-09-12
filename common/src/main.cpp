@@ -8,8 +8,8 @@
 #include "mapper.h"
 #include "read_profile.h"
 #include "signal_handler.h"
-#include <QByteArray>
 #include <QApplication>
+#include <QByteArray>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>

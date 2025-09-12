@@ -141,7 +141,8 @@ KeyPress KeyPress::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return KeyPress{parse_key(get_property_as_string(obj, "value"))};
+    return KeyPress{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // KeyRelease
@@ -150,7 +151,8 @@ KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return KeyRelease{parse_key(get_property_as_string(obj, "value"))};
+    return KeyRelease{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 //   "type": "tap_sequence",
@@ -175,7 +177,8 @@ TapSequence TapSequence::from_json(const QJsonObject &obj) {
         if (!str_to_keycode.contains_forward(get_value_as_string(pair.at(0))))
             qCritical() << "Key missing from forward map:"
                         << get_value_as_string(pair.at(0));
-        key_sequence.push_back(parse_key(get_value_as_string(pair.at(0))));
+        key_sequence.push_back(
+            str_to_keycode.find_forward(get_value_as_string(pair.at(0))));
         // TODO: use the timeout which is the second element in this array
     }
 
@@ -202,7 +205,8 @@ PressKey PressKey::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return PressKey{parse_key(get_property_as_string(obj, "value"))};
+    return PressKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // ReleaseKey
@@ -211,7 +215,8 @@ ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return ReleaseKey{parse_key(get_property_as_string(obj, "value"))};
+    return ReleaseKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // TapKey
@@ -220,7 +225,8 @@ TapKey TapKey::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return TapKey{parse_key(get_property_as_string(obj, "value"))};
+    return TapKey{
+        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
 
 // SwapLayer
