@@ -131,7 +131,8 @@ void warn_extra_properties(const QJsonObject &obj,
 KeyPress KeyPress::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:" << get_property_as_string(obj, "value");
+        qCritical() << "Key missing from forward map:"
+                    << get_property_as_string(obj, "value");
     return KeyPress{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
@@ -140,7 +141,8 @@ KeyPress KeyPress::from_json(const QJsonObject &obj) {
 KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:" << get_property_as_string(obj, "value");
+        qCritical() << "Key missing from forward map:"
+                    << get_property_as_string(obj, "value");
     return KeyRelease{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
@@ -165,7 +167,8 @@ TapSequence TapSequence::from_json(const QJsonObject &obj) {
     for (const QJsonValue &val : get_property_as_array(obj, "key_time_pairs")) {
         auto pair = get_value_as_array(val);
         if (!str_to_keycode.contains_forward(get_value_as_string(pair.at(0))))
-            qCritical() << "Key missing from forward map:" << get_value_as_string(pair.at(0));
+            qCritical() << "Key missing from forward map:"
+                        << get_value_as_string(pair.at(0));
         key_sequence.push_back(
             str_to_keycode.find_forward(get_value_as_string(pair.at(0))));
         // TODO: use the timeout which is the second element in this array
@@ -192,7 +195,8 @@ TimedTriggerBehavior parse_behavior(const QString &str) {
 PressKey PressKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:" << get_property_as_string(obj, "value");
+        qCritical() << "Key missing from forward map:"
+                    << get_property_as_string(obj, "value");
     return PressKey{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
@@ -201,7 +205,8 @@ PressKey PressKey::from_json(const QJsonObject &obj) {
 ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:" << get_property_as_string(obj, "value");
+        qCritical() << "Key missing from forward map:"
+                    << get_property_as_string(obj, "value");
     return ReleaseKey{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
@@ -210,7 +215,8 @@ ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
 TapKey TapKey::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:" << get_property_as_string(obj, "value");
+        qCritical() << "Key missing from forward map:"
+                    << get_property_as_string(obj, "value");
     return TapKey{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
@@ -338,7 +344,8 @@ Profile Profile::from_file(const QString &filename) {
 
     // Get absolute path
     qDebug() << "Checking file at:" << filename;
-    if (filename == "empty" || (!file.exists() && filename == LATEST_PROFILE_FILE_LOCATION)) {
+    if (filename == "empty" ||
+        (!file.exists() && filename == LATEST_PROFILE_FILE_LOCATION)) {
         qDebug() << "Using empty json mapping. Intended for startup by "
                     "electron app.";
         QJsonObject defaultJson = defaultProfile();
@@ -346,8 +353,6 @@ Profile Profile::from_file(const QString &filename) {
         QByteArray json_data = jsonDoc.toJson();
         return Profile::from_bytes(json_data);
     }
-
-
 
     if (!file.exists()) {
         qCritical() << "Profile does not exist:" << file.fileName();

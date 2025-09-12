@@ -4,11 +4,11 @@
 #include "key_channel.h"
 #include "key_code.h"
 #include "layer_indicator.h"
+#include <QApplication>
 #include <QTimer>
 #include <mutex>
 #include <optional>
 #include <profile.h>
-#include <QApplication>
 
 Mapper::Mapper(Profile profile, Daemon &daemon, KeyReceiver key_receiver)
     : daemon(daemon), key_receiver(key_receiver) {
@@ -40,10 +40,10 @@ void Mapper::set_layer_inner(size_t new_layer) {
     qDebug() << "Cur Layer: " << cur_layer
              << " Length = " << profile.layers.size();
 
-    QTimer::singleShot(0, qApp, [layerName = profile.layers[new_layer].layer_name]() {
-        new LayerIndicator(layerName, 1000);
-    });
-
+    QTimer::singleShot(0, qApp,
+                       [layerName = profile.layers[new_layer].layer_name]() {
+                           new LayerIndicator(layerName, 1000);
+                       });
 
     key_press_triggers.clear();
     key_release_triggers.clear();
