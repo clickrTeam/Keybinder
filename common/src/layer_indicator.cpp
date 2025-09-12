@@ -4,6 +4,7 @@
 #include <QScreen>
 #include <QVBoxLayout>
 #include <QDebug>
+#include <QApplication>
 
 LayerIndicator::LayerIndicator(const QString& layer_name, int duration_ms = 1000)
 {
@@ -22,12 +23,12 @@ LayerIndicator::LayerIndicator(const QString& layer_name, int duration_ms = 1000
 
     // Place the indicator in the bottom right corner of the screen where the mouse is.
     QPoint cursor_pos = QCursor::pos();
-    QScreen* screen = QGuiApplication::screenAt(cursor_pos);
+    QScreen* screen = QApplication::screenAt(cursor_pos);
 
     if (!screen)
     {
         qDebug() << "Cursor position not found, defaulting to primary screen";
-        screen = QGuiApplication::primaryScreen();
+        screen = QApplication::primaryScreen();
     }
 
     QRect screen_geometry = screen->availableGeometry();
