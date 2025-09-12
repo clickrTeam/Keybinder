@@ -19,7 +19,7 @@ Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
 
 Daemon::~Daemon() {
     cleanup();
-    qDebug() << "Daemon destroyed";
+    qDebug() << "Daemon destroyed" << Qt::endl;
 }
 
 void Daemon::cleanup() {
@@ -32,23 +32,6 @@ void Daemon::cleanup() {
             close(keyb_fd);
         }
         qDebug() << "Daemon cleaned up";
-        is_running = false;
-    } else {
-        qDebug()
-            << "cleanup() called but daemon not running. Exiting function.";
-    }
-}
-
-void Daemon::cleanup() {
-    if (this->is_running) {
-        ioctl(uinput_fd, UI_DEV_DESTROY);
-        close(uinput_fd);
-        if (keyb != nullptr && keyb_fd >= 0) {
-            libevdev_grab(keyb, LIBEVDEV_UNGRAB); // Release control of the physical keyboard
-            libevdev_free(keyb);
-            close(keyb_fd);
-        }
-        qDebug() << "Daemon cleaned up" << Qt::endl;
         is_running = false;
     } else {
         qDebug()
@@ -134,8 +117,6 @@ void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
         type = input.type == KeyEventType::Press ? 1 : 0;
         key_code = int_to_keycode.find_backward(input.keycode);
         send_key(key_code, type, fd);
-        qDebug() << "Key sent:" << key_code << ":" << type
-                 << Qt::endl;
     }
 }
 
@@ -152,11 +133,14 @@ void Daemon::send_key(int key_code, int state, int fd)
     event.value = state; // Key up or down
     write(fd, &event, sizeof(event)); // Send the event
 
-    // Synchronization event
-    event.type = EV_SYN;
-    // SYN_REPORT -> Used to synchronize and separate events into packets 
-    //               of input data occurring at the same moment in time.
-    event.code = SYN_REPORT;
-    event.value = 0;
-    write(uinput_fd, &event, sizeof(event));
+        // Synchronization event
+        event.type = EV_SYN;
+        // SYN_REPORT -> Used to synchronize and separate events into packets 
+        //               of input data occurring at the same moment in time.
+        event.code = SYN_REPORT;
+        event.value = 0; // This value is not used but is set to 0 by convention
+        write(fd, &event, sizeof(event)); // Send the event
+
+        qDebug() << "Key sent:" << input.keycode << ":" << type;
+    }
 }
