@@ -37,4 +37,6 @@ class Mapper {
     // the next type we are expecting (up or down)
     std::optional<std::tuple<TapSequence, Bind, size_t, KeyEventType>>
         current_tap_sequence;
+
+    QHash<InputEvent, QVector<OutputEvent>> basic_map;
 };
