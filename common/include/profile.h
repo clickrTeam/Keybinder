@@ -9,13 +9,13 @@
 #include <utility>
 #include <variant>
 
-enum class TimedTriggerBehavior {
+enum class SequenceBehavior {
     Capture,
     Release,
     Default,
 };
 
-TimedTriggerBehavior parse_behavior(const QString &str);
+SequenceBehavior parse_behavior(const QString &str);
 
 struct KeyPress {
     KeyCode key_code;
@@ -27,13 +27,22 @@ struct KeyRelease {
     static KeyRelease from_json(const QJsonObject &obj);
 };
 
-struct TapSequence {
-    QList<KeyCode> key_sequence;
-    TimedTriggerBehavior behavior;
-    static TapSequence from_json(const QJsonObject &obj);
+struct MinimumWait {
+    size_t ms;
+    static MinimumWait from_json(const QJsonObject &obj);
 };
 
-using Trigger = std::variant<KeyPress, KeyRelease, TapSequence>;
+struct MaximumWait {
+    size_t ms;
+    static MaximumWait from_json(const QJsonObject &obj);
+};
+
+using BasicTrigger = std::variant<KeyPress, KeyRelease>;
+BasicTrigger parse_basic_trigger(const QJsonObject &obj);
+
+using AdvancedTrigger =
+    std::variant<KeyPress, KeyRelease, MinimumWait, MaximumWait>;
+AdvancedTrigger parse__trigger(const QJsonObject &obj);
 
 struct PressKey {
     KeyCode key_code;
@@ -45,35 +54,36 @@ struct ReleaseKey {
     static ReleaseKey from_json(const QJsonObject &obj);
 };
 
-struct TapKey {
-    KeyCode key_code;
-    static TapKey from_json(const QJsonObject &obj);
-};
-
 struct SwapLayer {
     size_t new_layer;
     static SwapLayer from_json(const QJsonObject &obj);
 };
 
-struct Macro;
+struct Wait {
+    size_t ms;
+    static Wait from_json(const QJsonObject &obj);
+};
 
-using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer, Macro>;
+using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait>;
 Bind parse_bind(const QJsonObject &obj);
 
-struct Macro {
+struct SequenceTrigger {
+    SequenceBehavior behavior;
+    QList<AdvancedTrigger> sequence;
     QList<Bind> binds;
-    static Macro from_json(const QJsonObject &obj);
+    static SequenceTrigger from_json(const QJsonObject &obj);
 };
 
 struct Layer {
     QString layer_name;
-    QList<std::pair<Trigger, Bind>> remappings;
+    QList<std::pair<BasicTrigger, QList<Bind>>> basic_remappings;
+    QList<SequenceTrigger> sequence_remappings;
     static Layer from_json(const QJsonObject &obj);
 };
 
 struct Profile {
-    QString name;        // The name of the profile (e.g., "Default Profile")
-    QList<Layer> layers; // List of layers in the profile
+    QString name;
+    QList<Layer> layers;
     size_t default_layer;
     static Profile from_json(const QJsonObject &obj);
     static Profile from_bytes(const QByteArray &bytes);
