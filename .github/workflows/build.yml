@@ -33,11 +33,11 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Upload keybinder binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: keybinder-linux
-          path: build/keybinder
+      # - name: Upload keybinder binary
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: keybinder-linux
+      #     path: build/keybinder
 
       - name: Copy and Upload Dependencies
         run: |
@@ -59,7 +59,7 @@ jobs:
       - name: Upload all Qt libraries (single artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: keybinder-linux-packed
+          name: keybinder-linux
           path: |
             ${{ github.workspace }}/deploy/**
 
@@ -102,7 +102,7 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: keybinder-Windows
+        name: keybinder-windows
         path: deploy
     
     # - name: Upload to Release
@@ -134,6 +134,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install aqtinstall
           aqt install-qt mac desktop 6.5.3 clang_64 -O ~/Qt
+          echo ${{ github.workspace }}/Qt/6.2.0/macos/bin/ >> $GITHUB_PATH
 
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/Qt/6.5.3/macos
@@ -141,76 +142,20 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
+      # - name: Upload keybinder binary
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: keybinder-macos
+      #     path: build/keybinder
+      
+      - name: Deploy Qt Dependencies
+        run: |
+          cd build\release
+          macdeployqt.exe keybinder.exe --release -always-overwrite
+      # May not get all dependancies may need macdeployqtfix from python.
+
       - name: Upload keybinder binary
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-macos
           path: build/keybinder
-
-      # --------------------------------------------------------------
-      # 1️⃣  Gather macOS Qt frameworks & copy them next to the binary
-      # --------------------------------------------------------------
-      - name: Copy Qt frameworks
-        id: copy-deps
-        run: |
-          # Create a folder that will hold the executable + its frameworks
-          DEPLOY_DIR="${{ github.workspace }}/deploy"
-          mkdir -p "$DEPLOY_DIR"
-
-          # Path to the built executable
-          EXECUTABLE="${{ github.workspace }}/build/keybinder"
-
-          # Copy the executable itself
-          cp -v "$EXECUTABLE" "$DEPLOY_DIR/"
-
-          # Qt installation root
-          QT_ROOT="$HOME/Qt/6.5.3/macos"
-
-          # Find all Qt .framework bundles used by the binary
-          otool -L "$EXECUTABLE" \
-            | grep "$QT_ROOT" \
-            | awk '{print $1}' \
-            | while read -r framework_path; do
-                # Resolve symlinks to the actual .framework directory
-                real_path=$(readlink -f "$framework_path")
-                # Copy the entire .framework bundle into the deploy folder
-                cp -R "$real_path" "$DEPLOY_DIR/"
-              done
-
-      # --------------------------------------------------------------
-      # 2️⃣  Upload everything as a single artifact
-      # --------------------------------------------------------------
-      - name: Upload macOS package (single artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: keybinder-macos-packed
-          path: ${{ github.workspace }}/deploy/**
-
-  post-gitlab-status:
-    name: Post GitLab Status
-    runs-on: ubuntu-latest
-    needs: [build-linux, build-windows, build-macos]
-    if: always()
-    steps:
-      - name: Post GitLab commit status
-        env:
-          GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
-          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          TARGET_COMMIT: ${{ github.sha }}
-        run: |
-          # Determine overall workflow status
-          if [ "${{ needs.build-linux.result }}" = "success" ] && \
-             [ "${{ needs.build-windows.result }}" = "success" ] && \
-             [ "${{ needs.build-macos.result }}" = "success" ]; then
-            STATE="success"
-            DESCRIPTION="All builds succeeded"
-          else
-            STATE="failed"
-            DESCRIPTION="One or more builds failed"
-          fi
-  
-          curl --request POST \
-            --header "PRIVATE-TOKEN: $GITLAB_PAT" \
-            --header "Content-Type: application/json" \
-            --data "{\"state\":\"$STATE\",\"description\":\"$DESCRIPTION\",\"context\":\"CI\",\"target_url\":\"$GITHUB_RUN_URL\"}" \
-            "https://capstone.cs.utah.edu/api/v4/projects/113/statuses/$TARGET_COMMIT"
