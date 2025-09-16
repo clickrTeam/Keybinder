@@ -70,28 +70,22 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     
-    - name: Set up Qt
-      uses: jurplel/install-qt-action@v3
+    - name: Set up Python and install aqt
+      uses: actions/setup-python@v4
       with:
-        version: <b>${{ env.QT_VERSION }}</b>
-        arch: win64_msvc2019_64
-        cache: true
-    
-    - name: Set up MSVC
-      uses: microsoft/setup-msbuild@v1.1
-      with:
-        vs-version: 2019
+        python-version: "3.x"
+
+    - name: Install Qt via aqt
+      run: |
+        python -m pip install --upgrade pip
+        pip install aqtinstall
+        aqt install-qt windows desktop 6.5.3 win64_msvc2019_64 -O C:\Qt
     
     - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=release -G "Visual Studio 16 2019" -A x64
-    
-    - name: Build Project
-      run: |
-        cd build
-        cmake --build . --config release
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.5.3\msvc2019_64
+
+    - name: Build
+      run: cmake --build build --config Release
     
     - name: Deploy Qt Dependencies
       run: |
