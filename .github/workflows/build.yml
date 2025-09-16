@@ -80,7 +80,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install aqtinstall
         aqt install-qt windows desktop 6.5.3 win64_msvc2019_64
-        echo "${{ github.workspace }}/Qt/6.2.0/msvc2019_64/bin/" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "${{ github.workspace }}/Qt/6.5.3/msvc2019_64/bin/" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         
     - name: Set up MSVC
       uses: microsoft/setup-msbuild@v2
