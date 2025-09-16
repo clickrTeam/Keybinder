@@ -87,46 +87,54 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-windows
-          path: build/release/keybinder.exe   
+          path: build/Release/keybinder.exe
 
       # --------------------------------------------------------------
-      # 1️⃣  Copy Qt runtime DLLs next to a deploy folder
+      # 1️⃣  Make dumpbin available
+      # --------------------------------------------------------------
+      - name: Add dumpbin to PATH
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $dumpbinDir = Join-Path $installPath "VC\Tools\MSVC"
+          $dumpbinDir = Get-ChildItem $dumpbinDir -Directory | Sort-Object Name -Descending | Select-Object -First 1
+          $dumpbinDir = Join-Path $dumpbinDir.FullName "bin\Hostx64\x64"
+          echo "Adding $dumpbinDir to PATH"
+          echo "$dumpbinDir" >> $env:GITHUB_PATH
+        shell: pwsh
+
+      # --------------------------------------------------------------
+      # 2️⃣  Copy Qt runtime DLLs
       # --------------------------------------------------------------
       - name: Copy Qt runtime DLLs
         id: copy-deps
         run: |
-          # Create a folder that will hold the executable + its DLLs
           $DeployDir = "${{ github.workspace }}\deploy"
           New-Item -ItemType Directory -Force -Path $DeployDir | Out-Null
 
-          # Path to the built exe (adjust if you use a different configuration)
           $ExePath = "${{ github.workspace }}\build\Release\keybinder.exe"
-
-          # Copy the exe itself so the artifact is self‑contained
           Copy-Item -Path $ExePath -Destination $DeployDir -Force
 
-          # Use `dumpbin /DEPENDENTS` (available with Visual Studio) to list DLLs,
-          # then filter for those that live under the Qt installation directory.
           $QtRoot = "C:\Qt\6.5.3\msvc2019_64"
           $Deps = & dumpbin /DEPENDENTS $ExePath 2>$null |
                   Where-Object { $_ -match '\.dll$' } |
                   ForEach-Object { $_.Trim() }
 
           foreach ($dll in $Deps) {
-            $null = $dll -match '^(.*\\)?([^\\]+\.dll)$'
-            $dllName = $Matches[2]
-            $candidate = Join-Path $QtRoot $dllName
+            $candidate = Join-Path $QtRoot $dll
             if (Test-Path $candidate) {
               Copy-Item -Path $candidate -Destination $DeployDir -Force
             }
           }
 
+      # --------------------------------------------------------------
+      # 3️⃣  Upload Windows package (single artifact)
+      # --------------------------------------------------------------
       - name: Upload Windows package (single artifact)
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-windows-packed
           path: ${{ github.workspace }}\deploy\**
-
 
   build-macos:
     name: macOS Build
