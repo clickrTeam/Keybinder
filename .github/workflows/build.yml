@@ -34,7 +34,31 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-linux
-          path: build/keybinder   # adjust path to your binary
+          path: build/keybinder
+
+      - name: Copy and Upload Dependencies
+        run: |
+          EXECUTABLE="${{ github.workspace }}/build/keybinder"
+          DEPLOY_DIR="${{ github.workspace }}/deploy"
+          mkdir -p "$DEPLOY_DIR"
+
+          ldd "$EXECUTABLE" \
+            | grep "$HOME/Qt/6.5.3/gcc_64" \
+            | awk '{print $3}' \
+            | while read -r lib; do
+                if [[ -f "$lib" ]]; then
+                  cp -v "$lib" "$DEPLOY_DIR"
+                fi
+              done
+
+          cp -v "$EXECUTABLE" "$DEPLOY_DIR"
+
+      - name: Upload all Qt libraries (single artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-linux-packed
+          path: |
+            ${{ github.workspace }}/deploy/**
 
   build-windows:
     name: Windows Build
@@ -64,6 +88,45 @@ jobs:
         with:
           name: keybinder-windows
           path: build/release/keybinder.exe   
+
+      # --------------------------------------------------------------
+      # 1️⃣  Copy Qt runtime DLLs next to a deploy folder
+      # --------------------------------------------------------------
+      - name: Copy Qt runtime DLLs
+        id: copy-deps
+        run: |
+          # Create a folder that will hold the executable + its DLLs
+          $DeployDir = "${{ github.workspace }}\deploy"
+          New-Item -ItemType Directory -Force -Path $DeployDir | Out-Null
+
+          # Path to the built exe (adjust if you use a different configuration)
+          $ExePath = "${{ github.workspace }}\build\Release\keybinder.exe"
+
+          # Copy the exe itself so the artifact is self‑contained
+          Copy-Item -Path $ExePath -Destination $DeployDir -Force
+
+          # Use `dumpbin /DEPENDENTS` (available with Visual Studio) to list DLLs,
+          # then filter for those that live under the Qt installation directory.
+          $QtRoot = "C:\Qt\6.5.3\msvc2019_64"
+          $Deps = & dumpbin /DEPENDENTS $ExePath 2>$null |
+                  Where-Object { $_ -match '\.dll$' } |
+                  ForEach-Object { $_.Trim() }
+
+          foreach ($dll in $Deps) {
+            $null = $dll -match '^(.*\\)?([^\\]+\.dll)$'
+            $dllName = $Matches[2]
+            $candidate = Join-Path $QtRoot $dllName
+            if (Test-Path $candidate) {
+              Copy-Item -Path $candidate -Destination $DeployDir -Force
+            }
+          }
+
+      - name: Upload Windows package (single artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-windows-packed
+          path: ${{ github.workspace }}\deploy\**
+
 
   build-macos:
     name: macOS Build
@@ -95,6 +158,45 @@ jobs:
         with:
           name: keybinder-macos
           path: build/keybinder
+
+      # --------------------------------------------------------------
+      # 1️⃣  Gather macOS Qt frameworks & copy them next to the binary
+      # --------------------------------------------------------------
+      - name: Copy Qt frameworks
+        id: copy-deps
+        run: |
+          # Create a folder that will hold the executable + its frameworks
+          DEPLOY_DIR="${{ github.workspace }}/deploy"
+          mkdir -p "$DEPLOY_DIR"
+
+          # Path to the built executable
+          EXECUTABLE="${{ github.workspace }}/build/keybinder"
+
+          # Copy the executable itself
+          cp -v "$EXECUTABLE" "$DEPLOY_DIR/"
+
+          # Qt installation root
+          QT_ROOT="$HOME/Qt/6.5.3/macos"
+
+          # Find all Qt .framework bundles used by the binary
+          otool -L "$EXECUTABLE" \
+            | grep "$QT_ROOT" \
+            | awk '{print $1}' \
+            | while read -r framework_path; do
+                # Resolve symlinks to the actual .framework directory
+                real_path=$(readlink -f "$framework_path")
+                # Copy the entire .framework bundle into the deploy folder
+                cp -R "$real_path" "$DEPLOY_DIR/"
+              done
+
+      # --------------------------------------------------------------
+      # 2️⃣  Upload everything as a single artifact
+      # --------------------------------------------------------------
+      - name: Upload macOS package (single artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-macos-packed
+          path: ${{ github.workspace }}/deploy/**
 
   post-gitlab-status:
     name: Post GitLab Status
