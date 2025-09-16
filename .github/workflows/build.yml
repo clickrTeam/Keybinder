@@ -45,9 +45,9 @@ jobs:
           DEPLOY_DIR="${{ github.workspace }}/deploy"
           mkdir -p "$DEPLOY_DIR"
 
-          ldd "$EXECUTABLE" /
-            | grep "$HOME/Qt/6.5.3/gcc_64" /
-            | awk '{print $3}' /
+          ldd "$EXECUTABLE" \
+            | grep "$HOME/Qt/6.5.3/gcc_64" \
+            | awk '{print $3}' \
             | while read -r lib; do
                 if [[ -f "$lib" ]]; then
                   cp -v "$lib" "$DEPLOY_DIR"
@@ -79,25 +79,25 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install aqtinstall
-        aqt install-qt windows desktop 6.5.3 win64_msvc2019_64 -O C:/Qt
+        aqt install-qt windows desktop 6.5.3 win64_msvc2019_64 -O C:\Qt
         echo "C:/Qt/6.5.3/msvc2019_64/bin/" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:/Qt/6.5.3/msvc2019_64
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.5.3\msvc2019_64
 
     - name: Build
       run: cmake --build build --config Release
     
     - name: Deploy Qt Dependencies
       run: |
-        cd build/release
+        cd build\release
         windeployqt.exe keybinder.exe --release
     
     - name: Create Deployment Zip
       run: |
         mkdir deploy
-        copy build/release/keybinder.exe deploy/
-        windeployqt.exe deploy/keybinder.exe --release
+        copy build\release\keybinder.exe deploy\
+        windeployqt.exe deploy\keybinder.exe --release
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
@@ -150,7 +150,7 @@ jobs:
       
       - name: Deploy Qt Dependencies
         run: |
-          cd build/release
+          cd build\release
           macdeployqt.exe keybinder.exe --release -always-overwrite
       # May not get all dependancies may need macdeployqtfix from python.
 
