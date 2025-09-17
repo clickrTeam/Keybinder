@@ -151,7 +151,7 @@ jobs:
       - name: Deploy Qt Dependencies
         run: |
           cd build
-          macdeployqt.exe keybinder.exe --release -always-overwrite
+          macdeployqt keybinder --release -always-overwrite
       # May not get all dependancies may need macdeployqtfix from python.
 
       - name: Upload keybinder binary
