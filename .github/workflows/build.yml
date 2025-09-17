@@ -148,16 +148,40 @@ jobs:
       #     name: keybinder-macos
       #     path: build/keybinder
       
-      - name: Deploy Qt Dependencies
+      - name: Locate built .app bundle
+        id: find_app
         run: |
-          "$HOME/Qt/6.5.3/macos/bin/macdeployqt" build/keybinder --release -always-overwrite
-      # May not get all dependancies may need macdeployqtfix from python.
+          set -e
+          POSSIBLE=("build/Release/keybinder.app" "build/keybinder.app" "build/Release/keybinder/keybinder.app")
+          FOUND=""
+          for p in "${POSSIBLE[@]}"; do
+            if [ -d "$p" ]; then
+              FOUND="$p"
+              break
+            fi
+          done
+          if [ -z "$FOUND" ]; then
+            FOUND=$(find build -name "keybinder.app" -maxdepth 4 | head -n1 || true)
+          fi
+          if [ -z "$FOUND" ]; then
+            echo "::error::Could not find keybinder.app in build outputs"
+            exit 1
+          fi
+          echo "Found app bundle: $FOUND"
+          echo "app_path=$FOUND" >> $GITHUB_OUTPUT
 
-      - name: Upload keybinder binary
+      - name: Deploy Qt Dependencies (macdeployqt)
+        run: |
+          set -e
+          APP_PATH="${{ steps.find_app.outputs.app_path }}"
+          echo "Running macdeployqt on $APP_PATH"
+          "$HOME/Qt/6.5.3/macos/bin/macdeployqt" "$APP_PATH" --release -always-overwrite
+
+      - name: Upload keybinder .app artifact
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-macos
-          path: build/keybinder
+          path: ${{ steps.find_app.outputs.app_path }}
 
   post-gitlab-status:
     name: Post GitLab Status
