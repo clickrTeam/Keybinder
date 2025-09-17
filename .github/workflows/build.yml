@@ -148,40 +148,99 @@ jobs:
       #     name: keybinder-macos
       #     path: build/keybinder
       
-      - name: Locate built .app bundle
-        id: find_app
+      - name: Locate built app or executable
+        id: find_build_output
         run: |
           set -e
-          POSSIBLE=("build/Release/keybinder.app" "build/keybinder.app" "build/Release/keybinder/keybinder.app")
-          FOUND=""
-          for p in "${POSSIBLE[@]}"; do
+          # Try common bundle locations first
+          POSSIBLE_APPS=("build/Release/keybinder.app" "build/keybinder.app" "build/Release/keybinder/keybinder.app")
+          APP_FOUND=""
+          for p in "${POSSIBLE_APPS[@]}"; do
             if [ -d "$p" ]; then
-              FOUND="$p"
+              APP_FOUND="$p"
               break
             fi
           done
-          if [ -z "$FOUND" ]; then
-            FOUND=$(find build -name "keybinder.app" -maxdepth 4 | head -n1 || true)
+          if [ -z "$APP_FOUND" ]; then
+            APP_FOUND=$(find build -name "keybinder.app" -maxdepth 4 | head -n1 || true)
           fi
-          if [ -z "$FOUND" ]; then
-            echo "::error::Could not find keybinder.app in build outputs"
+
+          # If no .app, look for plain executable
+          POSSIBLE_EXES=("build/Release/keybinder" "build/keybinder" "build/Release/keybinder/keybinder")
+          EXE_FOUND=""
+          for p in "${POSSIBLE_EXES[@]}"; do
+            if [ -f "$p" ] && [ -x "$p" ]; then
+              EXE_FOUND="$p"
+              break
+            fi
+          done
+          if [ -z "$APP_FOUND" ] && [ -z "$EXE_FOUND" ]; then
+            EXE_FOUND=$(find build -type f -name "keybinder" -perm +111 -maxdepth 4 | head -n1 || true)
+          fi
+
+          if [ -n "$APP_FOUND" ]; then
+            echo "Found app bundle: $APP_FOUND"
+            echo "type=app" >> $GITHUB_OUTPUT
+            echo "path=$APP_FOUND" >> $GITHUB_OUTPUT
+          elif [ -n "$EXE_FOUND" ]; then
+            echo "Found executable: $EXE_FOUND"
+            echo "type=exe" >> $GITHUB_OUTPUT
+            echo "path=$EXE_FOUND" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Could not find keybinder.app or keybinder executable in build outputs"
+            ls -la build || true
             exit 1
           fi
-          echo "Found app bundle: $FOUND"
-          echo "app_path=$FOUND" >> $GITHUB_OUTPUT
 
-      - name: Deploy Qt Dependencies (macdeployqt)
+      - name: Deploy or package mac build
         run: |
           set -e
-          APP_PATH="${{ steps.find_app.outputs.app_path }}"
-          echo "Running macdeployqt on $APP_PATH"
-          "$HOME/Qt/6.5.3/macos/bin/macdeployqt" "$APP_PATH" --release -always-overwrite
+          TYPE="${{ steps.find_build_output.outputs.type }}"
+          PATH_VAL="${{ steps.find_build_output.outputs.path }}"
+          echo "Packaging type=$TYPE path=$PATH_VAL"
+          if [ "$TYPE" = "app" ]; then
+            echo "Running macdeployqt on $PATH_VAL"
+            "$HOME/Qt/6.5.3/macos/bin/macdeployqt" "$PATH_VAL" --release -always-overwrite
+            echo "Uploading app bundle: $PATH_VAL"
+            # Upload step will handle the app path
+          else
+            echo "No .app produced; packaging executable and Qt libs"
+            DEPLOY_DIR="${{ github.workspace }}/deploy_mac"
+            mkdir -p "$DEPLOY_DIR"
+            cp -v "$PATH_VAL" "$DEPLOY_DIR/"
 
-      - name: Upload keybinder .app artifact
+            # Collect linked Qt libraries that come from the installed Qt path
+            echo "Finding linked libraries from Qt install"
+            otool -L "$PATH_VAL" || true
+            QT_PREFIX="$HOME/Qt/6.5.3"
+            otool -L "$PATH_VAL" \
+              | grep "$QT_PREFIX" \
+              | awk '{print $1}' \
+              | while read -r lib; do
+                if [ -n "$lib" ]; then
+                  # For framework entries, copy parent framework dir; for dylib, copy file
+                  if [[ "$lib" == *.framework* ]]; then
+                    FRAME_DIR=$(echo "$lib" | sed -E 's@(/.+?\.framework).*@\1@')
+                    if [ -d "$FRAME_DIR" ]; then
+                      cp -R "$FRAME_DIR" "$DEPLOY_DIR/" || true
+                    fi
+                  else
+                    mkdir -p "$DEPLOY_DIR/lib"
+                    cp -v "$lib" "$DEPLOY_DIR/lib/" || true
+                  fi
+                fi
+              done
+
+            echo "Packaged deploy dir: $DEPLOY_DIR"
+          fi
+
+      - name: Upload mac build artifact
         uses: actions/upload-artifact@v4
         with:
           name: keybinder-macos
-          path: ${{ steps.find_app.outputs.app_path }}
+          path: |
+            ${{ steps.find_build_output.outputs.path }}
+            ${{ github.workspace }}/deploy_mac
 
   post-gitlab-status:
     name: Post GitLab Status
