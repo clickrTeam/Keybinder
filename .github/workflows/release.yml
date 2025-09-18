@@ -277,6 +277,7 @@ jobs:
           fi
           if [ -d release_assets/macos ]; then
             (cd release_assets/macos && zip -r ../../release_assets/zips/keybinder-macos.zip .)
+          fi
 
       - name: Create GitHub Release
         id: create_release
