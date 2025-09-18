@@ -1,36 +1,252 @@
 name: Release
 
 on:
-  push: #
+  push:
     tags: ['v*']
-  workflow_run:
-    workflows: ["build"]
-    types:
-      - completed
 
 env:
   QT_VERSION: 6.5.3
 
 jobs:
+  build-linux:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python and install aqt
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Qt via aqt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt linux desktop 6.5.3 gcc_64 -O ~/Qt
+
+      - name: Install libevdev
+        run: sudo apt install libevdev-dev
+ 
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/Qt/6.5.3/gcc_64
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      # - name: Upload keybinder binary
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: keybinder-linux
+      #     path: build/keybinder
+
+      - name: Copy and Upload Dependencies
+        run: |
+          EXECUTABLE="${{ github.workspace }}/build/keybinder"
+          DEPLOY_DIR="${{ github.workspace }}/deploy"
+          mkdir -p "$DEPLOY_DIR"
+
+          ldd "$EXECUTABLE" \
+            | grep "$HOME/Qt/6.5.3/gcc_64" \
+            | awk '{print $3}' \
+            | while read -r lib; do
+                if [[ -f "$lib" ]]; then
+                  cp -v "$lib" "$DEPLOY_DIR"
+                fi
+              done
+
+          cp -v "$EXECUTABLE" "$DEPLOY_DIR"
+
+      - name: Upload all Qt libraries (single artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-linux
+          path: |
+            ${{ github.workspace }}/deploy/**
+
+  build-windows:
+    name: Windows Build
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Set up Python and install aqt
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+
+    - name: Install Qt via aqt
+      run: |
+        python -m pip install --upgrade pip
+        pip install aqtinstall
+        aqt install-qt windows desktop 6.5.3 win64_msvc2019_64 -O C:\Qt
+        echo "C:/Qt/6.5.3/msvc2019_64/bin/" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.5.3\msvc2019_64
+
+    - name: Build
+      run: cmake --build build --config Release
+    
+    - name: Deploy Qt Dependencies
+      run: |
+        cd build\release
+        windeployqt.exe keybinder.exe --release
+    
+    - name: Create Deployment Zip
+      run: |
+        mkdir deploy
+        copy build\release\keybinder.exe deploy\
+        windeployqt.exe deploy\keybinder.exe --release
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: keybinder-windows
+        path: deploy
+    
+    # - name: Upload to Release
+    #   if: github.event_name == 'release'
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ github.event.release.upload_url }}
+    #     asset_path: ./deploy/keybinder.zip
+    #     asset_name: keybinder-Windows.zip
+    #     asset_content_type: application/zip
+
+  build-macos:
+    name: macOS Build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up Python and install aqt
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install Qt via aqt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+          aqt install-qt mac desktop 6.5.3 clang_64 -O ~/Qt
+          echo ${{ github.workspace }}/Qt/6.2.0/macos/bin/ >> $GITHUB_PATH
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/Qt/6.5.3/macos
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      # - name: Upload keybinder binary
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: keybinder-macos
+      #     path: build/keybinder
+      
+      - name: Locate built app or executable
+        id: find_build_output
+        run: |
+          set -e
+          # Try common bundle locations first
+          POSSIBLE_APPS=("build/Release/keybinder.app" "build/keybinder.app" "build/Release/keybinder/keybinder.app")
+          APP_FOUND=""
+          for p in "${POSSIBLE_APPS[@]}"; do
+            if [ -d "$p" ]; then
+              APP_FOUND="$p"
+              break
+            fi
+          done
+          if [ -z "$APP_FOUND" ]; then
+            APP_FOUND=$(find build -name "keybinder.app" -maxdepth 4 | head -n1 || true)
+          fi
+
+          # If no .app, look for plain executable
+          POSSIBLE_EXES=("build/Release/keybinder" "build/keybinder" "build/Release/keybinder/keybinder")
+          EXE_FOUND=""
+          for p in "${POSSIBLE_EXES[@]}"; do
+            if [ -f "$p" ] && [ -x "$p" ]; then
+              EXE_FOUND="$p"
+              break
+            fi
+          done
+          if [ -z "$APP_FOUND" ] && [ -z "$EXE_FOUND" ]; then
+            EXE_FOUND=$(find build -type f -name "keybinder" -perm +111 -maxdepth 4 | head -n1 || true)
+          fi
+
+          if [ -n "$APP_FOUND" ]; then
+            echo "Found app bundle: $APP_FOUND"
+            echo "type=app" >> $GITHUB_OUTPUT
+            echo "path=$APP_FOUND" >> $GITHUB_OUTPUT
+          elif [ -n "$EXE_FOUND" ]; then
+            echo "Found executable: $EXE_FOUND"
+            echo "type=exe" >> $GITHUB_OUTPUT
+            echo "path=$EXE_FOUND" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Could not find keybinder.app or keybinder executable in build outputs"
+            ls -la build || true
+            exit 1
+          fi
+
+      - name: Deploy or package mac build
+        run: |
+          set -e
+          TYPE="${{ steps.find_build_output.outputs.type }}"
+          PATH_VAL="${{ steps.find_build_output.outputs.path }}"
+          echo "Packaging type=$TYPE path=$PATH_VAL"
+          if [ "$TYPE" = "app" ]; then
+            echo "Running macdeployqt on $PATH_VAL"
+            "$HOME/Qt/6.5.3/macos/bin/macdeployqt" "$PATH_VAL" --release -always-overwrite
+            echo "Uploading app bundle: $PATH_VAL"
+            # Upload step will handle the app path
+          else
+            echo "No .app produced; packaging executable and Qt libs"
+            DEPLOY_DIR="${{ github.workspace }}/deploy_mac"
+            mkdir -p "$DEPLOY_DIR"
+            cp -v "$PATH_VAL" "$DEPLOY_DIR/"
+
+            # Collect linked Qt libraries that come from the installed Qt path
+            echo "Finding linked libraries from Qt install"
+            otool -L "$PATH_VAL" || true
+            QT_PREFIX="$HOME/Qt/6.5.3"
+            otool -L "$PATH_VAL" \
+              | grep "$QT_PREFIX" \
+              | awk '{print $1}' \
+              | while read -r lib; do
+                if [ -n "$lib" ]; then
+                  # For framework entries, copy parent framework dir; for dylib, copy file
+                  if [[ "$lib" == *.framework* ]]; then
+                    FRAME_DIR=$(echo "$lib" | sed -E 's@(/.+?\.framework).*@\1@')
+                    if [ -d "$FRAME_DIR" ]; then
+                      cp -R "$FRAME_DIR" "$DEPLOY_DIR/" || true
+                    fi
+                  else
+                    mkdir -p "$DEPLOY_DIR/lib"
+                    cp -v "$lib" "$DEPLOY_DIR/lib/" || true
+                  fi
+                fi
+              done
+
+            echo "Packaged deploy dir: $DEPLOY_DIR"
+          fi
+
+      - name: Upload mac build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keybinder-macos
+          path: |
+            ${{ steps.find_build_output.outputs.path }}
+            ${{ github.workspace }}/deploy_mac
+
   collect-artifacts:
     name: Collect artifacts from Build run
     runs-on: ubuntu-latest
     steps:
-      - name: Find Build run for this tag
-        id: find_run
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const core = require('@actions/core');
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const workflow = 'build.yml';
-            const targetSha = context.sha;
-            const runs = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id: workflow, per_page: 50});
-            const run = runs.data.workflow_runs.find(r => r.head_sha === targetSha);
-            if (!run) core.setFailed(`No build run found for sha ${targetSha}`);
-            core.setOutput('run_id', String(run.id));
-
       - name: Download Linux artifact from Build run
         uses: actions/download-artifact@v4
         with:
