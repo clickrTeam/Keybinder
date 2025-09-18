@@ -2,6 +2,8 @@ name: Build
 
 on:
   push:
+    tags-ignore:
+      - 'v*'
 
 env:
   QT_VERSION: 6.5.3
@@ -270,4 +272,3 @@ jobs:
             --header "Content-Type: application/json" \
             --data "{\"state\":\"$STATE\",\"description\":\"$DESCRIPTION\",\"context\":\"CI\",\"target_url\":\"$GITHUB_RUN_URL\"}" \
             "https://capstone.cs.utah.edu/api/v4/projects/113/statuses/$TARGET_COMMIT"
-            
