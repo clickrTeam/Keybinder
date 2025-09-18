@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+env:
+  QT_VERSION: 6.5.3
+
+jobs:
+  collect-artifacts:
+    name: Collect artifacts from Build run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Build run for this tag
+        id: find_run
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const core = require('@actions/core');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow = 'build.yml';
+            const targetSha = context.sha;
+            const runs = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id: workflow, per_page: 50});
+            const run = runs.data.workflow_runs.find(r => r.head_sha === targetSha);
+            if (!run) core.setFailed(`No build run found for sha ${targetSha}`);
+            core.setOutput('run_id', String(run.id));
+
+      - name: Download Linux artifact from Build run
+        uses: actions/download-artifact@v4
+        with:
+          name: keybinder-linux
+          path: ./release_assets/linux
+          run-id: ${{ steps.find_run.outputs.run_id }}
+
+      - name: Download Windows artifact from Build run
+        uses: actions/download-artifact@v4
+        with:
+          name: keybinder-windows
+          path: ./release_assets/windows
+          run-id: ${{ steps.find_run.outputs.run_id }}
+
+      - name: Download macOS artifact from Build run
+        uses: actions/download-artifact@v4
+        with:
+          name: keybinder-macos
+          path: ./release_assets/macos
+          run-id: ${{ steps.find_run.outputs.run_id }}
+
+      - name: Zip assets
+        run: |
+          mkdir -p release_assets/zips
+          if [ -d release_assets/linux ]; then
+            (cd release_assets/linux && zip -r ../../release_assets/zips/keybinder-linux.zip .)
+          fi
+          if [ -d release_assets/windows ]; then
+            (cd release_assets/windows && zip -r ../../release_assets/zips/keybinder-windows.zip .)
+          fi
+          if [ -d release_assets/macos ]; then
+            (cd release_assets/macos && zip -r ../../release_assets/zips/keybinder-macos.zip .)
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload linux asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/zips/keybinder-linux.zip
+          asset_name: keybinder-linux.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload windows asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/zips/keybinder-windows.zip
+          asset_name: keybinder-windows.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macos asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/zips/keybinder-macos.zip
+          asset_name: keybinder-macos.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
