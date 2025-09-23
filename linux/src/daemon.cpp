@@ -52,7 +52,7 @@ void Daemon::start() {
 
     struct libevdev *keyb;
     if (libevdev_new_from_fd(keyb_fd, &keyb) < 0) {
-        cerr << "Failed to initialize libevdev" << endl;
+        qCritical() << "Failed to initialize libevdev";
         return;
     }
 
@@ -63,7 +63,7 @@ void Daemon::start() {
 
     // Prevent the physical keyboard key presses from being typed
     if (libevdev_grab(keyb, LIBEVDEV_GRAB) < 0) {
-        cerr << "Failed to grab the keyboard device" << endl;
+        qCritical() << "Failed to grab the keyboard device";
         return;
     }
 
@@ -96,10 +96,13 @@ void Daemon::start() {
                     // something else)
                     continue;
                 }
-                event_list.append(e);
-                // Inject original key if not mapped
-                send_keys(event_list);
-                event_list.clear();
+                else
+                {
+                    // Inject original key if not mapped
+                    event_list.append(e);
+                    send_keys(event_list);
+                    event_list.clear();
+                }
             }
         }
     }

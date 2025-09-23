@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QElapsedTimer>
 #include <libevdev-1.0/libevdev/libevdev.h>
+#include <qlogging.h>
 #include <systemd/sd-device.h>
 #include <dirent.h>
 #include <iostream>
@@ -125,8 +126,8 @@ QString detect_keyboard()
 
     // Create a new enumerator object that will walk through udev's device list
     if (sd_device_enumerator_new(&enumerator) < 0) {
-        qCritical() << "Failed to create sd-device enumerator";
-        return "";
+        qWarning() << "Failed to create sd-device enumerator, falling back to spacebar detection";
+        return detect_keyboard_fallback();
     }
 
     // Restrict enumeration to the "input" subsystem (all input devices).
@@ -163,42 +164,42 @@ QString detect_keyboard()
 
     qDebug() << "Found" << device_candidates.size() << "keyboard candidates via sd-device.";
 
+    QList<QString> keyboard_candidates;
     // If only one candidate was found, assume it is the keyboard
     if (device_candidates.size() == 1) {
         return device_candidates[0];
     }
-
     // If no devices were found, fall back to interactive detection
-    if (device_candidates.size() == 0) {
+    else if (device_candidates.size() == 0) {
         qDebug() << "No keyboard devices found, falling back to spacebar detection.";
         return detect_keyboard_fallback();
     }
+    else{
+        // We have multiple candidates, refine using libevdev heuristics
+        // to confirm which device looks like a "full" keyboard
+        for (const QString &path : device_candidates) {
+            int fd = open(path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
+            if (fd < 0) {
+                qWarning() << "Failed to open" << path;
+                continue;
+            }
 
-    // If multiple candidates, refine using libevdev heuristics
-    // to confirm which device looks like a "full" keyboard
-    QList<QString> keyboard_candidates;
-    for (const QString &path : device_candidates) {
-        int fd = open(path.toUtf8().constData(), O_RDONLY | O_NONBLOCK);
-        if (fd < 0) {
-            qWarning() << "Failed to open" << path;
-            continue;
-        }
+            struct libevdev *dev = nullptr;
+            // Initialize a libevdev device object from the fd
+            if (libevdev_new_from_fd(fd, &dev) < 0) {
+                close(fd);
+                continue;
+            }
 
-        struct libevdev *dev = nullptr;
-        // Initialize a libevdev device object from the fd
-        if (libevdev_new_from_fd(fd, &dev) < 0) {
+            // Run heuristic: device must support typical alphanumeric + modifier keys
+            if (is_full_keyboard(dev)) {
+                keyboard_candidates.push_back(path);
+            }
+
+            // Clean up
+            libevdev_free(dev);
             close(fd);
-            continue;
         }
-
-        // Run heuristic: device must support typical alphanumeric + modifier keys
-        if (is_full_keyboard(dev)) {
-            keyboard_candidates.push_back(path);
-        }
-
-        // Clean up
-        libevdev_free(dev);
-        close(fd);
     }
 
     // If multiple devices matched heuristics, fall back to interactive detection
@@ -207,15 +208,15 @@ QString detect_keyboard()
         qDebug() << "Multiple possible keyboards detected, falling back to spacebar detection";
         return detect_keyboard_fallback();
     }
-
     // If no device matched heuristics, fall back to interactive detection
-    if (keyboard_candidates.size() <= 0) {
+    else if (keyboard_candidates.size() == 0) {
         qDebug() << "No keyboard matched heuristics, falling back to spacebar detection.";
         return detect_keyboard_fallback();
     }
-
-    // Only one possible keyboard was found, return it
-    return keyboard_candidates[0];
+    else {
+        // Only one possible keyboard was found, return it
+        return keyboard_candidates[0];
+    }
 }
 
 bool is_full_keyboard(libevdev *dev){
@@ -370,7 +371,7 @@ int setup_uinput_device() {
     uinput_device.id.vendor = 0x1;      // Arbitrary
     uinput_device.id.product = 0x1;     // Arbitrary
     // Device name that will show up in /proc/bus/input/devices or evtest
-    strcpy(uinput_device.name, "clickr_virtual_keyboard"); 
+    strlcpy(uinput_device.name, "clickr_virtual_keyboard\0", sizeof(uinput_device.name)); 
 
 
     if (ioctl(uinp_fd, UI_DEV_SETUP, &uinput_device) < 0 || // Configure the device with the provided info
