@@ -1,7 +1,7 @@
 #pragma once
 
 #include "abstract_daemon.h"
-#include "profile.h"
+#include "key_channel.h"
 #include <QDebug>
 #include <dirent.h>
 #include <fcntl.h>
@@ -9,8 +9,6 @@
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <linux/uinput.h> // Required for injecting events
 #include <map>
-#include <mapper.h>
-#include <string.h>
 #include <unistd.h>
 #include <vector>
 using std::cerr;
@@ -28,7 +26,6 @@ class Daemon : public AbstractDaemon {
     QString event_keyb_path = "";
     bool is_running = false;
     KeySender key_sender;
-
 
     void send_keys_helper(const QList<InputEvent> &vk, int fd);
     void send_key(int key_code, int state, int fd);
@@ -79,12 +76,6 @@ class Daemon : public AbstractDaemon {
     /// - For EV_SYN events:
     ///     - value is always set to 0 (SYN_REPORT convention).
     ///
-    /// Example:
-    ///   Passing a list with one "press A" and one "release A" event will
-    ///   generate the corresponding key press and release in the virtual
-    ///   input device.
-    ///
-    void send_keys(const QList<InputEvent> &vk) override;
     /// Example:
     ///   Passing a list with one "press A" and one "release A" event will
     ///   generate the corresponding key press and release in the virtual

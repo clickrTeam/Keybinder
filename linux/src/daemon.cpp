@@ -58,7 +58,7 @@ void Daemon::start() {
 
     // Release all keys before grab to prevent key spam
     for (int i = 0; i <= KEY_MAX; i++) {
-        send_key(i, 1, keyb_fd);
+        send_key(i, 0, keyb_fd);
     }
 
     // Prevent the physical keyboard key presses from being typed
@@ -133,14 +133,13 @@ void Daemon::send_key(int key_code, int state, int fd)
     event.value = state; // Key up or down
     write(fd, &event, sizeof(event)); // Send the event
 
-        // Synchronization event
-        event.type = EV_SYN;
-        // SYN_REPORT -> Used to synchronize and separate events into packets 
-        //               of input data occurring at the same moment in time.
-        event.code = SYN_REPORT;
-        event.value = 0; // This value is not used but is set to 0 by convention
-        write(fd, &event, sizeof(event)); // Send the event
+    // Synchronization event
+    event.type = EV_SYN;
+    // SYN_REPORT -> Used to synchronize and separate events into packets 
+    //               of input data occurring at the same moment in time.
+    event.code = SYN_REPORT;
+    event.value = 0; // This value is not used but is set to 0 by convention
+    write(fd, &event, sizeof(event)); // Send the event
 
-        qDebug() << "Key sent:" << input.keycode << ":" << type;
-    }
+    qDebug() << "Key sent:" << key_code << ":" << state;
 }
