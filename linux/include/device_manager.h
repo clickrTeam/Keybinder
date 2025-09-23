@@ -1,7 +1,7 @@
 #pragma once
 #include <QString>
-#include <linux/uinput.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
+#include <linux/uinput.h>
 
 ///
 /// \brief Determines whether a user has a eventX device configured as their
@@ -39,7 +39,8 @@ bool record_eventX(QString eventX_path);
 /// interactive detection routine (`detect_keyboard_fallback()`), where
 /// the user can press the spacebar to identify the correct device.
 ///
-/// \return QString Path to the detected keyboard device (e.g. "/dev/input/event3"),
+/// \return QString Path to the detected keyboard device (e.g.
+/// "/dev/input/event3"),
 ///                or an empty QString if none found.
 ///
 QString detect_keyboard();
@@ -55,10 +56,10 @@ QString detect_keyboard_fallback();
 ///
 /// \brief Check if an initialized libevdev device looks like a "full" keyboard.
 ///
-/// Many devices expose EV_KEY events (e.g. laptop hotkey panels, remote controls,
-/// volume/mute buttons), but they are not full keyboards. This function applies
-/// a heuristic: it checks that the device supports a set of representative keys
-/// that only a real alphanumeric keyboard would have.
+/// Many devices expose EV_KEY events (e.g. laptop hotkey panels, remote
+/// controls, volume/mute buttons), but they are not full keyboards. This
+/// function applies a heuristic: it checks that the device supports a set of
+/// representative keys that only a real alphanumeric keyboard would have.
 ///
 /// Keys checked:
 ///  - KEY_A and KEY_Z  → ensures alphabetic range is present
@@ -75,7 +76,7 @@ bool is_full_keyboard(libevdev *dev);
 /// \brief Set up a virtual keyboard device using the Linux uinput subsystem.
 ///
 /// \return A file descriptor of the virtual keyboard device.
-/// 
+///
 /// This function opens /dev/uinput and registers a new virtual input device
 /// that behaves like a keyboard. It enables support for key events (EV_KEY)
 /// and synchronization events (EV_SYN), then marks all possible key codes
@@ -83,6 +84,6 @@ bool is_full_keyboard(libevdev *dev);
 /// name "clickr_virtual_keyboard", and is created in the kernel
 /// so it appears as an input device (e.g., /dev/input/eventX).
 ///
-/// On success, the file descriptor for the created uinput device is returned. 
+/// On success, the file descriptor for the created uinput device is returned.
 /// On failure, the function prints an error and returns -1.
 int setup_uinput_device();

@@ -1,7 +1,7 @@
 #include "daemon.h"
+#include "device_manager.h"
 #include "key_channel.h"
 #include "key_map.h"
-#include "device_manager.h"
 #include <QThread>
 
 Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
@@ -27,7 +27,9 @@ void Daemon::cleanup() {
         ioctl(uinput_fd, UI_DEV_DESTROY);
         close(uinput_fd);
         if (keyb != nullptr && keyb_fd >= 0) {
-            libevdev_grab(keyb, LIBEVDEV_UNGRAB); // Release control of the physical keyboard
+            libevdev_grab(
+                keyb,
+                LIBEVDEV_UNGRAB); // Release control of the physical keyboard
             libevdev_free(keyb);
             close(keyb_fd);
         }
@@ -84,7 +86,8 @@ void Daemon::start() {
         termination_condition =
             QThread::currentThread()->isInterruptionRequested();
         struct input_event event;
-        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0) {
+        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
+               0) {
             if (event.type == EV_KEY) {
                 InputEvent e;
                 e.keycode = int_to_keycode.find_forward(event.code);
@@ -95,9 +98,7 @@ void Daemon::start() {
                     // Suppressed by the mapper (i.e. replaced/mapped to
                     // something else)
                     continue;
-                }
-                else
-                {
+                } else {
                     // Inject original key if not mapped
                     event_list.append(e);
                     send_keys(event_list);
@@ -112,8 +113,7 @@ void Daemon::send_keys(const QList<InputEvent> &vk) {
     send_keys_helper(vk, uinput_fd);
 }
 
-void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
-{
+void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd) {
     bool type;
     int key_code;
     foreach (InputEvent input, vk) {
@@ -123,22 +123,20 @@ void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd)
     }
 }
 
-
 // state 1 for pressed, 0 for released
-void Daemon::send_key(int key_code, int state, int fd)
-{
+void Daemon::send_key(int key_code, int state, int fd) {
     struct input_event event;
     memset(&event, 0, sizeof(event));
 
     // Key press event
     event.type = EV_KEY;
-    event.code = key_code; // Key that we are sending
-    event.value = state; // Key up or down
+    event.code = key_code;            // Key that we are sending
+    event.value = state;              // Key up or down
     write(fd, &event, sizeof(event)); // Send the event
 
     // Synchronization event
     event.type = EV_SYN;
-    // SYN_REPORT -> Used to synchronize and separate events into packets 
+    // SYN_REPORT -> Used to synchronize and separate events into packets
     //               of input data occurring at the same moment in time.
     event.code = SYN_REPORT;
     event.value = 0; // This value is not used but is set to 0 by convention
