@@ -1,7 +1,7 @@
 #include "daemon.h"
+#include "device_manager.h"
 #include "key_channel.h"
 #include "key_map.h"
-#include "linux_configure.h"
 #include <QThread>
 
 Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
@@ -13,7 +13,7 @@ Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
         event_keyb_path = detect_keyboard();
         record_eventX(event_keyb_path);
     }
-    qDebug() << "Daemon created" << Qt::endl;
+    qDebug() << "Daemon created";
     // Do stuff
 }
 
@@ -22,33 +22,57 @@ Daemon::~Daemon() {
     qDebug() << "Daemon destroyed" << Qt::endl;
 }
 
+void Daemon::cleanup() {
+    if (this->is_running) {
+        ioctl(uinput_fd, UI_DEV_DESTROY);
+        close(uinput_fd);
+        if (keyb != nullptr && keyb_fd >= 0) {
+            libevdev_grab(
+                keyb,
+                LIBEVDEV_UNGRAB); // Release control of the physical keyboard
+            libevdev_free(keyb);
+            close(keyb_fd);
+        }
+        qDebug() << "Daemon cleaned up";
+        is_running = false;
+    } else {
+        qDebug()
+            << "cleanup() called but daemon not running. Exiting function.";
+    }
+}
+
 void Daemon::start() {
-    qDebug() << "Daemon started" << Qt::endl;
+    qDebug() << "Daemon started";
 
     // Open the identified keyboard device in read-write mode
     int keyb_fd =
         open(event_keyb_path.toUtf8().constData(), O_RDWR | O_NONBLOCK);
     if (keyb_fd < 0) {
-        qCritical() << "Failed to open device: " << strerror(errno) << Qt::endl;
+        qCritical() << "Failed to open device: " << strerror(errno);
         return;
     }
 
     struct libevdev *keyb;
     if (libevdev_new_from_fd(keyb_fd, &keyb) < 0) {
-        cerr << "Failed to initialize libevdev" << endl;
+        qCritical() << "Failed to initialize libevdev";
         return;
     }
 
-    // Prevent the original key press from being typed
+    // Release all keys before grab to prevent key spam
+    for (int i = 0; i <= KEY_MAX; i++) {
+        send_key(i, 0, keyb_fd);
+    }
+
+    // Prevent the physical keyboard key presses from being typed
     if (libevdev_grab(keyb, LIBEVDEV_GRAB) < 0) {
-        cerr << "Failed to grab the keyboard device" << endl;
+        qCritical() << "Failed to grab the keyboard device";
         return;
     }
 
     // Set up uinput for key injection
-    setup_uinput_device();
+    uinput_fd = setup_uinput_device();
     if (uinput_fd < 0) {
-        qCritical() << "Failed to set up uinput" << Qt::endl;
+        qCritical() << "Failed to set up uinput";
         return;
     }
 
@@ -64,27 +88,7 @@ void Daemon::start() {
         struct input_event event;
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
                0) {
-
             if (event.type == EV_KEY) {
-                // TODO: Send key code to mapper.cpp and have it determine which
-                // key / combo to output.
-                //                if (event.code == KEY_ESC)
-                //                {
-                //                    escape_pressed = true;
-                //                    break;
-                //                }
-                //                // Send new key instead of the original key
-                //                for(Keybind bind :
-                //                profile.layers.first().keybinds)
-                //                {
-                //                    if(bind.bind.value == event.code)
-                //                    {
-                //                        qDebug() << "Sending mapped key: " <<
-                //                        bind.key.value;
-                //                        send_key_event(uinp_fd,
-                //                        map.getKey(bind.key.value));
-                //                    }
-                //                }
                 InputEvent e;
                 e.keycode = int_to_keycode.find_forward(event.code);
                 e.type = (event.value == 1) ? KeyEventType::Press
@@ -94,93 +98,50 @@ void Daemon::start() {
                     // Suppressed by the mapper (i.e. replaced/mapped to
                     // something else)
                     continue;
+                } else {
+                    // Inject original key if not mapped
+                    event_list.append(e);
+                    send_keys(event_list);
+                    event_list.clear();
                 }
-                event_list.append(e);
-                // Inject original key if not mapped
-                send_keys(event_list);
-                event_list.clear();
             }
         }
     }
 }
 
-void Daemon::cleanup() {
-    if (this->is_running) {
-        ioctl(uinput_fd, UI_DEV_DESTROY);
-        close(uinput_fd);
-        if (keyb != nullptr && keyb_fd >= 0) {
-            libevdev_grab(keyb, LIBEVDEV_UNGRAB); // @todo crash here
-            libevdev_free(keyb);
-            close(keyb_fd);
-        }
-        qDebug() << "Daemon cleaned up" << Qt::endl;
-        is_running = false;
-    } else {
-        qDebug()
-            << "cleanup() called but daemon not running. Exiting function.";
+void Daemon::send_keys(const QList<InputEvent> &vk) {
+    send_keys_helper(vk, uinput_fd);
+}
+
+void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd) {
+    bool type;
+    int key_code;
+    foreach (InputEvent input, vk) {
+        type = input.type == KeyEventType::Press ? 1 : 0;
+        key_code = int_to_keycode.find_backward(input.keycode);
+        send_key(key_code, type, fd);
     }
 }
 
-void Daemon::send_keys(const QList<InputEvent> &vk) {
+// state 1 for pressed, 0 for released
+void Daemon::send_key(int key_code, int state, int fd) {
     struct input_event event;
-    bool type;
     memset(&event, 0, sizeof(event));
 
-    foreach (InputEvent input_event, vk) {
-        type = input_event.type == KeyEventType::Press ? 1 : 0;
+    // Key press event
+    event.type = EV_KEY;
+    event.code = key_code;            // Key that we are sending
+    event.value = state;              // Key up or down
+    write(fd, &event, sizeof(event)); // Send the event
 
-        // Key press event
-        event.type = EV_KEY;
-        event.code = int_to_keycode.find_backward(input_event.keycode);
-        event.value = type;
-        write(uinput_fd, &event, sizeof(event));
+    // Synchronization event
+    event.type = EV_SYN;
+    // SYN_REPORT -> Used to synchronize and separate events into packets
+    //               of input data occurring at the same moment in time.
+    event.code = SYN_REPORT;
+    event.value = 0; // This value is not used but is set to 0 by convention
+    write(fd, &event, sizeof(event)); // Send the event
 
-        // Key release event
-        // event.value = 0;
-        // write(uinput_fd, &event, sizeof(event));
-
-        // Synchronization event
-        event.type = EV_SYN;
-        event.code = SYN_REPORT;
-        event.value = 0;
-        write(uinput_fd, &event, sizeof(event));
-
-        qDebug() << "Key sent:"
-                 << int_to_keycode.find_backward(input_event.keycode) << ":"
-                 << type << Qt::endl;
-    }
+    qDebug() << "Key sent:" << key_code << ":" << state;
 }
 
-void Daemon::setup_uinput_device() {
-    int uinp_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    if (uinp_fd < 0) {
-        cerr << "Failed to open /dev/uinput" << endl;
-        return;
-    }
-
-    ioctl(uinp_fd, UI_SET_EVBIT, EV_KEY);
-    ioctl(uinp_fd, UI_SET_EVBIT, EV_SYN);
-
-    // TODO: Should not need this part if we are handling mapping with
-    // mapper.cpp
-    // Registers all of the keys to be remapped
-    for (int i = 0; i < 128; i++) {
-        ioctl(uinp_fd, UI_SET_KEYBIT, i);
-    }
-
-    struct uinput_setup usetup;
-    memset(&usetup, 0, sizeof(usetup));
-    usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x1;
-    usetup.id.product = 0x1;
-    strcpy(usetup.name, "h_key_mapper");
-
-    if (ioctl(uinp_fd, UI_DEV_SETUP, &usetup) < 0 ||
-        ioctl(uinp_fd, UI_DEV_CREATE) < 0) {
-        cerr << "Failed to create uinput device" << endl;
-        close(uinp_fd);
-        return;
-    }
-
-    uinput_fd = uinp_fd;
-}

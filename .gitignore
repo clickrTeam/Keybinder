@@ -289,3 +289,6 @@ tmp/
 /out/
 ubuntu/learning/detect_keyboard
 ubuntu/learning/simple_remap
+logs/myapp.log
+build.sh
+last_loaded.profile.json
