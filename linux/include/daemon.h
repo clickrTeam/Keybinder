@@ -43,6 +43,7 @@ class Daemon : public AbstractDaemon {
     /// to return to normal function.
     ///
     void cleanup() override;
+    
     ///
     /// \brief Sends a sequence of key press and release events through the
     /// uinput device.
@@ -69,6 +70,5 @@ class Daemon : public AbstractDaemon {
     ///   generate the corresponding key press and release in the virtual
     ///   input device.
     ///
-
     void send_keys(const QList<InputEvent> &vk) override;
 };
