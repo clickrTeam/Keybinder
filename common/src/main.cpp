@@ -9,7 +9,7 @@
 #include "read_profile.h"
 #include "signal_handler.h"
 #include <QByteArray>
-#include <QCoreApplication>
+#include <QApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -22,7 +22,7 @@
 #include <qcoreapplication.h>
 
 int main(int argc, char *argv[]) {
-    QCoreApplication a(argc, argv);
+    QApplication a(argc, argv);
     QString path = "empty";
     Profile activeProfile;
 

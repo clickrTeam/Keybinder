@@ -3,6 +3,7 @@
 #include "event.h"
 #include "key_channel.h"
 #include "profile.h"
+#include "tray.h"
 #include <QDebug>
 #include <cstddef>
 #include <mutex>
@@ -28,6 +29,7 @@ class Mapper {
     KeyReceiver key_receiver;
     Profile profile;
     size_t cur_layer;
+    Tray tray;
 
     QMap<KeyCode, Bind> key_press_triggers;
     QMap<KeyCode, Bind> key_release_triggers;

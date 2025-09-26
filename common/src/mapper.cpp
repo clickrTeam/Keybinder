@@ -7,6 +7,7 @@
 #include <mutex>
 #include <optional>
 #include <profile.h>
+#include <qcontainerfwd.h>
 
 Mapper::Mapper(Profile profile, Daemon &daemon, KeyReceiver key_receiver)
     : daemon(daemon), key_receiver(key_receiver) {
@@ -28,6 +29,7 @@ bool Mapper::set_layer(size_t new_layer) {
         return false;
     }
     set_layer_inner(new_layer);
+
     return true;
 }
 
@@ -36,7 +38,7 @@ void Mapper::set_layer_inner(size_t new_layer) {
     cur_layer = new_layer;
 
     qDebug() << "Cur Layer: " << cur_layer
-             << " Lenght = " << profile.layers.size();
+             << " Length = " << profile.layers.size();
     key_press_triggers.clear();
     key_release_triggers.clear();
     tap_sequence_starts.clear();
@@ -59,6 +61,9 @@ void Mapper::set_layer_inner(size_t new_layer) {
             },
             trigger);
     }
+
+    QString layerName = profile.layers[new_layer].layer_name;
+    tray.sendNotification("Layer changed", "Layer changed to " + layerName);
 }
 
 // TODO: mostly temp code will move to state Machines soon

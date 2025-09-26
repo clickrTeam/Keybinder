@@ -8,9 +8,11 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/local_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_channel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_code.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/tray.cpp
 
     # For some reason it breaks without explicitly putting it here. 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/local_server.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/tray.h
     PARENT_SCOPE
 )
 set(COMMON_HEADER_PATHS
