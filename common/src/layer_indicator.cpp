@@ -7,7 +7,7 @@
 #include <QVBoxLayout>
 
 LayerIndicator::LayerIndicator(const QString &layer_name,
-                               int duration_ms = 1000) {
+                               int duration_ms) {
     qDebug() << "Layer Indicator constructor for: " << layer_name;
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
                    Qt::Tool);
@@ -23,6 +23,7 @@ LayerIndicator::LayerIndicator(const QString &layer_name,
     layout->addWidget(label);
     layout->setContentsMargins(0, 0, 0, 0);
     adjustSize();
+    resize(sizeHint());  // ensures width() and height() are valid
 
     // Place the indicator in the bottom right corner of the screen where the
     // mouse is.
@@ -37,9 +38,13 @@ LayerIndicator::LayerIndicator(const QString &layer_name,
     QRect screen_geometry = screen->availableGeometry();
     int x = screen_geometry.right() - width() - 20;
     int y = screen_geometry.bottom() - height() - 40;
-    move(x, y);
+    qDebug() << "Screen geom:" << screen_geometry 
+         << "Widget:" << width() << "x" << height()
+         << "Target:" << x << "," << y;
+
 
     show();
+    move(x, y);
 
     // Auto-close after duration
     QTimer::singleShot(duration_ms, this, &QWidget::close);

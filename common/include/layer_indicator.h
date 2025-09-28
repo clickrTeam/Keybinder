@@ -1,5 +1,4 @@
-#ifndef LAYER_INDICATOR_H
-#define LAYER_INDICATOR_H
+#pragma once
 
 #include <QString>
 #include <QWidget>
@@ -19,7 +18,5 @@ class LayerIndicator : public QWidget {
      * @param duration_ms is the amount of time in milliseconds the pop up
      * will be present on screen.
      */
-    LayerIndicator(const QString &layer_name, int duration_ms);
+    LayerIndicator(const QString &layer_name, int duration_ms = 1000);
 };
-
-#endif // LAYER_INDICATOR_H

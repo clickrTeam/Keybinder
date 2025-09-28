@@ -67,9 +67,6 @@ void Mapper::set_layer_inner(size_t new_layer) {
             },
             trigger);
     }
-
-    QString layerName = profile.layers[new_layer].layer_name;
-    tray.sendNotification("Layer changed", "Layer changed to " + layerName);
 }
 
 // TODO: mostly temp code will move to state Machines soon
