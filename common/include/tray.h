@@ -10,8 +10,6 @@ class Tray : public QObject {
 public:
     Tray(QObject *parent = nullptr);
 
-    void sendNotification(const QString &title, const QString &message);
-
 private:
     QSystemTrayIcon *trayIcon;
 };
