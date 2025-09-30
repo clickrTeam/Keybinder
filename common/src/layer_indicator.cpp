@@ -36,6 +36,11 @@ LayerIndicator::LayerIndicator(const QString &layer_name,
     }
 
     QRect screen_geometry = screen->availableGeometry();
+    QSize logicalSize = screen->geometry().size();
+    QSize physSize = screen->size();  // physical in mm, not pixels
+    qDebug() << "Logical:" << logicalSize
+            << "Reported DPR:" << screen->devicePixelRatio()
+            << "Pixel density:" << screen->logicalDotsPerInchX();
     int x = screen_geometry.right() - width() - 20;
     int y = screen_geometry.bottom() - height() - 40;
     qDebug() << "Screen geom:" << screen_geometry 
