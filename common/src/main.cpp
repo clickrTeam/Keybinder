@@ -6,7 +6,7 @@
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
-#include "read_profile.h"
+#include "tray.h"
 #include "signal_handler.h"
 #include <QApplication>
 #include <QByteArray>
@@ -20,6 +20,29 @@
 #include <QThread>
 #include <csignal>
 #include <qcoreapplication.h>
+#include <qtmetamacros.h>
+
+QThread *daemon_thread;
+QThread *mapper_thread;
+
+void cleanShutdown() {
+    qDebug() << "Shutting down...";
+
+    // Ask threads to quit gracefully
+    if (daemon_thread) {
+        daemon_thread->requestInterruption();
+        daemon_thread->quit();
+        daemon_thread->wait();
+    }
+
+    if (mapper_thread) {
+        mapper_thread->requestInterruption();
+        mapper_thread->quit();
+        mapper_thread->wait();
+    }
+
+    QApplication::quit();
+}
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -52,8 +75,8 @@ int main(int argc, char *argv[]) {
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
     // causing slowdowns
-    QThread *daemon_thread = QThread::create([&] { daemon.start(); });
-    QThread *mapper_thread = QThread::create([&] { mapper.start(); });
+    daemon_thread = QThread::create([&] { daemon.start(); });
+    mapper_thread = QThread::create([&] { mapper.start(); });
     daemon_thread->start(QThread::Priority::TimeCriticalPriority);
     mapper_thread->start(QThread::Priority::TimeCriticalPriority);
     sh.set_daemon_thread(daemon_thread);
@@ -65,6 +88,11 @@ int main(int argc, char *argv[]) {
     QObject::connect(QCoreApplication::instance(),
                      &QCoreApplication::aboutToQuit,
                      [&logger]() { logger.cleanUp(); });
+
+    Tray tray;
+    QObject::connect(&tray, &Tray::shutdown, [&]() {
+        cleanShutdown();
+    });
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
