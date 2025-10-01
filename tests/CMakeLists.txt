@@ -16,8 +16,8 @@ add_executable(keybinder_tests
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/mapper.cpp
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
-    ${CMAKE_SOURCE_DIR}/common/src/layer_indicator.cpp
-    ${CMAKE_SOURCE_DIR}/common/include/layer_indicator.h
+    ${CMAKE_SOURCE_DIR}/common/src/generic_indicator.cpp
+    ${CMAKE_SOURCE_DIR}/common/include/generic_indicator.h
     ${CMAKE_SOURCE_DIR}/common/src/tray.cpp
     ${CMAKE_SOURCE_DIR}/common/include/tray.h
 )

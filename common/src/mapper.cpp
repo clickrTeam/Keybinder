@@ -3,7 +3,7 @@
 #include "event.h"
 #include "key_channel.h"
 #include "key_code.h"
-#include "layer_indicator.h"
+#include "generic_indicator.h"
 #include <QApplication>
 #include <QTimer>
 #include <mutex>
@@ -40,9 +40,10 @@ void Mapper::set_layer_inner(size_t new_layer) {
     qDebug() << "Cur Layer: " << cur_layer
              << " Length = " << profile.layers.size();
 
+    // Create the notification for layer switching
     QTimer::singleShot(0, qApp,
                        [layerName = profile.layers[new_layer].layer_name]() {
-                           new LayerIndicator(layerName, 1000);
+                           new GenericIndicator(layerName, 1000);
                        });
 
     key_press_triggers.clear();
