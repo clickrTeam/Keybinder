@@ -22,7 +22,7 @@ class Daemon : public AbstractDaemon {
   private:
     int keyb_fd = -1;
     int uinput_fd = -1;
-    struct libevdev *keyb;
+    struct libevdev *keyb = nullptr;
     QString event_keyb_path = "";
     bool is_running = false;
     KeySender key_sender;
