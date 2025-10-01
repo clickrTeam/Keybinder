@@ -147,4 +147,3 @@ void Daemon::send_key(int key_code, int state, int fd) {
 
     qDebug() << "Key sent:" << key_code << ":" << state;
 }
-

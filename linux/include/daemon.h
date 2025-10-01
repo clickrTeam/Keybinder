@@ -43,7 +43,7 @@ class Daemon : public AbstractDaemon {
     /// to return to normal function.
     ///
     void cleanup() override;
-    
+
     ///
     /// \brief Sends a sequence of key press and release events through the
     /// uinput device.

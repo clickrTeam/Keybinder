@@ -221,7 +221,8 @@ QString detect_keyboard() {
         return detect_keyboard_fallback();
     } else {
         // Only one possible keyboard was found, return it
-        qDebug() << "Only one possible keyboard candidate detected at path: " << keyboard_candidates[0];
+        qDebug() << "Only one possible keyboard candidate detected at path: "
+                 << keyboard_candidates[0];
         return keyboard_candidates[0];
     }
 }
