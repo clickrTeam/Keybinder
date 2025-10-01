@@ -32,6 +32,10 @@ void Daemon::cleanup() {
                 LIBEVDEV_UNGRAB); // Release control of the physical keyboard
             libevdev_free(keyb);
             close(keyb_fd);
+
+            // Explicitly set keyb and keyb_fd
+            keyb_fd = -1;
+            keyb = nullptr;
         }
         qDebug() << "Daemon cleaned up";
         is_running = false;
@@ -45,15 +49,14 @@ void Daemon::start() {
     qDebug() << "Daemon started";
 
     // Open the identified keyboard device in read-write mode
-    int keyb_fd =
+    this->keyb_fd =
         open(event_keyb_path.toUtf8().constData(), O_RDWR | O_NONBLOCK);
     if (keyb_fd < 0) {
         qCritical() << "Failed to open device: " << strerror(errno);
         return;
     }
 
-    struct libevdev *keyb;
-    if (libevdev_new_from_fd(keyb_fd, &keyb) < 0) {
+    if (libevdev_new_from_fd(this->keyb_fd, &keyb) < 0) {
         qCritical() << "Failed to initialize libevdev";
         return;
     }
