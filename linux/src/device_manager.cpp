@@ -20,7 +20,6 @@ const QString DEFAULT_CONFIG_PATH =
     QDir::homePath() + "/.config/clickr/config.json";
 
 QString retrieve_eventX(QString config_file_path) {
-    qDebug() << "Searching for eventX in path: " << config_file_path;
     QString eventX = "";
     QFile config(config_file_path);
 
@@ -221,8 +220,7 @@ QString detect_keyboard() {
         return detect_keyboard_fallback();
     } else {
         // Only one possible keyboard was found, return it
-        qDebug() << "Only one possible keyboard candidate detected at path: "
-                 << keyboard_candidates[0];
+        qDebug() << "Only one possible keyboard candidate detected at path: " << keyboard_candidates[0];
         return keyboard_candidates[0];
     }
 }
