@@ -43,7 +43,7 @@ void Mapper::set_layer_inner(size_t new_layer) {
     // Create the notification for layer switching
     QTimer::singleShot(0, qApp,
                        [layerName = profile.layers[new_layer].layer_name]() {
-                           new GenericIndicator(layerName, 1000);
+                           new GenericIndicator(layerName, GenericIndicator::BOTTOM_RIGHT, 1000);
                        });
 
     key_press_triggers.clear();
