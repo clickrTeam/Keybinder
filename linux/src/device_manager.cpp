@@ -20,6 +20,7 @@ const QString DEFAULT_CONFIG_PATH =
     QDir::homePath() + "/.config/clickr/config.json";
 
 QString retrieve_eventX(QString config_file_path) {
+    qDebug() << "Searching for eventX in path: " << config_file_path;
     QString eventX = "";
     QFile config(config_file_path);
 
@@ -35,6 +36,7 @@ QString retrieve_eventX(QString config_file_path) {
         if (line.contains("keyboard=")) {
             int equal_idx = line.indexOf("=");
             eventX = line.mid(equal_idx + 1);
+            qDebug() << "Found eventX: " << eventX;
             break;
         }
     }
@@ -195,6 +197,7 @@ QString detect_keyboard() {
             // Run heuristic: device must support typical alphanumeric +
             // modifier keys
             if (is_full_keyboard(dev)) {
+                qDebug() << "Possible keyboard candidate at: " << path;
                 keyboard_candidates.push_back(path);
             }
 
@@ -218,6 +221,7 @@ QString detect_keyboard() {
         return detect_keyboard_fallback();
     } else {
         // Only one possible keyboard was found, return it
+        qDebug() << "Only one possible keyboard candidate detected at path: " << keyboard_candidates[0];
         return keyboard_candidates[0];
     }
 }
