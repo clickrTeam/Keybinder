@@ -2,29 +2,72 @@
 #include "daemon.h"
 #include "event.h"
 #include "key_channel.h"
-#include "key_code.h"
-#include <QTimer>
+#include "util.h"
+#include <algorithm>
+#include <cstdint>
 #include <mutex>
 #include <optional>
 #include <profile.h>
 
+namespace {
+// TODO: move into utils or somthing
+InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
+    return std::visit(
+        overloaded{
+            [&](const KeyPress &kp) {
+                return InputEvent{kp.key_code, KeyEventType::Press};
+            },
+            [&](const KeyRelease &kr) {
+                return InputEvent{kr.key_code, KeyEventType::Release};
+            },
+        },
+        trigger);
+}
+uint64_t current_time_ms() {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
+        .count();
+}
+} // namespace
+
 Mapper::Mapper(Profile profile, Daemon &daemon, KeyReceiver key_receiver)
-    : daemon(daemon), key_receiver(key_receiver) {
+    : daemon(daemon), key_receiver(key_receiver), cur_layer_idx(0),
+      cur_state_idx(HOME_STATE_IDX) {
     set_profile(profile);
 }
 
-Mapper::~Mapper() {}
-
-void Mapper::set_profile(Profile p) {
+bool Mapper::set_profile(Profile p) {
+    std::vector<std::vector<State>> new_states;
+    std::vector<QHash<InputEvent, std::vector<Bind>>> new_basic_maps;
     std::lock_guard lock_guard(mtx);
-    profile = p;
-    qDebug() << "Profile layer is: " << profile.default_layer;
-    set_layer_inner(profile.default_layer);
+
+    for (const Layer &layer : p.layers) {
+        QHash<InputEvent, std::vector<Bind>> basic_map;
+        for (const auto &[trigger, binds] : layer.basic_remappings) {
+            InputEvent input_event = trigger_to_input(trigger);
+            if (basic_map.contains(input_event)) {
+                return false;
+            }
+            std::vector<Bind> binds_vec(binds.begin(), binds.end());
+            basic_map[input_event] = binds_vec;
+        }
+        new_basic_maps.push_back(basic_map);
+
+        auto states_opt = generate_states(layer);
+        if (!states_opt.has_value()) {
+            return false;
+        }
+        new_states.push_back(*states_opt);
+    }
+    this->states = new_states;
+    this->basic_maps = new_basic_maps;
+    set_layer_inner(p.default_layer);
+    return true;
 }
 
 bool Mapper::set_layer(size_t new_layer) {
     std::lock_guard lock_guard(mtx);
-    if (new_layer >= this->profile.layers.size()) {
+    if (new_layer >= this->states.size()) {
         return false;
     }
     set_layer_inner(new_layer);
@@ -33,164 +76,136 @@ bool Mapper::set_layer(size_t new_layer) {
 
 // must be called with mtx aquired
 void Mapper::set_layer_inner(size_t new_layer) {
-    cur_layer = new_layer;
-
-    qDebug() << "Cur Layer: " << cur_layer
-             << " Lenght = " << profile.layers.size();
-    key_press_triggers.clear();
-    key_release_triggers.clear();
-    tap_sequence_starts.clear();
-    current_tap_sequence = std::nullopt;
-    for (const auto &pair : profile.layers[cur_layer].remappings) {
-        Trigger trigger = pair.first;
-        Bind bind = pair.second;
-        // trigger and bind are now copies
-        std::visit(
-            [this, bind](auto &&trigger) {
-                using T = std::decay_t<decltype(trigger)>;
-                if constexpr (std::is_same_v<T, KeyPress>) {
-                    key_press_triggers.insert(trigger.key_code, bind);
-                } else if constexpr (std::is_same_v<T, KeyRelease>) {
-                    key_release_triggers.insert(trigger.key_code, bind);
-                } else if constexpr (std::is_same_v<T, TapSequence>) {
-                    tap_sequence_starts[trigger.key_sequence.at(0)] =
-                        std::make_pair(trigger, bind);
-                }
-            },
-            trigger);
-    }
+    cur_layer_idx = new_layer;
+    cur_state_idx = HOME_STATE_IDX;
+    current_timer.reset();
 }
 
-// TODO: mostly temp code will move to state Machines soon
-void Mapper::start() {
-    while (true) {
-        // TODO: implement timouts
-        auto key_opt = this->key_receiver.wait_key(std::nullopt);
-        if (!key_opt.has_value()) {
-            continue;
-        }
-        InputEvent e = key_opt.value();
-        std ::lock_guard lock_guard(mtx);
-
-        if (current_tap_sequence == std::nullopt &&
-            e.type == KeyEventType::Press &&
-            tap_sequence_starts.contains(e.keycode)) {
-            const auto &[new_tap_sequence, bind] =
-                tap_sequence_starts[e.keycode];
-            current_tap_sequence =
-                std::make_tuple(std::ref(new_tap_sequence), std::ref(bind), 0,
-                                KeyEventType::Press);
-        }
-
-        // Handle tap sequences
-        if (current_tap_sequence.has_value()) {
-            auto &[tap_sequence, bind, current_key, current_state] =
-                *current_tap_sequence;
-
-            KeyCode expected_key = tap_sequence.key_sequence[current_key];
-            qDebug() << "Checking for tap sequence cur_key: " << current_key
-                     << "current_state: looking for "
-                     << str_to_keycode.find_backward(expected_key);
-
-            // Key matches the next tap in the sequence
-            if (expected_key == e.keycode && e.type == current_state) {
-
-                if (current_state == KeyEventType::Press) {
-                    current_state = KeyEventType::Release;
-                } else {
-                    current_state = KeyEventType::Press;
-                    current_key++;
-                }
-
-                // TOOD Start a timer to expire. For now I can't as qtimers rely
-                // on an event loop running on the current thread which is not
-                // happening. Should fix once mapper has its own thread. Also
-                // QTimers are likley not accurate enough so we should roll our
-                // own
-                current_tap_sequence = std::make_tuple(
-                    tap_sequence, bind, current_key, current_state);
-
-                if (current_key == tap_sequence.key_sequence.size()) {
-                    perform_binds({bind});
-                    current_tap_sequence = std::nullopt;
-                    qDebug() << "Tap Sequence Over";
-                }
-
-                if (tap_sequence.behavior != TimedTriggerBehavior::Release) {
-                    continue;
-                }
-            } else if (tap_sequence.behavior == TimedTriggerBehavior::Default) {
-                // Send out all keys now that the trigger has failed if we have
-                // capture release behavior
-                qDebug() << "Tap Sequence stopped, sending out caputred keys";
-                QList<Bind> binds;
-                for (size_t i = 0; i < current_key; i++) {
-                    auto key_code = tap_sequence.key_sequence[i];
-                    binds.push_back(PressKey{key_code});
-                    binds.push_back(ReleaseKey{key_code});
-                }
-                // If we where waiting for a release then send the keydown
-                if (current_state == KeyEventType::Release) {
-                    auto key_code = tap_sequence.key_sequence[current_key];
-                    binds.push_back(PressKey{key_code});
-                }
-
-                perform_binds(binds);
-                current_tap_sequence = std::nullopt;
-            } else {
-                current_tap_sequence = std::nullopt;
-            }
-        }
-
-        // Handle simple press and releases
-        if (e.type == KeyEventType::Press &&
-            key_press_triggers.contains(e.keycode)) {
-            qDebug() << "Mapping keydown of : "
-                     << str_to_keycode.find_backward(e.keycode);
-            perform_binds({key_press_triggers[e.keycode]});
-        } else if (e.type == KeyEventType::Release &&
-                   key_release_triggers.contains(e.keycode)) {
-            qDebug() << "Mapping keyup of : "
-                     << str_to_keycode.find_backward(e.keycode);
-            perform_binds({key_release_triggers[e.keycode]});
-        } else {
-            qDebug() << "No mappings found for :"
-                     << str_to_keycode.find_backward(e.keycode);
-            if (e.type == KeyEventType::Press) {
-                perform_binds({PressKey{e.keycode}});
-            } else {
-                perform_binds({ReleaseKey{e.keycode}});
-            }
-        }
-    }
-}
-
-void Mapper::perform_binds(const QList<Bind> &binds) {
-
-    QList<InputEvent> events;
+void Mapper::queue_binds(const std::vector<Bind> &binds) {
+    uint64_t delay_ms = 0;
 
     for (const Bind &bind : binds) {
         std::visit(
-            [&](auto &&bind) {
-                using T = std::decay_t<decltype(bind)>;
-                if constexpr (std::is_same_v<T, PressKey>) {
-                    events.push_back(
-                        {InputEvent{bind.key_code, KeyEventType::Press}});
-                } else if constexpr (std::is_same_v<T, ReleaseKey>) {
-                    events.push_back(
-                        {InputEvent{bind.key_code, KeyEventType::Release}});
-                } else if constexpr (std::is_same_v<T, TapKey>) {
-                    events.append(
-                        {InputEvent{bind.key_code, KeyEventType::Press},
-                         InputEvent{bind.key_code, KeyEventType::Release}});
-                } else if constexpr (std::is_same_v<T, SwapLayer>) {
-                    set_layer_inner(bind.new_layer);
-                } else if constexpr (std::is_same_v<T, Macro>) {
-                    perform_binds(bind.binds);
-                }
+            overloaded{
+                [&](const PressKey &bind) {
+                    queue_output(
+                        OutputEvent{bind.key_code, KeyEventType::Press},
+                        delay_ms);
+                },
+                [&](const ReleaseKey &bind) {
+                    queue_output(
+                        OutputEvent{bind.key_code, KeyEventType::Release},
+                        delay_ms);
+                },
+                [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
+                [&](const Wait &wait) { delay_ms += wait.ms; },
             },
             bind);
     }
+}
 
-    daemon.send_keys(events);
+void Mapper::queue_output(OutputEvent e, uint64_t delay = 0) {
+    uint64_t time_to_emit = current_time_ms() + delay;
+    queued_events.push_back(std::make_pair(time_to_emit, e));
+}
+
+void Mapper::start() {
+    std::optional<std::chrono::milliseconds> timeout;
+    while (true) {
+
+        auto key_opt = this->key_receiver.wait_key(timeout);
+        // It is important to not aquire the mutex while we are waiting for the
+        // key
+        std::lock_guard lock_guard(mtx);
+        if (key_opt) {
+            InputEvent e = key_opt.value();
+            process_input(e);
+        }
+        const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
+        if (current_timer && *current_timer <= current_time_ms() &&
+            cur_state.timer_transition) {
+            apply_transition(*cur_state.timer_transition);
+        }
+        check_queued_events();
+
+        // TODO: right now the sleep is hardcoded to 10 ms which is probably
+        // fine but maybe a differnt value is better
+        timeout = current_timer || !queued_events.empty()
+                      ? std::optional(std::chrono::milliseconds(10))
+                      : std::nullopt;
+    }
+}
+
+// Must be called wil mtx acquired
+void Mapper::apply_transition(const Transition &transition,
+                              std::optional<InputEvent> prev_event) {
+    cur_state_idx = transition.new_state;
+    current_timer =
+        transition.timer_ms
+            ? std::optional(*transition.timer_ms + current_time_ms())
+            : std::nullopt;
+
+    std::vector<InputEvent> events_to_redo;
+    for (const StateMachineOutputEvent &output : transition.outputs) {
+        std::visit(overloaded{
+                       [&](const ProccessInput &proc) {
+                           if (proc.event) {
+                               events_to_redo.push_back(*proc.event);
+                           } else if (prev_event) {
+                               events_to_redo.push_back(*prev_event);
+                           }
+                       },
+                       [&](const BasicTranlation &basic) {
+                           auto event = basic.event;
+                           if (!event && prev_event)
+                               event = prev_event;
+                           if (event &&
+                               basic_maps.at(cur_layer_idx).contains(*event)) {
+                               queue_binds(
+                                   basic_maps.at(cur_layer_idx)[*event]);
+                           }
+                       },
+                       [&](const Bind &bind) { queue_binds({bind}); },
+                   },
+                   output);
+    }
+
+    for (InputEvent e : events_to_redo) {
+        process_input(e);
+    }
+}
+
+void Mapper::process_input(InputEvent e) {
+    const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
+    const Transition &transition = cur_state.edges.contains(e)
+                                       ? cur_state.edges[e]
+                                       : cur_state.fallback_transition;
+    apply_transition(transition, e);
+}
+
+void Mapper::check_queued_events() {
+    if (queued_events.empty())
+        return;
+    uint64_t cur_time = current_time_ms();
+
+    auto pred = [&](const std::pair<uint64_t, OutputEvent> &p) {
+        return p.first > cur_time;
+    };
+
+    auto mid = std::partition(queued_events.begin(), queued_events.end(), pred);
+
+    // Everything from mid..end are ready/expired
+    if (mid != queued_events.end()) {
+        QList<OutputEvent> ready_events;
+        ready_events.reserve(static_cast<int>(queued_events.end() - mid));
+
+        for (auto it = mid; it != queued_events.end(); ++it) {
+            ready_events.append(std::move(it->second));
+        }
+
+        daemon.send_keys(ready_events);
+
+        // Just drop the tail in one shot
+        queued_events.resize(std::distance(queued_events.begin(), mid));
+    }
 }

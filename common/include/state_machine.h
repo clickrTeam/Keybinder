@@ -2,99 +2,77 @@
 #include "profile.h"
 #include <QDebug>
 #include <QHash>
-#include <functional>
+#include <optional>
 #include <variant>
 
-struct TimerExpiredEvent {
-    size_t timer_id;
+constexpr size_t HOME_STATE_IDX = 0;
+
+// tell the maper to remap some inputs. If it is none that means to remap the
+// latest mapped input
+struct ProccessInput {
+    std::optional<InputEvent> event;
 };
 
-inline bool operator==(const TimerExpiredEvent &a, const TimerExpiredEvent &b) {
-    return a.timer_id == b.timer_id;
+inline bool operator==(const ProccessInput &a, const ProccessInput &b) {
+    return a.event == b.event;
 }
 
-inline uint qHash(const TimerExpiredEvent &key, uint seed = 0) {
-    qDebug() << "qHash(TimerExpiredEvent) called"; // DEBUG
-    return ::qHash(key.timer_id, seed);
+inline uint qHash(const ProccessInput &i, uint seed = 0) {
+    return i.event ? qHash(*i.event, seed) : qHash(0, seed);
 }
 
-using StateMachineInputEvent = std::variant<InputEvent, TimerExpiredEvent>;
-
-inline bool operator==(const StateMachineInputEvent &a,
-                       const StateMachineInputEvent &b) {
-    return a.index() == b.index() &&
-           std::visit([](auto &&lhs, auto &&rhs) { return lhs == rhs; }, a, b);
-}
-
-// Added qHash for std::variant with debug
-inline uint qHash(const StateMachineInputEvent &key, uint seed = 0) {
-    qDebug() << "qHash(StateMachineInputEvent) called"; // DEBUG
-    return std::visit([seed](auto &&v) { return qHash(v, seed); }, key);
-}
-
-struct ProccessInputs {
-    QVector<InputEvent> keys;
+struct BasicTranlation {
+    std::optional<InputEvent> event;
 };
 
-struct SendOutput {
-    OutputEvent e;
+inline bool operator==(const BasicTranlation &a, const BasicTranlation &b) {
+    return a.event == b.event;
+}
+
+inline uint qHash(const BasicTranlation &t, uint seed = 0) {
+    return t.event ? qHash(*t.event, seed) : qHash(0, seed);
+}
+
+using StateMachineOutputEvent =
+    std::variant<ProccessInput, BasicTranlation, Bind>;
+
+inline uint qHash(const StateMachineOutputEvent &e, uint seed = 0) {
+    return std::visit(
+        [&](auto const &value) {
+            seed ^= qHash(e.index(), seed);
+            return qHash(value, seed);
+        },
+        e);
+}
+
+struct Transition {
+    std::optional<size_t> timer_ms;
+    QList<StateMachineOutputEvent> outputs;
+    size_t new_state;
 };
 
-struct StartTimer {
-    size_t state_id;
-    size_t timer_id;
-};
+inline bool operator==(const Transition &a, const Transition &b) {
+    return a.timer_ms == b.timer_ms && a.outputs == b.outputs &&
+           a.new_state == b.new_state;
+}
 
-using StateMachineOutputEvent = std::variant<SendOutput, StartTimer>;
-
-class BasicInputMappings {
-    QHash<InputEvent, QVector<OutputEvent>> basic_map;
-
-  public:
-    // Constructor to take a prebuilt map
-    explicit BasicInputMappings(QHash<InputEvent, QVector<OutputEvent>> map)
-        : basic_map(std::move(map)) {}
-    std::optional<QVector<OutputEvent>> get(const InputEvent &input) const {
-        auto it = basic_map.find(input);
-        if (it != basic_map.end()) {
-            return *it;
-        } else {
-            return std::nullopt;
-        }
+inline uint qHash(const Transition &t, uint seed = 0) {
+    if (t.timer_ms) {
+        seed ^= qHash(*t.timer_ms, seed);
+    } else {
+        seed ^= qHash(0, seed);
     }
-};
-
-// This is a function type which takes an StateMachineInputEvent and returns a
-// List of actions to take and a new state to transition to.
-using StateMachineEventHandler =
-    std::function<std::tuple<QVector<StateMachineOutputEvent>, size_t>(
-        const BasicInputMappings &)>;
-
-using StateMachineEventDefaultHandler =
-    std::function<std::tuple<QVector<StateMachineOutputEvent>, size_t>(
-        StateMachineInputEvent, const BasicInputMappings &)>;
-
-class State {
-  public:
-    State(QHash<StateMachineInputEvent, StateMachineEventHandler> handlers,
-          StateMachineEventDefaultHandler default_h)
-        : event_handlers(std::move(handlers)),
-          default_handler(std::move(default_h)) {}
-    std::tuple<QVector<StateMachineOutputEvent>, size_t>
-    handle_event(StateMachineInputEvent input,
-                 const BasicInputMappings &basic_mappings) const {
-        auto it = event_handlers.find(input);
-        if (it != event_handlers.end()) {
-            return it.value()(basic_mappings);
-        } else {
-
-            return default_handler(input, basic_mappings);
-        }
+    for (const auto &out : t.outputs) {
+        seed ^= qHash(out, seed);
     }
+    seed ^= qHash(t.new_state, seed);
+    return seed;
+}
 
-  private:
-    QHash<StateMachineInputEvent, StateMachineEventHandler> event_handlers;
-    StateMachineEventDefaultHandler default_handler;
+struct State {
+    QHash<InputEvent, Transition> edges;
+    Transition fallback_transition;
+    std::optional<Transition> timer_transition;
 };
 
-QVector<State> generate_states(Layer);
+std::optional<std::vector<State>> generate_states(const Layer &);

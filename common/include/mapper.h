@@ -3,40 +3,42 @@
 #include "event.h"
 #include "key_channel.h"
 #include "profile.h"
+#include "state_machine.h"
 #include <QDebug>
 #include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <optional>
+#include <stdint.h>
 
 using std::size_t;
 
 class Mapper {
   public:
     Mapper(Profile, Daemon &, KeyReceiver);
-    ~Mapper();
-    void set_profile(Profile p);
+    bool set_profile(Profile p);
     // This should be called in a seperate thread as it does not return
     void start();
     bool set_layer(size_t);
 
   private:
-    void perform_binds(const QList<Bind> &bind);
-    void set_layer_inner(size_t new_layer);
-
+    void queue_binds(const std::vector<Bind> &);
+    void queue_output(OutputEvent, uint64_t);
+    void set_layer_inner(size_t);
+    void apply_transition(const Transition &,
+                          std::optional<InputEvent> = std::nullopt);
+    void check_queued_events();
+    void process_input(InputEvent);
     std::mutex mtx;
     Daemon &daemon;
     KeyReceiver key_receiver;
-    Profile profile;
-    size_t cur_layer;
 
-    QMap<KeyCode, Bind> key_press_triggers;
-    QMap<KeyCode, Bind> key_release_triggers;
-    QMap<KeyCode, std::pair<TapSequence, Bind>> tap_sequence_starts;
+    std::vector<std::vector<State>> states;
+    size_t cur_layer_idx;
+    size_t cur_state_idx;
 
-    // Sored the current tap sequence, the current key are we expected next
-    // the next type we are expecting (up or down)
-    std::optional<std::tuple<TapSequence, Bind, size_t, KeyEventType>>
-        current_tap_sequence;
-
-    QHash<InputEvent, QVector<OutputEvent>> basic_map;
+    std::vector<QHash<InputEvent, std::vector<Bind>>> basic_maps;
+    // The time (in ms) at which the timer is expired
+    std::optional<uint64_t> current_timer;
+    std::vector<std::pair<uint64_t, OutputEvent>> queued_events;
 };

@@ -16,6 +16,7 @@ add_executable(keybinder_tests
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/mapper.cpp
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/state_machine.cpp
 )
 
 target_include_directories(keybinder_tests PRIVATE
