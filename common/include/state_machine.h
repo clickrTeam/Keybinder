@@ -7,7 +7,7 @@
 
 constexpr size_t HOME_STATE_IDX = 0;
 
-// tell the maper to remap some inputs. If it is none that means to remap the
+// tell the mapper to remap some inputs. If it is none that means to remap the
 // latest mapped input
 struct ProccessInput {
     std::optional<InputEvent> event;
