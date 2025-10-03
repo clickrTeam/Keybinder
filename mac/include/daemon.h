@@ -15,6 +15,7 @@
 
 #include "virtual_hid_device_driver.hpp"
 #include "virtual_hid_device_service.hpp"
+extern char **environ;
 
 class Daemon : public AbstractDaemon {
   public:
@@ -25,9 +26,10 @@ class Daemon : public AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_keys(const QList<InputEvent> &events) override;
+    void send_outputs(const QList<OutputEvent> &events) override;
 
   private:
+    void run_script(const RunScript &rs);
     KeySender key_sender;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
@@ -42,6 +44,8 @@ class Daemon : public AbstractDaemon {
     CFDictionaryRef create_keyboard_matching_dictionary();
 
     void handle_input_event(uint64_t value, uint32_t page, uint32_t code);
+
+    QHash<RunScript, QString> scriptTempFiles;
 
     // Callback for input events (called when an input value changes)
     static void input_event_callback(void *context, IOReturn result,

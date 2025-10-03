@@ -88,7 +88,16 @@ struct Wait {
     static Wait from_json(const QJsonObject &obj);
 };
 
-using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait>;
+struct RunScript {
+    QString interpreter;
+    QString script;
+    static RunScript from_json(const QJsonObject &obj);
+    bool operator==(const RunScript &other) const noexcept {
+        return interpreter == other.interpreter && script == other.script;
+    }
+};
+
+using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait, RunScript>;
 
 inline uint qHash(const PressKey &key, uint seed = 0) noexcept {
     return qHash(static_cast<uint>(key.key_code), seed);
@@ -104,6 +113,9 @@ inline uint qHash(const SwapLayer &layer, uint seed = 0) noexcept {
 
 inline uint qHash(const Wait &wait, uint seed = 0) noexcept {
     return qHash(static_cast<quintptr>(wait.ms), seed);
+}
+inline uint qHash(const RunScript &key, uint seed = 0) noexcept {
+    return qHash(key.interpreter, seed) ^ qHash(key.script, seed << 1);
 }
 
 inline uint qHash(const Bind &bind, uint seed = 0) noexcept {

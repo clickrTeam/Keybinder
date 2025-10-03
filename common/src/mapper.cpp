@@ -93,17 +93,17 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
         std::visit(
             overloaded{
                 [&](const PressKey &bind) {
-                    queue_output(
-                        OutputEvent{bind.key_code, KeyEventType::Press},
-                        delay_ms);
+                    queue_output(InputEvent{bind.key_code, KeyEventType::Press},
+                                 delay_ms);
                 },
                 [&](const ReleaseKey &bind) {
                     queue_output(
-                        OutputEvent{bind.key_code, KeyEventType::Release},
+                        InputEvent{bind.key_code, KeyEventType::Release},
                         delay_ms);
                 },
                 [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
                 [&](const Wait &wait) { delay_ms += wait.ms; },
+                [&](const RunScript &s) { queue_output(s, delay_ms); },
             },
             bind);
     }
@@ -211,7 +211,7 @@ void Mapper::check_queued_events() {
             ready_events.append(std::move(it->second));
         }
 
-        daemon.send_keys(ready_events);
+        daemon.send_outputs(ready_events);
 
         // Just drop the tail in one shot
         queued_events.resize(std::distance(queued_events.begin(), mid));

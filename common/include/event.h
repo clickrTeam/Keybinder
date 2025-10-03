@@ -1,7 +1,10 @@
 #pragma once
+#include "event.h"
 #include "key_code.h"
 #include <QDebug>
 #include <QHash>
+#include <profile.h>
+#include <variant>
 
 enum class KeyEventType {
     Press,
@@ -24,4 +27,4 @@ inline uint qHash(const InputEvent &key, uint seed = 0) {
 
 // TODO: eventually these will become differnt however for now they can be the
 // same as we just handle keys
-using OutputEvent = InputEvent;
+using OutputEvent = std::variant<InputEvent, RunScript>;

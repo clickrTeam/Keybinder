@@ -191,6 +191,15 @@ Wait Wait::from_json(const QJsonObject &obj) {
     return Wait{(size_t)get_property_as_number(obj, "duration")};
 }
 
+RunScript RunScript::from_json(const QJsonObject &obj) {
+
+    warn_extra_properties(obj, {"type", "interpreter", "script"});
+    return RunScript{
+        get_property_as_string(obj, "interpreter"),
+        get_property_as_string(obj, "script"),
+    };
+}
+
 BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
     QString trigger_type = get_property_as_string(obj, "type");
 
@@ -231,6 +240,8 @@ QList<Bind> parse_binds(const QJsonArray &json_arr) {
             bind_v = SwapLayer::from_json(bind_obj);
         } else if (bind_type == "wait") {
             bind_v = Wait::from_json(bind_obj);
+        } else if (bind_type == "run_script") {
+            bind_v = RunScript::from_json(bind_obj);
         } else {
             throw std::invalid_argument(
                 ("Invalid bind type: " + bind_type.toStdString()).c_str());
@@ -287,7 +298,6 @@ Layer Layer::from_json(const QJsonObject &obj) {
                  .basic_remappings = basic_remappings,
                  .sequence_remappings = sequence_remappings};
 }
-
 // Profile
 Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
