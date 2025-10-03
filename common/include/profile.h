@@ -20,11 +20,17 @@ SequenceBehavior parse_behavior(const QString &str);
 struct KeyPress {
     KeyCode key_code;
     static KeyPress from_json(const QJsonObject &obj);
+    bool operator==(const KeyPress &other) const noexcept {
+        return key_code == other.key_code;
+    }
 };
 
 struct KeyRelease {
     KeyCode key_code;
     static KeyRelease from_json(const QJsonObject &obj);
+    bool operator==(const KeyRelease &other) const noexcept {
+        return key_code == other.key_code;
+    }
 };
 
 struct MinimumWait {
@@ -37,7 +43,7 @@ struct MinimumWait {
 
 struct MaximumWait {
     size_t ms;
-    inline bool operator==(const MaximumWait &other) const noexcept {
+    bool operator==(const MaximumWait &other) const noexcept {
         return ms == other.ms;
     }
     static MaximumWait from_json(const QJsonObject &obj);
@@ -54,7 +60,7 @@ AdvancedTrigger parse_trigger(const QJsonObject &obj);
 
 struct PressKey {
     KeyCode key_code;
-    inline bool operator==(const PressKey &other) const noexcept {
+    bool operator==(const PressKey &other) const noexcept {
         return key_code == other.key_code;
     }
     static PressKey from_json(const QJsonObject &obj);
@@ -62,7 +68,7 @@ struct PressKey {
 
 struct ReleaseKey {
     KeyCode key_code;
-    inline bool operator==(const ReleaseKey &other) const noexcept {
+    bool operator==(const ReleaseKey &other) const noexcept {
         return key_code == other.key_code;
     }
     static ReleaseKey from_json(const QJsonObject &obj);
@@ -70,7 +76,7 @@ struct ReleaseKey {
 
 struct SwapLayer {
     size_t new_layer;
-    inline bool operator==(const SwapLayer &other) const noexcept {
+    bool operator==(const SwapLayer &other) const noexcept {
         return new_layer == other.new_layer;
     }
     static SwapLayer from_json(const QJsonObject &obj);
@@ -78,9 +84,7 @@ struct SwapLayer {
 
 struct Wait {
     size_t ms;
-    inline bool operator==(const Wait &other) const noexcept {
-        return ms == other.ms;
-    }
+    bool operator==(const Wait &other) const noexcept { return ms == other.ms; }
     static Wait from_json(const QJsonObject &obj);
 };
 
@@ -113,6 +117,11 @@ struct SequenceTrigger {
     SequenceBehavior behavior;
     QList<AdvancedTrigger> sequence;
     QList<Bind> binds;
+
+    bool operator==(const SequenceTrigger &other) const noexcept {
+        return behavior == other.behavior && sequence == other.sequence &&
+               binds == other.binds;
+    }
     static SequenceTrigger from_json(const QJsonObject &obj);
 };
 
@@ -121,6 +130,11 @@ struct Layer {
     QList<std::pair<BasicTrigger, QList<Bind>>> basic_remappings;
     QList<SequenceTrigger> sequence_remappings;
     static Layer from_json(const QJsonObject &obj);
+    bool operator==(const Layer &other) const noexcept {
+        return layer_name == other.layer_name &&
+               basic_remappings == other.basic_remappings &&
+               sequence_remappings == other.sequence_remappings;
+    }
 };
 
 struct Profile {
@@ -131,4 +145,9 @@ struct Profile {
     static Profile from_bytes(const QByteArray &bytes);
     static Profile from_file(const QString &filename);
     static Profile loadLatest();
+
+    bool operator==(const Profile &other) const noexcept {
+        return name == other.name && layers == other.layers &&
+               default_layer == other.default_layer;
+    }
 };

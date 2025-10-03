@@ -8,8 +8,6 @@
 #include <variant>
 #include <vector>
 
-constexpr size_t HOME_STATE_IDX = 0;
-
 namespace {
 struct StateMetadata {
     std::optional<Timer> timer;
@@ -110,13 +108,18 @@ normailze_sequences(const QList<SequenceTrigger> &sequences) {
 std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
     return std::visit(
         overloaded{
-            [&](const KeyPress &kp) {
+            [&](const KeyPress &kp) -> std::optional<InputEvent> {
                 return InputEvent{kp.key_code, KeyEventType::Press};
             },
-            [&](const KeyRelease &kr) {
+            [&](const KeyRelease &kr) -> std::optional<InputEvent> {
                 return InputEvent{kr.key_code, KeyEventType::Release};
             },
-            [&](auto &) { return std::nullopt; },
+            [&](const MinimumWait &mw) -> std::optional<InputEvent> {
+                return std::nullopt;
+            },
+            [&](const MaximumWait &mw) -> std::optional<InputEvent> {
+                return std::nullopt;
+            },
         },
         trigger);
 }
@@ -147,7 +150,6 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
 
         for (size_t i = 0; i < sequence_trigger.sequence.size(); ++i) {
             bool is_last = i + 1 == sequence_trigger.sequence.size();
-            State &current_state = states.at(current_state_idx);
             const AdvancedTrigger &trigger = sequence_trigger.sequence[i];
 
             QHash<InputEvent, Transition> edges;
@@ -176,7 +178,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             }
 
             size_t next_state_idx;
-            if (current_state.edges.contains(input_event)) {
+            if (states.at(current_state_idx).edges.contains(input_event)) {
                 // If this is the last bind in a sequence then we know that some
                 // binds conflict
                 if (is_last) {
@@ -184,7 +186,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                     return std::nullopt;
                 }
                 Transition &existing_transition =
-                    current_state.edges[input_event];
+                    states.at(current_state_idx).edges[input_event];
                 // Transition for this event alreay exits. Using the state
                 // metadata ensure these states can be shared
                 const StateMetadata &matadata =
@@ -251,7 +253,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                     states.push_back(new_state);
                     state_metadata.push_back(new_state_metadata);
                 }
-                current_state.edges[input_event] = transition;
+                states.at(current_state_idx).edges[input_event] = transition;
             }
 
             State &next_state = states.at(next_state_idx);

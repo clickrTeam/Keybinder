@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 #include <profile.h>
+#include <vector>
 
 namespace {
 // TODO: move into utils or somthing
@@ -59,6 +60,10 @@ bool Mapper::set_profile(Profile p) {
         }
         new_states.push_back(*states_opt);
     }
+    // qDebug() << "States in profile: " << new_states[0].size();
+    // qDebug() << "handlers: " << new_states[0][0].edges.size();
+    // qDebug() << "handlers: " << new_states[0][1].edges.size();
+    //
     this->states = new_states;
     this->basic_maps = new_basic_maps;
     set_layer_inner(p.default_layer);
@@ -140,6 +145,7 @@ void Mapper::start() {
 void Mapper::apply_transition(const Transition &transition,
                               std::optional<InputEvent> prev_event) {
     cur_state_idx = transition.new_state;
+    qDebug() << "New state: " << cur_state_idx;
     current_timer =
         transition.timer_ms
             ? std::optional(*transition.timer_ms + current_time_ms())
@@ -163,6 +169,8 @@ void Mapper::apply_transition(const Transition &transition,
                                basic_maps.at(cur_layer_idx).contains(*event)) {
                                queue_binds(
                                    basic_maps.at(cur_layer_idx)[*event]);
+                           } else if (event) {
+                               queue_output(*event);
                            }
                        },
                        [&](const Bind &bind) { queue_binds({bind}); },

@@ -185,6 +185,11 @@ SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "value"});
     return SwapLayer{(size_t)get_property_as_number(obj, "value")};
 }
+Wait Wait::from_json(const QJsonObject &obj) {
+
+    warn_extra_properties(obj, {"type", "duration"});
+    return Wait{(size_t)get_property_as_number(obj, "duration")};
+}
 
 BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
     QString trigger_type = get_property_as_string(obj, "type");
@@ -288,10 +293,8 @@ Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
     QString profile_name = get_property_as_string(obj, "profile_name");
     qDebug() << "Loading PROFILE_NAME:" << profile_name;
-    // TODO: probably should have some kind of default layer beyond just
-    // always the first size_t default_layer =
-    // (size_t)get_property_as_number(obj, "default_layer");
-    size_t default_layer = 0;
+    size_t default_layer = (size_t)get_property_as_number(obj, "default_layer");
+
     QList<Layer> layers;
 
     for (const QJsonValue &remapping : get_property_as_array(obj, "layers")) {

@@ -18,7 +18,6 @@ inline bool operator==(const InputEvent &a, const InputEvent &b) {
 }
 
 inline uint qHash(const InputEvent &key, uint seed = 0) {
-    qDebug() << "qHash(InputEvent) called"; // DEBUG remove later
     return ::qHash(static_cast<int>(key.keycode), seed) ^
            ::qHash(static_cast<int>(key.type), seed << 1);
 }

@@ -11,6 +11,7 @@ FetchContent_MakeAvailable(googletest)
 # ---- Test binary (only common sources/headers) ----
 add_executable(keybinder_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/test_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/profile_parsing.cpp
     ${CMAKE_SOURCE_DIR}/common/src/key_channel.cpp 
     ${CMAKE_SOURCE_DIR}/common/src/key_code.cpp
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
