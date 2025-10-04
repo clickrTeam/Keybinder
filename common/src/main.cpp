@@ -1,6 +1,6 @@
 // This each OS should have this daemon.h file in their include path so that
 // the compiler will just use the right implementation at runtime.
-// See mac/include/daemon.h for an example
+// See mac/include/daemon.h for an example.
 #include "daemon.h"
 #include "key_channel.h"
 #include "local_server.h"
