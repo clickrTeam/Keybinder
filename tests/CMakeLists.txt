@@ -12,12 +12,17 @@ FetchContent_MakeAvailable(googletest)
 add_executable(keybinder_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/test_main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/profile_parsing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/basic_mapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sequence_mapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/test_util.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
     ${CMAKE_SOURCE_DIR}/common/src/key_channel.cpp 
     ${CMAKE_SOURCE_DIR}/common/src/key_code.cpp
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/mapper.cpp
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
     ${CMAKE_SOURCE_DIR}/common/src/state_machine.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/util.cpp
 )
 
 target_include_directories(keybinder_tests PRIVATE

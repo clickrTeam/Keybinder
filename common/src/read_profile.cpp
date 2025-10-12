@@ -1,5 +1,4 @@
 #include "read_profile.h"
-
 #include <QFileInfo>
 #include <QtLogging>
 #include <cstddef>
@@ -314,7 +313,10 @@ Profile Profile::from_json(const QJsonObject &obj) {
     saveLatestJsonProfile(obj);
 
     return Profile{
-        .name = profile_name, .layers = layers, .default_layer = default_layer};
+        .name = profile_name,
+        .layers = layers,
+        .default_layer = default_layer,
+    };
 }
 
 Profile Profile::from_bytes(const QByteArray &bytes) {
