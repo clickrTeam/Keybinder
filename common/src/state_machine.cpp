@@ -231,8 +231,6 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                         .behavior = cur_behavior,
                     };
                     new_state.fallback_transition.new_state = HOME_STATE_IDX;
-                    new_state.fallback_transition.outputs.append(
-                        BasicTranlation{});
                     if (cur_behavior == SequenceBehavior::Default) {
                         new_state.fallback_transition.outputs.append(
                             BasicTranlation{
@@ -240,14 +238,24 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                                     .value(),
                             });
 
-                        for (int j = 1; j <= i; j++) {
+                        for (int j = 0; j <= i; j++) {
                             auto input =
                                 trigger_to_input(sequence_trigger.sequence[j]);
-                            if (input)
+                            if (input) {
+
+                                StateMachineOutputEvent event;
+                                if (j == 0) {
+                                    event = ProccessInput{*input};
+                                } else {
+                                    event = BasicTranlation{input};
+                                }
                                 new_state.fallback_transition.outputs.append(
-                                    ProccessInput{*input});
+                                    event);
+                            }
                         }
                     }
+                    new_state.fallback_transition.outputs.append(
+                        BasicTranlation{});
                     transition.new_state = states.size();
                     next_state_idx = transition.new_state;
                     states.push_back(new_state);
