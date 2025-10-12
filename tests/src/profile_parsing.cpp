@@ -4,27 +4,27 @@
 
 static const char *profileJson1 = R"(
 {
-    "profile_name": "ProfileOne",
-    "default_layer": 0,
-    "layers": [
+  "profile_name": "ProfileOne",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "LayerA",
+      "remappings": [
         {
-            "layer_name": "LayerA",
-            "remappings": [
-                {
-                    "trigger": {
-                        "type": "key_press",
-                        "value": "A"
-                    },
-                    "binds": [
-                        {
-                            "type": "press_key",
-                            "value": "B"
-                        }
-                    ]
-                }
-            ]
+          "trigger": {
+            "type": "key_press",
+            "value": "A"
+          },
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "B"
+            }
+          ]
         }
-    ]
+      ]
+    }
+  ]
 }
 )";
 
@@ -52,34 +52,34 @@ TEST(ProfileTest, LoadProfileOne) {
 
 static const char *profileJson2 = R"(
 {
-    "profile_name": "ProfileTwo",
-    "default_layer": 1,
-    "layers": [
+  "profile_name": "ProfileTwo",
+  "default_layer": 1,
+  "layers": [
+    {
+      "layer_name": "LayerB",
+      "remappings": [
         {
-            "layer_name": "LayerB",
-            "remappings": [
-                {
-                    "triggers": [
-                        {
-                            "type": "key_press",
-                            "value": "C"
-                        },
-                        {
-                            "type": "key_release",
-                            "value": "D"
-                        }
-                    ],
-                    "binds": [
-                        {
-                            "type": "switch_layer",
-                            "value": 2
-                        }
-                    ],
-                    "behavior": "capture"
-                }
-            ]
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "C"
+            },
+            {
+              "type": "key_release",
+              "value": "D"
+            }
+          ],
+          "binds": [
+            {
+              "type": "switch_layer",
+              "value": 2
+            }
+          ],
+          "behavior": "capture"
         }
-    ]
+      ]
+    }
+  ]
 }
 )";
 TEST(ProfileTest, LoadProfileTwo) {
