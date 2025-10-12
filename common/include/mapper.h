@@ -21,6 +21,9 @@ class Mapper {
     // This should be called in a seperate thread as it does not return
     void start();
     bool set_layer(size_t);
+    bool waiting_for_timer();
+    void stop();
+    size_t processed_events();
 
   private:
     void queue_binds(const std::vector<Bind> &);
@@ -37,9 +40,12 @@ class Mapper {
     std::vector<std::vector<State>> states;
     size_t cur_layer_idx;
     size_t cur_state_idx;
+    size_t processed_events_count = 0;
 
     std::vector<QHash<InputEvent, std::vector<Bind>>> basic_maps;
     // The time (in ms) at which the timer is expired
     std::optional<uint64_t> current_timer;
     std::vector<std::pair<uint64_t, OutputEvent>> queued_events;
+
+    std::atomic<bool> stopped = false;
 };

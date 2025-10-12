@@ -5,6 +5,7 @@
 #include "util.h"
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
 #include <mutex>
 #include <optional>
 #include <profile.h>
@@ -23,11 +24,6 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
             },
         },
         trigger);
-}
-uint64_t current_time_ms() {
-    using namespace std::chrono;
-    return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
-        .count();
 }
 } // namespace
 
@@ -60,10 +56,6 @@ bool Mapper::set_profile(Profile p) {
         }
         new_states.push_back(*states_opt);
     }
-    // qDebug() << "States in profile: " << new_states[0].size();
-    // qDebug() << "handlers: " << new_states[0][0].edges.size();
-    // qDebug() << "handlers: " << new_states[0][1].edges.size();
-    //
     this->states = new_states;
     this->basic_maps = new_basic_maps;
     set_layer_inner(p.default_layer);
@@ -81,6 +73,7 @@ bool Mapper::set_layer(size_t new_layer) {
 
 // must be called with mtx aquired
 void Mapper::set_layer_inner(size_t new_layer) {
+    qDebug() << "new layer: " << new_layer;
     cur_layer_idx = new_layer;
     cur_state_idx = HOME_STATE_IDX;
     current_timer.reset();
@@ -116,7 +109,7 @@ void Mapper::queue_output(OutputEvent e, uint64_t delay = 0) {
 
 void Mapper::start() {
     std::optional<std::chrono::milliseconds> timeout;
-    while (true) {
+    while (!stopped) {
 
         auto key_opt = this->key_receiver.wait_key(timeout);
         // It is important to not aquire the mutex while we are waiting for the
@@ -125,6 +118,7 @@ void Mapper::start() {
         if (key_opt) {
             InputEvent e = key_opt.value();
             process_input(e);
+            processed_events_count++;
         }
         const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
         if (current_timer && *current_timer <= current_time_ms() &&
@@ -145,7 +139,6 @@ void Mapper::start() {
 void Mapper::apply_transition(const Transition &transition,
                               std::optional<InputEvent> prev_event) {
     cur_state_idx = transition.new_state;
-    qDebug() << "New state: " << cur_state_idx;
     current_timer =
         transition.timer_ms
             ? std::optional(*transition.timer_ms + current_time_ms())
@@ -179,6 +172,7 @@ void Mapper::apply_transition(const Transition &transition,
     }
 
     for (InputEvent e : events_to_redo) {
+        std::cout << "REDOING: " << e << std::endl;
         process_input(e);
     }
 }
@@ -216,4 +210,15 @@ void Mapper::check_queued_events() {
         // Just drop the tail in one shot
         queued_events.resize(std::distance(queued_events.begin(), mid));
     }
+}
+void Mapper::stop() { stopped = true; }
+
+bool Mapper::waiting_for_timer() {
+    std::lock_guard lock_guard(mtx);
+    return current_timer.has_value() && queued_events.size() == 0;
+}
+
+size_t Mapper::processed_events() {
+    std::lock_guard lock_guard(mtx);
+    return processed_events_count;
 }
