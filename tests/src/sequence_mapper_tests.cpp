@@ -211,3 +211,90 @@ TEST(SequenceMapperTests, ABToCRelease) {
                     InputEvent{KeyCode::D, KeyEventType::Press},
                 });
 }
+
+// A B -> C
+// A D -> E
+static const char *overloaded_sequence = R"(
+{
+  "profile_name": "ProfileOne",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "LayerA",
+      "remappings": [
+        {
+          "behavior": "capture",
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "A"
+            },
+            {
+              "type": "key_press",
+              "value": "B"
+            }
+          ],
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "C"
+            },
+            {
+              "type": "release_key",
+              "value": "C"
+            }
+          ]
+        },
+        {
+          "behavior": "capture",
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "A"
+            },
+            {
+              "type": "key_press",
+              "value": "D"
+            }
+          ],
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "E"
+            },
+            {
+              "type": "release_key",
+              "value": "E"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+)";
+
+// A B -> C
+// A D -> E
+TEST(SequenceMapperTests, OverloadedSequence) {
+    mapper_test(Profile::from_bytes(QByteArray(overloaded_sequence)),
+                {
+                    InputEvent{KeyCode::A, KeyEventType::Press},
+                    InputEvent{KeyCode::B, KeyEventType::Press},
+
+                    InputEvent{KeyCode::A, KeyEventType::Press},
+                    InputEvent{KeyCode::D, KeyEventType::Press},
+
+                    InputEvent{KeyCode::A, KeyEventType::Press},
+                    InputEvent{KeyCode::S, KeyEventType::Press},
+                },
+                {
+                    InputEvent{KeyCode::C, KeyEventType::Press},
+                    InputEvent{KeyCode::C, KeyEventType::Release},
+
+                    InputEvent{KeyCode::E, KeyEventType::Press},
+                    InputEvent{KeyCode::E, KeyEventType::Release},
+
+                    InputEvent{KeyCode::S, KeyEventType::Press},
+                });
+}
