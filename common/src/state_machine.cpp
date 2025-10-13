@@ -4,6 +4,7 @@
 #include "util.h"
 #include <QVector>
 #include <cassert>
+#include <iostream>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -160,21 +161,30 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             };
 
             std::optional<Timer> timer = std::nullopt;
+            std::optional<size_t> timer_ms = std::nullopt;
 
             InputEvent input_event = trigger_to_input(trigger).value();
 
-            // Look ahead for a timer affect the current transition
+            // Look ahead for a timer as it affects the current transition
             if (!is_last) {
                 std::visit(overloaded{[&](const MinimumWait &t) {
                                           timer = t;
+                                          timer_ms = t.ms;
                                           i++; // consume timer trigger
                                       },
                                       [&](const MaximumWait &t) {
                                           timer = t;
+                                          timer_ms = t.ms;
                                           i++; // consume timer trigger
                                       },
                                       [&](auto &) {}},
                            sequence_trigger.sequence[i + 1]);
+            }
+
+            if (timer) {
+                std::cout << "Timer: present: " << *timer_ms << std::endl;
+            } else {
+                std::cout << "Timer: null" << std::endl;
             }
 
             size_t next_state_idx;
@@ -209,7 +219,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             } else {
                 // If no Transition already exits for this input then we create
                 // a new state and transition to said state
-                Transition transition;
+                Transition transition{.timer_ms = timer_ms};
                 if (cur_behavior == SequenceBehavior::Release) {
                     transition.outputs = {BasicTranlation{input_event}};
                 }
@@ -238,11 +248,10 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                                     .value(),
                             });
 
-                        for (int j = 0; j <= i; j++) {
+                        for (size_t j = 0; j <= i; j++) {
                             auto input =
                                 trigger_to_input(sequence_trigger.sequence[j]);
                             if (input) {
-
                                 StateMachineOutputEvent event;
                                 if (j == 0) {
                                     event = ProccessInput{*input};

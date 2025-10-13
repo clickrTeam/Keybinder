@@ -4,9 +4,6 @@
 #include "test_util.h"
 #include <gtest/gtest.h>
 
-// ,
-// Release,
-// Default,
 static const char *a_b_to_c_capture = R"(
 {
   "profile_name": "ProfileOne",

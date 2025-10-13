@@ -145,6 +145,17 @@ KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     return KeyRelease{
         str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
 }
+MinimumWait MinimumWait::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "duration"});
+    return MinimumWait{
+        static_cast<size_t>(get_property_as_number(obj, "duration"))};
+}
+
+MaximumWait MaximumWait::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "duration"});
+    return MaximumWait{
+        static_cast<size_t>(get_property_as_number(obj, "duration"))};
+}
 
 SequenceBehavior parse_behavior(const QString &str) {
     if (str == "capture") {
@@ -218,6 +229,10 @@ AdvancedTrigger parse_advanced_trigger(const QJsonObject &obj) {
         return KeyPress::from_json(obj);
     } else if (trigger_type == "key_release") {
         return KeyRelease::from_json(obj);
+    } else if (trigger_type == "minimum_wait") {
+        return MinimumWait::from_json(obj);
+    } else if (trigger_type == "maximum_wait") {
+        return MaximumWait::from_json(obj);
     }
     throw std::invalid_argument(
         ("Invalid trigger type: " + trigger_type.toStdString()).c_str());

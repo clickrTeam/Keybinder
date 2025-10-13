@@ -14,6 +14,7 @@ add_executable(keybinder_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/profile_parsing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/basic_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sequence_mapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sequence_mapper_timed_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/test_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
     ${CMAKE_SOURCE_DIR}/common/src/key_channel.cpp 

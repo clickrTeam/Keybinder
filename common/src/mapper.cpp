@@ -115,15 +115,15 @@ void Mapper::start() {
         // It is important to not aquire the mutex while we are waiting for the
         // key
         std::lock_guard lock_guard(mtx);
-        if (key_opt) {
-            InputEvent e = key_opt.value();
-            process_input(e);
-            processed_events_count++;
-        }
         const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
         if (current_timer && *current_timer <= current_time_ms() &&
             cur_state.timer_transition) {
             apply_transition(*cur_state.timer_transition);
+        }
+        if (key_opt) {
+            InputEvent e = key_opt.value();
+            process_input(e);
+            processed_events_count++;
         }
         check_queued_events();
 
