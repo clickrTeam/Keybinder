@@ -381,7 +381,7 @@ int setup_uinput_device() {
     uinput_device.id.vendor = 0x1;      // Arbitrary
     uinput_device.id.product = 0x1;     // Arbitrary
     // Device name that will show up in /proc/bus/input/devices or evtest
-    strlcpy(uinput_device.name, "clickr_virtual_keyboard\0",
+    strncpy(uinput_device.name, "clickr_virtual_keyboard\0",
             sizeof(uinput_device.name));
 
     if (ioctl(uinp_fd, UI_DEV_SETUP, &uinput_device) <
