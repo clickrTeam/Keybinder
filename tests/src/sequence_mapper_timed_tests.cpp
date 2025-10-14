@@ -69,7 +69,79 @@ TEST(SequenceMapperTimedTests, ATapToBUnsuccessful) {
                       },
                       {
                           0,
-                          8000,
+                          3000,
+                      },
+                      {
+                          InputEvent{KeyCode::A, KeyEventType::Release},
+                      });
+}
+
+static const char *a_hold_to_b = R"(
+{
+  "profile_name": "ProfileOne",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "LayerA",
+      "remappings": [
+        {
+          "behavior": "capture",
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "A"
+            },
+            {
+              "type": "minimum_wait",
+              "duration": 500
+            },
+            {
+              "type": "key_release",
+              "value": "A"
+            }
+          ],
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "B"
+            },
+            {
+              "type": "release_key",
+              "value": "B"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+)";
+
+// FAILED
+TEST(SequenceMapperTimedTests, AHoldToBSuccessful) {
+    mapper_test_timed(Profile::from_bytes(QByteArray(a_hold_to_b)),
+                      {
+                          InputEvent{KeyCode::A, KeyEventType::Press},
+                          InputEvent{KeyCode::A, KeyEventType::Release},
+                      },
+                      {
+                          0,
+                          5000,
+                      },
+                      {
+                          InputEvent{KeyCode::B, KeyEventType::Press},
+                          InputEvent{KeyCode::B, KeyEventType::Release},
+                      });
+}
+TEST(SequenceMapperTimedTests, AHoldToBUnsuccessful) {
+    mapper_test_timed(Profile::from_bytes(QByteArray(a_hold_to_b)),
+                      {
+                          InputEvent{KeyCode::A, KeyEventType::Press},
+                          InputEvent{KeyCode::A, KeyEventType::Release},
+                      },
+                      {
+                          0,
+                          0,
                       },
                       {
                           InputEvent{KeyCode::A, KeyEventType::Release},

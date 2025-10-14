@@ -20,7 +20,7 @@ void mapper_test_timed(Profile p, QList<InputEvent> events,
     auto [rx, tx] = create_channel();
     Daemon d(rx);
     auto m = std::make_shared<Mapper>(p, d, tx);
-    QThread *mapper_thread = QThread::create([&] { m->start(); });
+    QThread *mapper_thread = QThread::create([m] { m->start(); });
     mapper_thread->start();
     uint64_t time = current_time_ms();
     size_t i = 0;
@@ -35,4 +35,5 @@ void mapper_test_timed(Profile p, QList<InputEvent> events,
     }
     ASSERT_EQ(d.get_outputs(), outputs);
     m->stop();
+    mapper_thread->wait();
 }
