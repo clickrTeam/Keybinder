@@ -110,7 +110,6 @@ void Mapper::queue_output(OutputEvent e, uint64_t delay = 0) {
 void Mapper::start() {
     std::optional<std::chrono::milliseconds> timeout;
     while (!stopped) {
-
         auto key_opt = this->key_receiver.wait_key(timeout);
         // It is important to not aquire the mutex while we are waiting for the
         // key
@@ -131,7 +130,7 @@ void Mapper::start() {
         // fine but maybe a differnt value is better
         timeout = current_timer || !queued_events.empty()
                       ? std::optional(std::chrono::milliseconds(10))
-                      : std::nullopt;
+                      : std::optional(std::chrono::milliseconds(1000));
     }
 }
 
@@ -172,7 +171,6 @@ void Mapper::apply_transition(const Transition &transition,
     }
 
     for (InputEvent e : events_to_redo) {
-        std::cout << "REDOING: " << e << std::endl;
         process_input(e);
     }
 }
@@ -207,7 +205,6 @@ void Mapper::check_queued_events() {
 
         daemon.send_outputs(ready_events);
 
-        // Just drop the tail in one shot
         queued_events.resize(std::distance(queued_events.begin(), mid));
     }
 }

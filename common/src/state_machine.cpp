@@ -151,6 +151,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
 
         for (size_t i = 0; i < sequence_trigger.sequence.size(); ++i) {
             bool is_last = i + 1 == sequence_trigger.sequence.size();
+            bool is_second_to_last = i + 2 == sequence_trigger.sequence.size();
             const AdvancedTrigger &trigger = sequence_trigger.sequence[i];
 
             QHash<InputEvent, Transition> edges;
@@ -179,12 +180,6 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                                       },
                                       [&](auto &) {}},
                            sequence_trigger.sequence[i + 1]);
-            }
-
-            if (timer) {
-                std::cout << "Timer: present: " << *timer_ms << std::endl;
-            } else {
-                std::cout << "Timer: null" << std::endl;
             }
 
             size_t next_state_idx;
@@ -242,21 +237,15 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
                     };
                     new_state.fallback_transition.new_state = HOME_STATE_IDX;
                     if (cur_behavior == SequenceBehavior::Default) {
-                        new_state.fallback_transition.outputs.append(
-                            BasicTranlation{
-                                trigger_to_input(sequence_trigger.sequence[0])
-                                    .value(),
-                            });
-
                         for (size_t j = 0; j <= i; j++) {
                             auto input =
                                 trigger_to_input(sequence_trigger.sequence[j]);
                             if (input) {
                                 StateMachineOutputEvent event;
                                 if (j == 0) {
-                                    event = ProccessInput{*input};
-                                } else {
                                     event = BasicTranlation{input};
+                                } else {
+                                    event = ProccessInput{*input};
                                 }
                                 new_state.fallback_transition.outputs.append(
                                     event);
@@ -276,34 +265,49 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             State &next_state = states.at(next_state_idx);
             size_t final_state_idx = next_state_idx;
             if (timer) {
-                std::visit(overloaded{
-                               [&](const MaximumWait &max_wait) {
-                                   if (!next_state.timer_transition) {
-                                       next_state.timer_transition =
-                                           next_state.fallback_transition;
-                                   }
-                               },
-                               [&](const MinimumWait &min_wait) {
-                                   if (next_state.timer_transition) {
-                                       final_state_idx =
-                                           next_state.timer_transition.value()
-                                               .new_state;
-                                   } else {
-                                       final_state_idx = states.size();
-                                       State new_state;
-                                       StateMetadata new_state_metadata{
-                                           .timer = std::nullopt,
-                                           .behavior = cur_behavior,
-                                       };
-                                       next_state.fallback_transition =
-                                           next_state.fallback_transition;
-                                       states.push_back(new_state);
-                                       state_metadata.push_back(
-                                           new_state_metadata);
-                                   }
-                               },
-                           },
-                           *timer);
+                std::visit(
+                    overloaded{
+                        [&](const MaximumWait &max_wait) {
+                            if (!next_state.timer_transition) {
+                                next_state.timer_transition =
+                                    next_state.fallback_transition;
+                            }
+                        },
+                        [&](const MinimumWait &min_wait) {
+                            if (next_state.timer_transition) {
+                                final_state_idx =
+                                    next_state.timer_transition.value()
+                                        .new_state;
+                            } else {
+                                if (is_second_to_last) {
+                                    next_state.timer_transition =
+                                        Transition{.new_state = HOME_STATE_IDX};
+
+                                    for (const Bind &x :
+                                         sequence_trigger.binds) {
+                                        next_state.timer_transition.value()
+                                            .outputs.append(x);
+                                    }
+
+                                } else {
+                                    final_state_idx = states.size();
+                                    State new_state;
+                                    StateMetadata new_state_metadata{
+                                        .timer = std::nullopt,
+                                        .behavior = cur_behavior,
+                                    };
+                                    next_state.timer_transition = Transition{
+                                        .new_state = final_state_idx};
+                                    next_state.fallback_transition =
+                                        next_state.fallback_transition;
+                                    states.push_back(new_state);
+                                    state_metadata.push_back(
+                                        new_state_metadata);
+                                }
+                            }
+                        },
+                    },
+                    *timer);
             }
 
             current_state_idx = final_state_idx;
