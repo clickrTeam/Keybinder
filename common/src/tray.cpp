@@ -40,10 +40,3 @@ Tray::Tray(QObject *parent) : QObject(parent) {
 
     trayIcon->show();
 }
-
-void Tray::sendNotification(const QString &title, const QString &message) {
-    if (trayIcon->isVisible()) {
-        trayIcon->showMessage(title, message, QSystemTrayIcon::Information,
-                              5000);
-    }
-}
