@@ -2,6 +2,7 @@
 #include "bi_map.h"
 #include <QString>
 
+// clang-format off
 BiMap<QString, KeyCode> str_to_keycode = {
     {"A", KeyCode::A},        {"B", KeyCode::B},  {"C", KeyCode::C},
     {"D", KeyCode::D},        {"E", KeyCode::E},  {"F", KeyCode::F},
@@ -15,6 +16,6 @@ BiMap<QString, KeyCode> str_to_keycode = {
     {"1", KeyCode::K1},       {"2", KeyCode::K2}, {"3", KeyCode::K3},
     {"4", KeyCode::K4},       {"5", KeyCode::K5}, {"6", KeyCode::K6},
     {"7", KeyCode::K7},       {"8", KeyCode::K8}, {"9", KeyCode::K9},
-    {"Space", KeyCode::Space}
+    {"Space", KeyCode::Space}, {"CapsLock", KeyCode::CapsLock},
 
 };

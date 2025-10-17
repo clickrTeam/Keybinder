@@ -1,4 +1,5 @@
 #include "local_server.h"
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <profile.h>
@@ -11,6 +12,12 @@ LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
         qFatal() << "Could not listen on: " << PIPE_PATH;
     }
     qDebug() << "Server listening on: " << PIPE_PATH;
+
+    // Set socket permissions
+    QFile socketFile(PIPE_PATH);
+    socketFile.setPermissions(QFile::ReadOwner | QFile::WriteOwner |
+                              QFile::ReadGroup | QFile::WriteGroup |
+                              QFile::ReadOther | QFile::WriteOther);
 
     QObject::connect(&server, &QLocalServer::newConnection, this,
                      &LocalServer::handle_new_connection);
