@@ -1,16 +1,14 @@
 #include "tray.h"
-#include <QIcon>
-#include <QMenu>
 #include <QAction>
 #include <QApplication>
+#include <QIcon>
+#include <QMenu>
+#include <qicon.h>
 
 Tray::Tray(QObject *parent) : QObject(parent) {
     trayIcon = new QSystemTrayIcon(this);
 
-    QIcon icon = QIcon::fromTheme("dialog-information");
-    if (icon.isNull()) {
-        icon = QIcon(":/icons/myicon.png"); // fallback resource icon
-    }
+    QIcon icon(":/resources/favicon.png");
     trayIcon->setIcon(icon);
     trayIcon->setToolTip("Clickr");
 
@@ -31,9 +29,8 @@ Tray::Tray(QObject *parent) : QObject(parent) {
 
     // Exit action
     QAction *exitAction = new QAction("Exit", this);
-    connect(exitAction, &QAction::triggered, this, [this]() {
-        emit shutdown();
-    });
+    connect(exitAction, &QAction::triggered, this,
+            [this]() { emit shutdown(); });
 
     // Add actions to menu
     menu->addAction(pauseResumeAction);

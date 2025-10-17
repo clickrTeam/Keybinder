@@ -11,6 +11,9 @@
 #include <qlogging.h>
 #include <systemd/sd-device.h>
 #include <unistd.h>
+#include <QTimer>
+#include <QApplication>
+#include "generic_indicator.h"
 
 using std::cout;
 using std::endl;
@@ -303,9 +306,23 @@ QString detect_keyboard_fallback() {
 
     // Now we listen to key events to determine which device is indeed the
     // keyboard
+
     cout << "Press SPACEBAR to identify the correct keyboard device. This will "
             "time out after "
          << timeout_seconds << " seconds." << endl;
+
+    // Create the notification for pressing spacebar
+    QTimer::singleShot(0, qApp,
+                       []() {
+                           new GenericIndicator("Press SPACEBAR to identify the correct keyboard device.", GenericIndicator::CENTER, 5000);
+                       });
+
+    // Force Qt to process the notification now
+    // More than 2 are needed to fix it just showing a black box
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
     bool found_keyb = false;
     QElapsedTimer timer;
     timer.start();
