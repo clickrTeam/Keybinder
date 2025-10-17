@@ -1,9 +1,9 @@
 #include "mapper.h"
 #include "daemon.h"
 #include "event.h"
+#include "generic_indicator.h"
 #include "key_channel.h"
 #include "key_code.h"
-#include "generic_indicator.h"
 #include <QApplication>
 #include <QTimer>
 #include <mutex>
@@ -43,7 +43,8 @@ void Mapper::set_layer_inner(size_t new_layer) {
     // Create the notification for layer switching
     QTimer::singleShot(0, qApp,
                        [layerName = profile.layers[new_layer].layer_name]() {
-                           new GenericIndicator(layerName, GenericIndicator::BOTTOM_RIGHT, 1000);
+                           new GenericIndicator(
+                               layerName, GenericIndicator::BOTTOM_RIGHT, 1000);
                        });
 
     key_press_triggers.clear();

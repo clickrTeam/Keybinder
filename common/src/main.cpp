@@ -6,8 +6,8 @@
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
-#include "tray.h"
 #include "signal_handler.h"
+#include "tray.h"
 #include <QApplication>
 #include <QByteArray>
 #include <QDateTime>
@@ -90,9 +90,7 @@ int main(int argc, char *argv[]) {
                      [&logger]() { logger.cleanUp(); });
 
     Tray tray;
-    QObject::connect(&tray, &Tray::shutdown, [&]() {
-        cleanShutdown();
-    });
+    QObject::connect(&tray, &Tray::shutdown, [&]() { cleanShutdown(); });
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)

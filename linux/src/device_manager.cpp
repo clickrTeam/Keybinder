@@ -1,8 +1,11 @@
 #include "device_manager.h"
+#include "generic_indicator.h"
+#include <QApplication>
 #include <QDebug>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QTimer>
 #include <QVector>
 #include <dirent.h>
 #include <fcntl.h>
@@ -11,9 +14,6 @@
 #include <qlogging.h>
 #include <systemd/sd-device.h>
 #include <unistd.h>
-#include <QTimer>
-#include <QApplication>
-#include "generic_indicator.h"
 
 using std::cout;
 using std::endl;
@@ -223,7 +223,8 @@ QString detect_keyboard() {
         return detect_keyboard_fallback();
     } else {
         // Only one possible keyboard was found, return it
-        qDebug() << "Only one possible keyboard candidate detected at path: " << keyboard_candidates[0];
+        qDebug() << "Only one possible keyboard candidate detected at path: "
+                 << keyboard_candidates[0];
         return keyboard_candidates[0];
     }
 }
@@ -312,10 +313,11 @@ QString detect_keyboard_fallback() {
          << timeout_seconds << " seconds." << endl;
 
     // Create the notification for pressing spacebar
-    QTimer::singleShot(0, qApp,
-                       []() {
-                           new GenericIndicator("Press SPACEBAR to identify the correct keyboard device.", GenericIndicator::CENTER, 5000);
-                       });
+    QTimer::singleShot(0, qApp, []() {
+        new GenericIndicator(
+            "Press SPACEBAR to identify the correct keyboard device.",
+            GenericIndicator::CENTER, 5000);
+    });
 
     // Force Qt to process the notification now
     // More than 2 are needed to fix it just showing a black box
