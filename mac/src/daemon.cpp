@@ -173,6 +173,8 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
 
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
+    if (!int_to_keycode.contains_forward(code))
+        return;
 
     auto event = InputEvent{
         .keycode = int_to_keycode.find_forward(code),
