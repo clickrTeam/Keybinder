@@ -1,8 +1,11 @@
 #include "device_manager.h"
+#include "generic_indicator.h"
+#include <QApplication>
 #include <QDebug>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QTimer>
 #include <QVector>
 #include <dirent.h>
 #include <fcntl.h>
@@ -20,7 +23,6 @@ const QString DEFAULT_CONFIG_PATH =
     QDir::homePath() + "/.config/clickr/config.json";
 
 QString retrieve_eventX(QString config_file_path) {
-    qDebug() << "Searching for eventX in path: " << config_file_path;
     QString eventX = "";
     QFile config(config_file_path);
 
@@ -305,9 +307,24 @@ QString detect_keyboard_fallback() {
 
     // Now we listen to key events to determine which device is indeed the
     // keyboard
+
     cout << "Press SPACEBAR to identify the correct keyboard device. This will "
             "time out after "
          << timeout_seconds << " seconds." << endl;
+
+    // Create the notification for pressing spacebar
+    QTimer::singleShot(0, qApp, []() {
+        new GenericIndicator(
+            "Press SPACEBAR to identify the correct keyboard device.",
+            GenericIndicator::CENTER, 5000);
+    });
+
+    // Force Qt to process the notification now
+    // More than 2 are needed to fix it just showing a black box
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
     bool found_keyb = false;
     QElapsedTimer timer;
     timer.start();

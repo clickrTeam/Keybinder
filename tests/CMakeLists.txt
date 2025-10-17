@@ -16,7 +16,12 @@ add_executable(keybinder_tests
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/mapper.cpp
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/generic_indicator.cpp
+    ${CMAKE_SOURCE_DIR}/common/include/generic_indicator.h
+    ${CMAKE_SOURCE_DIR}/common/src/tray.cpp
+    ${CMAKE_SOURCE_DIR}/common/include/tray.h
 )
+set_target_properties(keybinder_tests PROPERTIES AUTOMOC ON)
 
 target_include_directories(keybinder_tests PRIVATE
     ${COMMON_HEADER_PATHS}
@@ -27,6 +32,7 @@ target_link_libraries(keybinder_tests PRIVATE
     GTest::gtest_main
     Qt::Core
     Qt::Network
+    Qt::Widgets
 )
 
 add_test(NAME keybinder_tests COMMAND keybinder_tests)

@@ -3,6 +3,7 @@
 #include "key_channel.h"
 #include "key_map.h"
 #include <QThread>
+#include <stdexcept>
 
 Daemon::Daemon(KeySender key_sender) : key_sender(key_sender) {
     // TODO: Possibly update with config file path
@@ -93,19 +94,24 @@ void Daemon::start() {
                0) {
             if (event.type == EV_KEY) {
                 InputEvent e;
-                e.keycode = int_to_keycode.find_forward(event.code);
-                e.type = (event.value == 1) ? KeyEventType::Press
-                                            : KeyEventType::Release;
+                // TODO remove try catch
+                try {
+                    e.keycode = int_to_keycode.find_forward(event.code);
+                    e.type = (event.value == 1) ? KeyEventType::Press
+                                                : KeyEventType::Release;
 
-                if (key_sender.send_key(e)) {
-                    // Suppressed by the mapper (i.e. replaced/mapped to
-                    // something else)
-                    continue;
-                } else {
-                    // Inject original key if not mapped
-                    event_list.append(e);
-                    send_keys(event_list);
-                    event_list.clear();
+                    if (key_sender.send_key(e)) {
+                        // Suppressed by the mapper (i.e. replaced/mapped to
+                        // something else)
+                        continue;
+                    } else {
+                        // Inject original key if not mapped
+                        event_list.append(e);
+                        send_keys(event_list);
+                        event_list.clear();
+                    }
+                } catch (std::out_of_range) {
+                    send_key(event.code, event.value, uinput_fd);
                 }
             }
         }
