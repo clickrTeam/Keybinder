@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <mutex>
 #include <optional>
-#include <stdint.h>
 #include <vector>
 
 using std::size_t;
