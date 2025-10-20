@@ -7,48 +7,17 @@ Luke Hamling
 Ryan Dalrymple
 Tim Blamires
 
-## Architecture
+## Build & Testing
+
+This project uses CMake and Google rest to build and test the code. To build the code run: 
+```bash
+cmake -B build
 ```
-.
-├── CMakeLists.txt
-├── README.md
-├── common
-│   ├── CMakeLists.txt
-│   ├── include
-│   │   ├── abstract_daemon.h
-│   │   ├── mapper.h
-│   │   ├── profile.h
-│   │   └── readprofile.h
-│   └── src
-│       ├── main.cpp
-│       ├── mapper.cpp
-│       └── readprofile.cpp
-├── exampleProfiles
-│   ├── e1.json
-│   └── ...
-├── linux
-│   ├── CMakeLists.txt
-│   ├── include
-│   │   ├── daemon.h
-│   │   └── linux_configure.h
-│   ├── learning
-│   │   ├── Detection.cpp
-│   │   ├── README.md
-│   │   ├── SimpleRemap.cpp
-│   │   └── SimpleRemap.h
-│   └── src
-│       └── daemon.cpp
-├── mac
-│   ├── CMakeLists.txt
-│   ├── include
-│   │   └── daemon.h
-│   └── src
-│       └── daemon.cpp
-├── startup.cpp
-└── win
-    ├── CMakeLists.txt
-    ├── include
-    │   └── daemon.h
-    └── src
-        └── daemon.cpp
+
+Once built use this to run the test:
+```bash
+ctest --test-dir build
+```
+
+
 ```

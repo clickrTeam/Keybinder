@@ -42,6 +42,8 @@ enum class KeyCode : std::uint16_t {
     K9,
     Space,
     CapsLock,
+    Enter,
+    Backspace,
 };
 
 extern BiMap<QString, KeyCode> str_to_keycode;

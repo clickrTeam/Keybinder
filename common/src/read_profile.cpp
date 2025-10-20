@@ -125,6 +125,14 @@ void warn_extra_properties(const QJsonObject &obj,
         }
     }
 }
+KeyCode parse_key(const QString &key) {
+    if (str_to_keycode.contains_forward(key)) {
+        return str_to_keycode.find_forward(key);
+    } else {
+        throw std::invalid_argument(
+            ("Unkown key:" + key.toStdString()).c_str());
+    }
+}
 
 // KeyPress
 KeyPress KeyPress::from_json(const QJsonObject &obj) {
@@ -132,8 +140,7 @@ KeyPress KeyPress::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return KeyPress{
-        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
+    return KeyPress{parse_key(get_property_as_string(obj, "value"))};
 }
 
 // KeyRelease
@@ -142,8 +149,7 @@ KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return KeyRelease{
-        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
+    return KeyRelease{parse_key(get_property_as_string(obj, "value"))};
 }
 MinimumWait MinimumWait::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "duration"});
@@ -175,8 +181,7 @@ PressKey PressKey::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return PressKey{
-        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
+    return PressKey{parse_key(get_property_as_string(obj, "value"))};
 }
 
 // ReleaseKey
@@ -185,8 +190,7 @@ ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
     if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
         qCritical() << "Key missing from forward map:"
                     << get_property_as_string(obj, "value");
-    return ReleaseKey{
-        str_to_keycode.find_forward(get_property_as_string(obj, "value"))};
+    return ReleaseKey{parse_key(get_property_as_string(obj, "value"))};
 }
 
 // SwapLayer

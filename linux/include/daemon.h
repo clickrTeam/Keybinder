@@ -22,10 +22,13 @@ class Daemon : public AbstractDaemon {
   private:
     int keyb_fd = -1;
     int uinput_fd = -1;
-    struct libevdev *keyb;
+    struct libevdev *keyb = nullptr;
     QString event_keyb_path = "";
     bool is_running = false;
     KeySender key_sender;
+
+    void send_keys_helper(const QList<InputEvent> &vk, int fd);
+    void send_key(int key_code, int state, int fd);
 
   public:
     // Constructor and Destructor
@@ -40,10 +43,32 @@ class Daemon : public AbstractDaemon {
     /// to return to normal function.
     ///
     void cleanup() override;
-    void send_keys(const QList<InputEvent> &vk) override;
 
     ///
-    /// \brief Opens the uinput device to send key events.
+    /// \brief Sends a sequence of key press and release events through the
+    /// uinput device.
     ///
-    void setup_uinput_device();
+    /// This function iterates over a list of input events, translates each into
+    /// a Linux input_event structure, and writes it to the uinput file
+    /// descriptor. For each key press/release, a synchronization (EV_SYN /
+    /// SYN_REPORT) event is also sent to mark the end of that event frame.
+    ///
+    /// \param vk A QList of InputEvent objects, each representing a keycode and
+    ///           whether the key is pressed or released.
+    ///
+    /// \param fd A uinput file descriptor of a device to send the keys to
+    ///
+    /// Behavior details:
+    /// - For EV_KEY events:
+    ///     - value = 1 → key press
+    ///     - value = 0 → key release
+    /// - For EV_SYN events:
+    ///     - value is always set to 0 (SYN_REPORT convention).
+    ///
+    /// Example:
+    ///   Passing a list with one "press A" and one "release A" event will
+    ///   generate the corresponding key press and release in the virtual
+    ///   input device.
+    ///
+    void send_keys(const QList<InputEvent> &vk) override;
 };

@@ -16,6 +16,7 @@ enum class SequenceBehavior {
 };
 
 SequenceBehavior parse_behavior(const QString &str);
+KeyCode parse_key(const QString &str);
 
 struct KeyPress {
     KeyCode key_code;

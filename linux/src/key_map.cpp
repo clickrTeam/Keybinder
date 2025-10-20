@@ -47,14 +47,14 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     // Special Characters
     {KEY_SPACE, KeyCode::Space},
     // TODO: add to keycode
-    //  {"Enter", KEY_ENTER},
+    {KEY_ENTER, KeyCode::Enter},
     //  {KEY_ESC, KeyCode::Esc},
     //  {KEY_ESC, KeyCode::Escape},
     //  {KEY_TAB, KeyCode::Tab},
     //  {KEY_LEFTSHIFT, KeyCode::Shift},
     //  {KEY_LEFTCTRL, KeyCode::Ctrl},
     //  {KEY_LEFTALT, KeyCode::Alt},
-    //  {KEY_BACKSPACE, KeyCode::Backspace},
+    {KEY_BACKSPACE, KeyCode::Backspace},
     //  {KEY_PAUSE, KeyCode::Pause},
     //  {KEY_CAPSLOCK, KeyCode::CapsLock},
     //
