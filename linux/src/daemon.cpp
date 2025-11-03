@@ -118,8 +118,13 @@ void Daemon::start() {
     }
 }
 
-void Daemon::send_keys(const QList<InputEvent> &vk) {
-    send_keys_helper(vk, uinput_fd);
+void Daemon::send_outputs(const QList<OutputEvent> &output) {
+    if (const InputEvent *vk = std::get_if<InputEvent>(&event)) {
+        send_keys_helper(vk, uinput_fd);
+    } else {
+        // TODO: The macos version should be compatable with this
+        qWarning() << "RunScript is not implemented on Windows yet";
+    }
 }
 
 void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd) {

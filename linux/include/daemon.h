@@ -70,5 +70,5 @@ class Daemon : public AbstractDaemon {
     ///   generate the corresponding key press and release in the virtual
     ///   input device.
     ///
-    void send_keys(const QList<InputEvent> &vk) override;
+    void send_outputs(const QList<OutputEvent> &vk) override;
 };
