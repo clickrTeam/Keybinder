@@ -3,6 +3,7 @@
 #include "key_channel.h"
 #include "key_map.h"
 #include <QCoreApplication>
+#include <QtCore/qlogging.h>
 #include <windows.h>
 #include <winuser.h>
 
@@ -50,24 +51,28 @@ void Daemon::cleanup() {
     qDebug() << "Daemon cleaned up";
 }
 
-void Daemon::send_keys(const QList<InputEvent> &vk) {
+void Daemon::send_outputs(const QList<OutputEvent> &vk) {
     qDebug() << "Sending" << vk.count() << "keys";
 
     QVector<INPUT> inputs;
     inputs.resize(vk.count() * 2); // Press + Release for each key
 
     for (int i = 0; i < vk.count(); ++i) {
-        InputEvent v = vk[i];
-
-        // Press
-        inputs[i].type = INPUT_KEYBOARD;
-        inputs[i].ki.wVk = int_to_keycode.find_backward(v.keycode);
-        // identify key so we can ignore it.
-        inputs[i].ki.dwExtraInfo = InfoIdentifier;
-        if (v.type == KeyEventType::Press) {
-            inputs[i].ki.dwFlags = 0;
+        const OutputEvent &event = vk[i];
+        if (const InputEvent *v = std::get_if<InputEvent>(&event)) {
+            INPUT input;
+            input.type = INPUT_KEYBOARD;
+            input.ki.wVk = int_to_keycode.find_backward(v->keycode);
+            // identify key so we can ignore it.
+            input.ki.dwExtraInfo = InfoIdentifier;
+            if (v->type == KeyEventType::Press) {
+                input.ki.dwFlags = 0;
+            } else {
+                input.ki.dwFlags = KEYEVENTF_KEYUP;
+            }
+            inputs.append(input);
         } else {
-            inputs[i].ki.dwFlags = KEYEVENTF_KEYUP;
+            qWarning() << "RunScript is not implemented on Windows yet";
         }
     }
 
