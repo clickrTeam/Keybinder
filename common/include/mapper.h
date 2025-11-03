@@ -15,7 +15,8 @@ using std::size_t;
 
 class Mapper {
   public:
-    Mapper(Profile, Daemon &, KeyReceiver);
+    Mapper(Profile, Daemon &, KeyReceiver,
+           std::optional<std::function<void(QString)>> = std::nullopt);
     bool set_profile(Profile p);
     // This should be called in a seperate thread as it does not return
     void start();
@@ -33,12 +34,13 @@ class Mapper {
     void check_queued_events();
     void process_input(InputEvent);
     std::mutex mtx;
+    Profile profile;
     Daemon &daemon;
     KeyReceiver key_receiver;
 
     std::vector<std::vector<State>> states;
-    size_t cur_layer_idx;
-    size_t cur_state_idx;
+    size_t cur_layer_idx = 0;
+    size_t cur_state_idx = HOME_STATE_IDX;
     size_t processed_events_count = 0;
 
     std::vector<QHash<InputEvent, std::vector<Bind>>> basic_maps;
@@ -47,4 +49,5 @@ class Mapper {
     std::vector<std::pair<uint64_t, OutputEvent>> queued_events;
 
     std::atomic<bool> stopped = false;
+    std::optional<std::function<void(QString)>> layer_changed_callback;
 };

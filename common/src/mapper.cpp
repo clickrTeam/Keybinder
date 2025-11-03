@@ -3,9 +3,9 @@
 #include "event.h"
 #include "key_channel.h"
 #include "util.h"
+#include <QTimer>
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 #include <mutex>
 #include <optional>
 #include <profile.h>
@@ -27,9 +27,11 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
 }
 } // namespace
 
-Mapper::Mapper(Profile profile, Daemon &daemon, KeyReceiver key_receiver)
-    : daemon(daemon), key_receiver(key_receiver), cur_layer_idx(0),
-      cur_state_idx(HOME_STATE_IDX) {
+Mapper::Mapper(
+    Profile profile, Daemon &daemon, KeyReceiver key_receiver,
+    std::optional<std::function<void(QString)>> layer_changed_callback)
+    : profile(profile), daemon(daemon), key_receiver(key_receiver),
+      layer_changed_callback(layer_changed_callback) {
     set_profile(profile);
 }
 
@@ -56,9 +58,11 @@ bool Mapper::set_profile(Profile p) {
         }
         new_states.push_back(*states_opt);
     }
-    this->states = new_states;
-    this->basic_maps = new_basic_maps;
+    profile = p;
+    states = new_states;
+    basic_maps = new_basic_maps;
     set_layer_inner(p.default_layer);
+
     return true;
 }
 
@@ -77,6 +81,9 @@ void Mapper::set_layer_inner(size_t new_layer) {
     cur_layer_idx = new_layer;
     cur_state_idx = HOME_STATE_IDX;
     current_timer.reset();
+    if (layer_changed_callback) {
+        (*layer_changed_callback)(profile.layers[new_layer].layer_name);
+    }
 }
 
 void Mapper::queue_binds(const std::vector<Bind> &binds) {

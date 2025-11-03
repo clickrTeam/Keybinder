@@ -7,8 +7,7 @@ project(keybinder LANGUAGES CXX)
 
 set(CMAKE_MACOSX_RPATH ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
-find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network Widgets)
 
 qt_standard_project_setup()
 
