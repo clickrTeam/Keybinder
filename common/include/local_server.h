@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mapper.h"
+#include "settings.h"
 #include <QByteArray>
 #include <QDebug>
 #include <QLocalServer>
@@ -18,7 +19,7 @@ class LocalServer : public QObject {
     Q_OBJECT
 
   public:
-    explicit LocalServer(Mapper &mapper);
+    explicit LocalServer(Mapper &mapper, KeybinderSettings &settings);
     virtual ~LocalServer();
     bool start();
 
@@ -30,6 +31,7 @@ class LocalServer : public QObject {
 
     QLocalServer server;
     Mapper &mapper;
+    KeybinderSettings &settings;
 };
 
 class ClientConnection : public QObject {
@@ -37,7 +39,7 @@ class ClientConnection : public QObject {
 
   public:
     ClientConnection(QLocalSocket *socket, Mapper &mapper,
-                     QObject *parent = nullptr);
+                     KeybinderSettings &settings, QObject *parent = nullptr);
     virtual ~ClientConnection() = default;
 
   private slots:
@@ -48,5 +50,6 @@ class ClientConnection : public QObject {
 
     QLocalSocket *socket;
     Mapper &mapper;
+    KeybinderSettings &settings;
     QByteArray buffer;
 };

@@ -4,7 +4,8 @@
 #include <QJsonObject>
 #include <profile.h>
 
-LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
+LocalServer::LocalServer(Mapper &mapper, KeybinderSettings &settings)
+    : mapper(mapper), settings(settings) {
     // Attempt to clean up old socket if it is still there.
     QLocalServer::removeServer(PIPE_PATH);
 
@@ -31,12 +32,13 @@ LocalServer::~LocalServer() {
 
 void LocalServer::handle_new_connection() {
     QLocalSocket *socket = server.nextPendingConnection();
-    new ClientConnection(socket, mapper, this); // `this` for QObject parenting
+    new ClientConnection(socket, mapper, settings,
+                         this); // `this` for QObject parenting
 }
 
 ClientConnection::ClientConnection(QLocalSocket *socket, Mapper &mapper,
-                                   QObject *parent)
-    : QObject(parent), socket(socket), mapper(mapper) {
+                                   KeybinderSettings &settings, QObject *parent)
+    : QObject(parent), socket(socket), mapper(mapper), settings(settings) {
     qInfo() << "New client connected";
     connect(socket, &QLocalSocket::readyRead, this,
             &ClientConnection::read_data);
@@ -87,6 +89,12 @@ void ClientConnection::read_data() {
                 } catch (const std::invalid_argument &e) {
                     qWarning() << "Invalid profile JSON:" << e.what();
                     send_response("fail", e.what());
+                }
+            } else if (msg_type == "set_settings") {
+                if (settings.load_from_json(obj)) {
+                    send_response("ok");
+                } else {
+                    send_response("fail", "invalid settings JSON");
                 }
             } else {
                 qWarning() << "Unknown message_type:" << msg_type;

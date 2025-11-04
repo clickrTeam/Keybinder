@@ -7,6 +7,7 @@
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
+#include "settings.h"
 #include "signal_handler.h"
 #include "tray.h"
 #include <QApplication>
@@ -47,6 +48,7 @@ void cleanShutdown() {
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     QString path = "empty";
+    KeybinderSettings settings;
     Profile activeProfile;
 
 #ifdef QT_DEBUG
@@ -100,7 +102,7 @@ int main(int argc, char *argv[]) {
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
-    LocalServer server(mapper);
+    LocalServer server(mapper, settings);
 
     // Removing for prototype as not yet used
     //
