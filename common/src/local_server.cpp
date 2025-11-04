@@ -78,7 +78,7 @@ void ClientConnection::read_data() {
         // parse JSON
         QJsonParseError parse_error;
         QJsonDocument doc = QJsonDocument::fromJson(line, &parse_error);
-        qDebug() << "Loading Profile from electron:" << doc;
+        qDebug() << "Loading message from electron:" << doc;
 
         if (parse_error.error != QJsonParseError::NoError || !doc.isObject()) {
             qWarning() << "JSON parse error:" << parse_error.errorString();
@@ -97,7 +97,7 @@ void ClientConnection::read_data() {
                     send_response("fail", e.what());
                 }
             } else if (msg_type == "set_settings") {
-                if (settings.load_from_json(obj)) {
+                if (settings.load_from_json(obj["settings"].toObject())) {
                     send_response("ok");
                 } else {
                     send_response("fail", "invalid settings JSON");

@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonValue>
+#include <QtCore/qlogging.h>
 
 KeyCounter::KeyCounter(const QString &filename, QObject *parent)
     : QObject(parent), filename(filename) {
@@ -17,8 +18,9 @@ KeyCounter::KeyCounter(const QString &filename, QObject *parent)
 KeyCounter::~KeyCounter() { save(); }
 
 void KeyCounter::increment(const KeyCode &key) {
+    qDebug() << "increment: " << str_to_keycode.find_backward(key);
     {
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard<std::recursive_mutex> lock(mtx);
         counts[str_to_keycode.find_backward(key)] += 1;
         dirty = true;
     }
@@ -26,14 +28,14 @@ void KeyCounter::increment(const KeyCode &key) {
 
 void KeyCounter::clear() {
     {
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard<std::recursive_mutex> lock(mtx);
         counts.clear();
         save();
     }
 }
 
-QJsonObject KeyCounter::to_json() const {
-    std::lock_guard<std::mutex> lock(mtx);
+QJsonObject KeyCounter::to_json() {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     QJsonObject obj;
     for (auto it = counts.begin(); it != counts.end(); ++it) {
         obj[it.key()] = it.value();
@@ -42,7 +44,7 @@ QJsonObject KeyCounter::to_json() const {
 }
 
 void KeyCounter::load() {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::recursive_mutex> lock(mtx);
 
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -66,7 +68,8 @@ void KeyCounter::load() {
 }
 
 void KeyCounter::save() {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::recursive_mutex> lock(mtx);
+    qDebug() << "Saving keycounts to " << filename;
     if (!dirty)
         return;
 

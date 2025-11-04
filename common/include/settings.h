@@ -4,13 +4,13 @@
 #include <QString>
 #include <mutex>
 
-class KeybinderSettings {
+class KeybinderSettings : public QObject {
     Q_OBJECT
   public:
     explicit KeybinderSettings(const QString &filename = "settings.json");
 
     void load();
-    void save();
+    void save(QJsonDocument doc, QString filename);
 
     QJsonObject to_json();
     bool load_from_json(const QJsonObject &obj);

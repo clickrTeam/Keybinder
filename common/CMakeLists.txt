@@ -19,8 +19,8 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/local_server.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/generic_indicator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/tray.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/key_counter.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/settings.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/key_counter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/settings.h
     PARENT_SCOPE
 )
 set(COMMON_HEADER_PATHS

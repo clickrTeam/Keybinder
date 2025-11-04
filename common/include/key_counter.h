@@ -18,7 +18,7 @@ class KeyCounter : public QObject {
     void increment(const KeyCode &key);
     void clear();
 
-    QJsonObject to_json() const;
+    QJsonObject to_json();
 
   private:
     void load();
@@ -26,7 +26,7 @@ class KeyCounter : public QObject {
 
     QString filename;
     QMap<QString, int> counts;
-    mutable std::mutex mtx;
+    std::recursive_mutex mtx;
     QTimer save_timer;
     bool dirty = true;
 };
