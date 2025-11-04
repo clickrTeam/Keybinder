@@ -1,9 +1,11 @@
 #pragma once
 #include <QJsonObject>
+#include <QObject>
 #include <QString>
 #include <mutex>
 
 class KeybinderSettings {
+    Q_OBJECT
   public:
     explicit KeybinderSettings(const QString &filename = "settings.json");
 
@@ -14,6 +16,8 @@ class KeybinderSettings {
     bool load_from_json(const QJsonObject &obj);
 
     bool get_log_key_frequency();
+  signals:
+    void settingsChanged();
 
   private:
     QString filename;
