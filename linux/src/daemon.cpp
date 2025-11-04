@@ -81,7 +81,7 @@ void Daemon::start() {
     }
 
     bool termination_condition = false;
-    QList<InputEvent> event_list;
+    QList<OutputEvent> event_list;
     is_running = true;
     while (!termination_condition) {
         // Check if the thread has been requested to be interrupted, if so exit
@@ -107,7 +107,7 @@ void Daemon::start() {
                     } else {
                         // Inject original key if not mapped
                         event_list.append(e);
-                        send_keys(event_list);
+                        send_outputs(event_list);
                         event_list.clear();
                     }
                 } catch (std::out_of_range) {
@@ -118,22 +118,18 @@ void Daemon::start() {
     }
 }
 
-void Daemon::send_outputs(const QList<OutputEvent> &output) {
-    if (const InputEvent *vk = std::get_if<InputEvent>(&event)) {
-        send_keys_helper(vk, uinput_fd);
-    } else {
-        // TODO: The macos version should be compatable with this
-        qWarning() << "RunScript is not implemented on Windows yet";
-    }
-}
+void Daemon::send_outputs(const QList<OutputEvent> &outputs) {
+    foreach (OutputEvent event, outputs) {
+        if (const InputEvent *input = std::get_if<InputEvent>(&event)) {
 
-void Daemon::send_keys_helper(const QList<InputEvent> &vk, int fd) {
-    bool type;
-    int key_code;
-    foreach (InputEvent input, vk) {
-        type = input.type == KeyEventType::Press ? 1 : 0;
-        key_code = int_to_keycode.find_backward(input.keycode);
-        send_key(key_code, type, fd);
+            bool type = input->type == KeyEventType::Press ? 1 : 0;
+            int key_code = int_to_keycode.find_backward(input->keycode);
+            send_key(key_code, type, uinput_fd);
+            //
+        } else {
+            // TODO: The macos version should be compatable with this
+            qWarning() << "RunScript is not implemented on Windows yet";
+        }
     }
 }
 
