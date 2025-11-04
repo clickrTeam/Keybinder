@@ -20,13 +20,10 @@ jobs:
       - name: Run clang-format
         id: format-check
         run: |
-          FILES=$(find  -name '*.c' -o -name '*.cpp' -o -name '*.h')
           FORMATTED=false
-          if [ -n "$FILES" ]; then
-            clang-format -i $FILES
-            if ! git diff --quiet; then
-              FORMATTED=true
-            fi
+          ./format.sh
+          if ! git diff --quiet; then
+            FORMATTED=true
           fi
           echo "formatted=$FORMATTED" >> $GITHUB_OUTPUT
 
