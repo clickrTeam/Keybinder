@@ -4,6 +4,7 @@
 #include "daemon.h"
 #include "generic_indicator.h"
 #include "key_channel.h"
+#include "key_counter.h"
 #include "local_server.h"
 #include "logger.h"
 #include "mapper.h"
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     QString path = "empty";
     KeybinderSettings settings;
+    KeyCounter key_counter;
     Profile activeProfile;
 
 #ifdef QT_DEBUG
@@ -73,12 +75,14 @@ int main(int argc, char *argv[]) {
     auto [sender, receiver] = create_channel();
     Daemon daemon(sender);
     // Mapper mapper(activeProfile, daemon, receiver);
-    Mapper mapper(activeProfile, daemon, receiver, [](auto layer_name) {
-        QTimer::singleShot(0, qApp, [layer_name]() {
-            new GenericIndicator(QString(layer_name),
-                                 GenericIndicator::BOTTOM_RIGHT, 1000);
-        });
-    });
+    Mapper mapper(activeProfile, daemon, receiver, settings, key_counter,
+                  [](auto layer_name) {
+                      QTimer::singleShot(0, qApp, [layer_name]() {
+                          new GenericIndicator(QString(layer_name),
+                                               GenericIndicator::BOTTOM_RIGHT,
+                                               1000);
+                      });
+                  });
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
@@ -102,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
-    LocalServer server(mapper, settings);
+    LocalServer server(mapper, settings, key_counter);
 
     // Removing for prototype as not yet used
     //
