@@ -63,7 +63,7 @@ bool KeybinderSettings::load_from_json(const QJsonObject &obj) {
 
     QJsonObject settings_json = to_json();
     save(QJsonDocument(settings_json), filename);
-    emit settingsChanged();
+    emit settings_changed();
     return successful;
 }
 

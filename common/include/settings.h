@@ -17,7 +17,7 @@ class KeybinderSettings : public QObject {
 
     bool get_log_key_frequency();
   signals:
-    void settingsChanged();
+    void settings_changed();
 
   private:
     QString filename;

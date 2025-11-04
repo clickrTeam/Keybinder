@@ -104,6 +104,12 @@ int main(int argc, char *argv[]) {
     Tray tray;
     QObject::connect(&tray, &Tray::shutdown, [&]() { cleanShutdown(); });
 
+    QObject::connect(&settings, &KeybinderSettings::settings_changed, [&]() {
+        if (!settings.get_log_key_frequency()) {
+            key_counter.clear();
+        }
+    });
+
     // Start the local server by calling its constructor (could add start method
     // IDK if needed)
     LocalServer server(mapper, settings, key_counter);
