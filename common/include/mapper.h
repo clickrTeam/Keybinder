@@ -2,7 +2,9 @@
 #include "daemon.h"
 #include "event.h"
 #include "key_channel.h"
+#include "key_counter.h"
 #include "profile.h"
+#include "settings.h"
 #include "state_machine.h"
 #include <QDebug>
 #include <cstddef>
@@ -15,7 +17,7 @@ using std::size_t;
 
 class Mapper {
   public:
-    Mapper(Profile, Daemon &, KeyReceiver,
+    Mapper(Profile, Daemon &, KeyReceiver, KeybinderSettings &, KeyCounter &,
            std::optional<std::function<void(QString)>> = std::nullopt);
     bool set_profile(Profile p);
     // This should be called in a seperate thread as it does not return
@@ -37,6 +39,8 @@ class Mapper {
     Profile profile;
     Daemon &daemon;
     KeyReceiver key_receiver;
+    KeybinderSettings &settings;
+    KeyCounter &key_counter;
 
     std::vector<std::vector<State>> states;
     size_t cur_layer_idx = 0;

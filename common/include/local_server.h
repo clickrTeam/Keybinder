@@ -1,12 +1,15 @@
 #pragma once
 
+#include "key_counter.h"
 #include "mapper.h"
+#include "settings.h"
 #include <QByteArray>
 #include <QDebug>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QObject>
 #include <QString>
+#include <QtCore/qjsonobject.h>
 
 #ifdef WIN32
 constexpr auto PIPE_PATH = R"(\\.\pipe\clickr)";
@@ -18,7 +21,8 @@ class LocalServer : public QObject {
     Q_OBJECT
 
   public:
-    explicit LocalServer(Mapper &mapper);
+    explicit LocalServer(Mapper &mapper, KeybinderSettings &settings,
+                         KeyCounter &key_counter);
     virtual ~LocalServer();
     bool start();
 
@@ -30,6 +34,8 @@ class LocalServer : public QObject {
 
     QLocalServer server;
     Mapper &mapper;
+    KeybinderSettings &settings;
+    KeyCounter &key_counter;
 };
 
 class ClientConnection : public QObject {
@@ -37,6 +43,7 @@ class ClientConnection : public QObject {
 
   public:
     ClientConnection(QLocalSocket *socket, Mapper &mapper,
+                     KeybinderSettings &settings, KeyCounter &key_counter,
                      QObject *parent = nullptr);
     virtual ~ClientConnection() = default;
 
@@ -44,9 +51,12 @@ class ClientConnection : public QObject {
     void read_data();
 
   private:
-    void send_response(const QString &status, const QString &error = QString());
+    void send_response(const QString &status, const QString &error = QString(),
+                       std::optional<QJsonObject> rest = std::nullopt);
 
     QLocalSocket *socket;
     Mapper &mapper;
+    KeybinderSettings &settings;
+    KeyCounter &key_counter;
     QByteArray buffer;
 };

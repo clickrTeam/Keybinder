@@ -1,10 +1,14 @@
 #include "local_server.h"
+#include "key_counter.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QtCore/qjsonobject.h>
 #include <profile.h>
 
-LocalServer::LocalServer(Mapper &mapper) : mapper(mapper) {
+LocalServer::LocalServer(Mapper &mapper, KeybinderSettings &settings,
+                         KeyCounter &key_counter)
+    : mapper(mapper), settings(settings), key_counter(key_counter) {
     // Attempt to clean up old socket if it is still there.
     QLocalServer::removeServer(PIPE_PATH);
 
@@ -31,12 +35,15 @@ LocalServer::~LocalServer() {
 
 void LocalServer::handle_new_connection() {
     QLocalSocket *socket = server.nextPendingConnection();
-    new ClientConnection(socket, mapper, this); // `this` for QObject parenting
+    new ClientConnection(socket, mapper, settings, key_counter,
+                         this); // `this` for QObject parenting
 }
 
 ClientConnection::ClientConnection(QLocalSocket *socket, Mapper &mapper,
-                                   QObject *parent)
-    : QObject(parent), socket(socket), mapper(mapper) {
+                                   KeybinderSettings &settings,
+                                   KeyCounter &key_counter, QObject *parent)
+    : QObject(parent), socket(socket), mapper(mapper), settings(settings),
+      key_counter(key_counter) {
     qInfo() << "New client connected";
     connect(socket, &QLocalSocket::readyRead, this,
             &ClientConnection::read_data);
@@ -45,8 +52,9 @@ ClientConnection::ClientConnection(QLocalSocket *socket, Mapper &mapper,
 }
 
 void ClientConnection::send_response(const QString &status,
-                                     const QString &error) {
-    QJsonObject resp;
+                                     const QString &error,
+                                     std::optional<QJsonObject> rest) {
+    QJsonObject resp = rest.value_or(QJsonObject());
     resp["status"] = status;
     if (status == "fail") {
         resp["error"] = error;
@@ -70,7 +78,7 @@ void ClientConnection::read_data() {
         // parse JSON
         QJsonParseError parse_error;
         QJsonDocument doc = QJsonDocument::fromJson(line, &parse_error);
-        qDebug() << "Loading Profile from electron:" << doc;
+        qDebug() << "Loading message from electron:" << doc;
 
         if (parse_error.error != QJsonParseError::NoError || !doc.isObject()) {
             qWarning() << "JSON parse error:" << parse_error.errorString();
@@ -88,6 +96,17 @@ void ClientConnection::read_data() {
                     qWarning() << "Invalid profile JSON:" << e.what();
                     send_response("fail", e.what());
                 }
+            } else if (msg_type == "set_settings") {
+                if (settings.load_from_json(obj["settings"].toObject())) {
+                    send_response("ok");
+                } else {
+                    send_response("fail", "invalid settings JSON");
+                }
+
+            } else if (msg_type == "get_frequencies") {
+                send_response(
+                    "success", "",
+                    QJsonObject({{"frequencies", key_counter.to_json()}}));
             } else {
                 qWarning() << "Unknown message_type:" << msg_type;
                 send_response("fail", "unknown message_type: " + msg_type);

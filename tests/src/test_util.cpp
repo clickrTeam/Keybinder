@@ -1,7 +1,9 @@
 #include "test_util.h"
 #include "daemon.h"
 #include "key_channel.h"
+#include "key_counter.h"
 #include "mapper.h"
+#include "settings.h"
 #include "util.h"
 #include <QThread>
 #include <chrono>
@@ -19,7 +21,10 @@ void mapper_test_timed(Profile p, QList<InputEvent> events,
     ASSERT_EQ(events.size(), waits.size());
     auto [rx, tx] = create_channel();
     Daemon d(rx);
-    auto m = std::make_shared<Mapper>(p, d, tx);
+
+    KeybinderSettings settings;
+    KeyCounter key_counter;
+    auto m = std::make_shared<Mapper>(p, d, tx, settings, key_counter);
     QThread *mapper_thread = QThread::create([m] { m->start(); });
     mapper_thread->start();
     uint64_t time = current_time_ms();

@@ -29,8 +29,10 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
 
 Mapper::Mapper(
     Profile profile, Daemon &daemon, KeyReceiver key_receiver,
+    KeybinderSettings &settings, KeyCounter &key_counter,
     std::optional<std::function<void(QString)>> layer_changed_callback)
     : profile(profile), daemon(daemon), key_receiver(key_receiver),
+      settings(settings), key_counter(key_counter),
       layer_changed_callback(layer_changed_callback) {
     set_profile(profile);
 }
@@ -128,6 +130,11 @@ void Mapper::start() {
         }
         if (key_opt) {
             InputEvent e = key_opt.value();
+            // only count presses
+            if (settings.get_log_key_frequency() &&
+                e.type == KeyEventType::Press) {
+                key_counter.increment(e.keycode);
+            }
             process_input(e);
             processed_events_count++;
         }
@@ -183,6 +190,7 @@ void Mapper::apply_transition(const Transition &transition,
 }
 
 void Mapper::process_input(InputEvent e) {
+
     const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
     const Transition &transition = cur_state.edges.contains(e)
                                        ? cur_state.edges[e]

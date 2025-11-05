@@ -24,6 +24,11 @@ add_executable(keybinder_tests
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
     ${CMAKE_SOURCE_DIR}/common/src/state_machine.cpp
     ${CMAKE_SOURCE_DIR}/common/src/util.cpp
+
+    ${CMAKE_SOURCE_DIR}/common/src/settings.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/key_counter.cpp
+    ${CMAKE_SOURCE_DIR}/common/include/settings.h
+    ${CMAKE_SOURCE_DIR}/common/include/key_counter.h
 )
 
 target_include_directories(keybinder_tests PRIVATE
