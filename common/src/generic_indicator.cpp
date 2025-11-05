@@ -6,8 +6,7 @@
 #include <QVBoxLayout>
 #include <QWindow>
 
-GenericIndicator::GenericIndicator(const QString &note,
-                                   IndicatorPosition location,
+GenericIndicator::GenericIndicator(QString note, IndicatorPosition location,
                                    int duration_ms) {
     qDebug() << "Generic Indicator constructor for: " << note;
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |

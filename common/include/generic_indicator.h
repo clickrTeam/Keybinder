@@ -31,7 +31,7 @@ class GenericIndicator : public QWidget {
      * @param duration_ms is the amount of time in milliseconds the pop up
      * will be present on screen.
      */
-    GenericIndicator(const QString &note, IndicatorPosition location,
+    GenericIndicator(QString note, IndicatorPosition location,
                      int duration_ms = 1000);
 
   private:

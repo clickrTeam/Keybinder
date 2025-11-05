@@ -11,17 +11,20 @@ FetchContent_MakeAvailable(googletest)
 # ---- Test binary (only common sources/headers) ----
 add_executable(keybinder_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/test_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/profile_parsing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/basic_mapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sequence_mapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sequence_mapper_timed_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/test_util.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
     ${CMAKE_SOURCE_DIR}/common/src/key_channel.cpp 
     ${CMAKE_SOURCE_DIR}/common/src/key_code.cpp
     ${CMAKE_SOURCE_DIR}/common/src/logger.cpp
     ${CMAKE_SOURCE_DIR}/common/src/mapper.cpp
     ${CMAKE_SOURCE_DIR}/common/src/read_profile.cpp
-    ${CMAKE_SOURCE_DIR}/common/src/generic_indicator.cpp
-    ${CMAKE_SOURCE_DIR}/common/include/generic_indicator.h
-    ${CMAKE_SOURCE_DIR}/common/src/tray.cpp
-    ${CMAKE_SOURCE_DIR}/common/include/tray.h
+    ${CMAKE_SOURCE_DIR}/common/src/state_machine.cpp
+    ${CMAKE_SOURCE_DIR}/common/src/util.cpp
 )
-set_target_properties(keybinder_tests PROPERTIES AUTOMOC ON)
 
 target_include_directories(keybinder_tests PRIVATE
     ${COMMON_HEADER_PATHS}
@@ -32,7 +35,6 @@ target_link_libraries(keybinder_tests PRIVATE
     GTest::gtest_main
     Qt::Core
     Qt::Network
-    Qt::Widgets
 )
 
 add_test(NAME keybinder_tests COMMAND keybinder_tests)

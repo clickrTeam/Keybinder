@@ -13,7 +13,13 @@ class Daemon : AbstractDaemon {
     // Override abstract class methods
     void start() override;
     void cleanup() override;
-    void send_keys(const QList<InputEvent> &events) override;
+
+    void send_outputs(const QList<OutputEvent> &events) override;
+    QList<OutputEvent> get_outputs();
 
     KeySender key_sender;
+
+  private:
+    std::mutex mu;
+    QList<OutputEvent> outputs;
 };

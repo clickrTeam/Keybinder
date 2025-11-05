@@ -8,8 +8,9 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/local_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_channel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_code.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/state_machine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/generic_indicator.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tray.cpp
 
     # For some reason it breaks without explicitly putting it here.

@@ -2,13 +2,20 @@
 #include "event.h"
 #include "key_code.h"
 #include "key_map.h"
+#include "util.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 #include <MacTypes.h>
 #include <QDebug>
+#include <QDir>
+#include <QMap>
+#include <QTemporaryFile>
 #include <cstdint>
 #include <iostream>
+#include <spawn.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 // Heavily based on https://github.com/psych3r/driverkit
 Daemon::Daemon(KeySender key_sender)
@@ -134,20 +141,28 @@ void Daemon::start() {
 /// TODO: fill this in not exactly sure how to unsieze devices
 void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 
-void Daemon::send_keys(const QList<InputEvent> &events) {
-    for (const InputEvent &event : events) {
-        qDebug() << "SENDING KEY "
-                 << str_to_keycode.find_backward(event.keycode)
-                 << (event.type == KeyEventType::Press ? " pressed"
-                                                       : " released");
+void Daemon::send_outputs(const QList<OutputEvent> &events) {
+    for (const OutputEvent &event : events) {
+        std::visit(overloaded{
+                       [&](const InputEvent &key) {
+                           qDebug() << "SENDING KEY "
+                                    << str_to_keycode.find_backward(key.keycode)
+                                    << (key.type == KeyEventType::Press
+                                            ? " pressed"
+                                            : " released");
 
-        uint16_t raw_keycode = int_to_keycode.find_backward(event.keycode);
-        if (event.type == KeyEventType::Press)
-            report.keys.insert(raw_keycode);
-        else if (event.type == KeyEventType::Release)
-            report.keys.erase(raw_keycode);
+                           uint16_t raw_keycode =
+                               int_to_keycode.find_backward(key.keycode);
+                           if (key.type == KeyEventType::Press)
+                               report.keys.insert(raw_keycode);
+                           else if (key.type == KeyEventType::Release)
+                               report.keys.erase(raw_keycode);
 
-        client->async_post_report(report);
+                           client->async_post_report(report);
+                       },
+                       [&](const RunScript &script) { run_script(script); },
+                   },
+                   event);
     }
 }
 
@@ -158,6 +173,8 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
 
     std::cout << "Key " << code << (value ? " pressed" : " released")
               << std::endl;
+    if (!int_to_keycode.contains_forward(code))
+        return;
 
     auto event = InputEvent{
         .keycode = int_to_keycode.find_forward(code),
@@ -165,7 +182,7 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     };
 
     if (!key_sender.send_key(event)) {
-        send_keys({event});
+        send_outputs({event});
     }
 }
 void Daemon::input_event_callback(void *context, IOReturn result, void *sender,
@@ -212,4 +229,55 @@ CFStringRef Daemon::get_property(mach_port_t item, const char *property) {
 CFStringRef Daemon::from_cstr(const char *str) {
     return CFStringCreateWithCString(kCFAllocatorDefault, str,
                                      CFStringGetSystemEncoding());
+}
+
+void Daemon::run_script(const RunScript &rs) {
+    QString tempPath;
+
+    // Reuse temp file if already created
+    if (scriptTempFiles.contains(rs)) {
+        tempPath = scriptTempFiles[rs];
+    } else {
+        QTemporaryFile tempFile(QDir::tempPath() + "/runscript_XXXXXX.sh");
+        tempFile.setAutoRemove(false);
+        if (!tempFile.open()) {
+            qDebug() << "Failed to open temp file";
+            return;
+        }
+
+        tempFile.write(rs.script.toUtf8());
+        tempFile.flush();
+        tempPath = tempFile.fileName();
+        tempFile.close();
+
+        scriptTempFiles[rs] = tempPath;
+
+        // Make executable
+        if (chmod(tempPath.toUtf8().constData(), 0755) != 0) {
+            qDebug() << "Failed to chmod temp script:" << strerror(errno);
+            return;
+        }
+    }
+
+    qDebug() << "interpreter: " << rs.interpreter;
+    qDebug() << "script: " << rs.script;
+    QByteArray interpreterBytes = rs.interpreter.toUtf8();
+    QByteArray tempPathBytes = tempPath.toUtf8();
+
+    char *argv[] = {interpreterBytes.data(), tempPathBytes.data(), nullptr};
+
+    posix_spawnattr_t attr;
+    posix_spawnattr_init(&attr);
+
+    // TODO: Drop privileges for the spawned process
+    pid_t pid;
+    int status = posix_spawnp(&pid, argv[0], nullptr, &attr, argv, environ);
+    posix_spawnattr_destroy(&attr);
+
+    if (status != 0) {
+        qDebug() << "Failed to spawn process:" << strerror(status);
+        return;
+    }
+
+    qDebug() << "Spawned script" << tempPath << "with pid" << pid;
 }

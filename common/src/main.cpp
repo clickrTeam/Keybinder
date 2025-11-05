@@ -2,6 +2,7 @@
 // the compiler will just use the right implementation at runtime.
 // See mac/include/daemon.h for an example.
 #include "daemon.h"
+#include "generic_indicator.h"
 #include "key_channel.h"
 #include "local_server.h"
 #include "logger.h"
@@ -18,9 +19,8 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QThread>
+#include <QTimer>
 #include <csignal>
-#include <qcoreapplication.h>
-#include <qtmetamacros.h>
 
 QThread *daemon_thread;
 QThread *mapper_thread;
@@ -70,7 +70,13 @@ int main(int argc, char *argv[]) {
 
     auto [sender, receiver] = create_channel();
     Daemon daemon(sender);
-    Mapper mapper(activeProfile, daemon, receiver);
+    // Mapper mapper(activeProfile, daemon, receiver);
+    Mapper mapper(activeProfile, daemon, receiver, [](auto layer_name) {
+        QTimer::singleShot(0, qApp, [layer_name]() {
+            new GenericIndicator(QString(layer_name),
+                                 GenericIndicator::BOTTOM_RIGHT, 1000);
+        });
+    });
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine

@@ -41,6 +41,7 @@ enum class KeyCode : std::uint16_t {
     K8,
     K9,
     Space,
+    CapsLock,
     Enter,
     Backspace,
 };

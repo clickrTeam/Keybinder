@@ -1,6 +1,7 @@
 #include "key_map.h"
 #include <cstdint>
 
+// clang-format off
 BiMap<uint16_t, KeyCode> int_to_keycode = {
     {4, KeyCode::A},     {5, KeyCode::B},   {6, KeyCode::C},
     {7, KeyCode::D},     {8, KeyCode::E},   {9, KeyCode::F},
@@ -17,6 +18,6 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {36, KeyCode::K7},   {37, KeyCode::K8}, {38, KeyCode::K9},
     {39, KeyCode::K0},
 
-    {44, KeyCode::Space}
+    {44, KeyCode::Space}, {57, KeyCode::CapsLock},
 
 };

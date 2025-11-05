@@ -1,5 +1,4 @@
 #include "read_profile.h"
-
 #include <QFileInfo>
 #include <QtLogging>
 #include <cstddef>
@@ -152,48 +151,28 @@ KeyRelease KeyRelease::from_json(const QJsonObject &obj) {
                     << get_property_as_string(obj, "value");
     return KeyRelease{parse_key(get_property_as_string(obj, "value"))};
 }
-
-//   "type": "tap_sequence",
-//   "key_time_pairs": [
-//     [
-//       "Q",
-//       300
-//     ],
-//     [
-//       "Q",
-//       300
-//     ]
-//   ],
-//   "behavior": "default"
-// },
-// TapSequence
-TapSequence TapSequence::from_json(const QJsonObject &obj) {
-    QList<KeyCode> key_sequence;
-    warn_extra_properties(obj, {"type", "key_time_pairs", "behavior"});
-    for (const QJsonValue &val : get_property_as_array(obj, "key_time_pairs")) {
-        auto pair = get_value_as_array(val);
-        if (!str_to_keycode.contains_forward(get_value_as_string(pair.at(0))))
-            qCritical() << "Key missing from forward map:"
-                        << get_value_as_string(pair.at(0));
-        key_sequence.push_back(parse_key(get_value_as_string(pair.at(0))));
-        // TODO: use the timeout which is the second element in this array
-    }
-
-    auto behavior = parse_behavior(get_property_as_string(obj, "behavior"));
-
-    return TapSequence{key_sequence, behavior};
+MinimumWait MinimumWait::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "duration"});
+    return MinimumWait{
+        static_cast<size_t>(get_property_as_number(obj, "duration"))};
 }
 
-TimedTriggerBehavior parse_behavior(const QString &str) {
+MaximumWait MaximumWait::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "duration"});
+    return MaximumWait{
+        static_cast<size_t>(get_property_as_number(obj, "duration"))};
+}
+
+SequenceBehavior parse_behavior(const QString &str) {
     if (str == "capture") {
-        return TimedTriggerBehavior::Capture;
+        return SequenceBehavior::Capture;
     } else if (str == "release") {
-        return TimedTriggerBehavior::Release;
+        return SequenceBehavior::Release;
     } else if (str == "default") {
-        return TimedTriggerBehavior::Default;
+        return SequenceBehavior::Default;
     } else {
         throw std::invalid_argument(
-            ("Invalid Timed Bind Behavior: " + str.toStdString()).c_str());
+            ("SequenceBehavior Behavior: " + str.toStdString()).c_str());
     }
 }
 
@@ -214,93 +193,136 @@ ReleaseKey ReleaseKey::from_json(const QJsonObject &obj) {
     return ReleaseKey{parse_key(get_property_as_string(obj, "value"))};
 }
 
-// TapKey
-TapKey TapKey::from_json(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"type", "value"});
-    if (!str_to_keycode.contains_forward(get_property_as_string(obj, "value")))
-        qCritical() << "Key missing from forward map:"
-                    << get_property_as_string(obj, "value");
-    return TapKey{parse_key(get_property_as_string(obj, "value"))};
-}
-
 // SwapLayer
 SwapLayer SwapLayer::from_json(const QJsonObject &obj) {
 
     warn_extra_properties(obj, {"type", "value"});
     return SwapLayer{(size_t)get_property_as_number(obj, "value")};
 }
+Wait Wait::from_json(const QJsonObject &obj) {
 
-// Macro
-Macro Macro::from_json(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"type", "binds"});
-    QList<Bind> binds;
-    for (const QJsonValue &bindObj : get_property_as_array(obj, "binds")) {
-        binds.push_back(parse_bind(get_value_as_object(bindObj)));
-    }
-    return Macro{.binds = binds};
+    warn_extra_properties(obj, {"type", "duration"});
+    return Wait{(size_t)get_property_as_number(obj, "duration")};
 }
 
-Trigger parse_trigger(const QJsonObject &obj) {
+RunScript RunScript::from_json(const QJsonObject &obj) {
+
+    warn_extra_properties(obj, {"type", "interpreter", "script"});
+    return RunScript{
+        get_property_as_string(obj, "interpreter"),
+        get_property_as_string(obj, "script"),
+    };
+}
+
+BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
     QString trigger_type = get_property_as_string(obj, "type");
 
     if (trigger_type == "key_press") {
         return KeyPress::from_json(obj);
     } else if (trigger_type == "key_release") {
         return KeyRelease::from_json(obj);
-    } else if (trigger_type == "tap_sequence") {
-        return TapSequence::from_json(obj);
     }
-
     throw std::invalid_argument(
         ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
 }
-// using Bind = std::variant<PressKey, ReleaseKey, TapKey, SwapLayer>;
-Bind parse_bind(const QJsonObject &obj) {
-    QString bind_type = get_property_as_string(obj, "type");
 
-    if (bind_type == "press_key") {
-        return PressKey::from_json(obj);
-    } else if (bind_type == "release_key") {
-        return ReleaseKey::from_json(obj);
-    } else if (bind_type == "tap_key") {
-        return TapKey::from_json(obj);
-    } else if (bind_type == "switch_layer") {
-        return SwapLayer::from_json(obj);
-    } else if (bind_type == "macro") {
-        return Macro::from_json(obj);
+AdvancedTrigger parse_advanced_trigger(const QJsonObject &obj) {
+    QString trigger_type = get_property_as_string(obj, "type");
+
+    if (trigger_type == "key_press") {
+        return KeyPress::from_json(obj);
+    } else if (trigger_type == "key_release") {
+        return KeyRelease::from_json(obj);
+    } else if (trigger_type == "minimum_wait") {
+        return MinimumWait::from_json(obj);
+    } else if (trigger_type == "maximum_wait") {
+        return MaximumWait::from_json(obj);
+    }
+    throw std::invalid_argument(
+        ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
+}
+QList<Bind> parse_binds(const QJsonArray &json_arr) {
+
+    QList<Bind> binds;
+    for (const QJsonValue &bind : json_arr) {
+        auto bind_obj = get_value_as_object(bind);
+
+        QString bind_type = get_property_as_string(bind_obj, "type");
+        Bind bind_v;
+
+        if (bind_type == "press_key") {
+            bind_v = PressKey::from_json(bind_obj);
+        } else if (bind_type == "release_key") {
+            bind_v = ReleaseKey::from_json(bind_obj);
+        } else if (bind_type == "switch_layer") {
+            bind_v = SwapLayer::from_json(bind_obj);
+        } else if (bind_type == "wait") {
+            bind_v = Wait::from_json(bind_obj);
+        } else if (bind_type == "run_script") {
+            bind_v = RunScript::from_json(bind_obj);
+        } else {
+            throw std::invalid_argument(
+                ("Invalid bind type: " + bind_type.toStdString()).c_str());
+        }
+        binds.push_back(bind_v);
     }
 
-    throw std::invalid_argument(
-        ("Invalid bind type: " + bind_type.toStdString()).c_str());
+    return binds;
 }
 
-std::pair<Trigger, Bind> parse_remapping(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"trigger", "bind"});
-    Trigger trigger = parse_trigger(get_property_as_object(obj, "trigger"));
-    Bind bind = parse_bind(get_property_as_object(obj, "bind"));
-    return std::make_pair(trigger, bind);
+std::pair<BasicTrigger, QList<Bind>>
+parse_basic_remapping(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"trigger", "binds"});
+    BasicTrigger trigger =
+        parse_basic_trigger(get_property_as_object(obj, "trigger"));
+    auto binds = parse_binds(get_property_as_array(obj, "binds"));
+    return std::make_pair(trigger, binds);
+}
+SequenceTrigger SequenceTrigger::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"triggers", "binds", "behavior"});
+    QList<AdvancedTrigger> triggers;
+    for (const QJsonValue &trigger_json :
+         get_property_as_array(obj, "triggers")) {
+        triggers.push_back(
+            parse_advanced_trigger(get_value_as_object(trigger_json)));
+    }
+    auto binds = parse_binds(get_property_as_array(obj, "binds"));
+    auto behavior = parse_behavior(get_property_as_string(obj, "behavior"));
+
+    return SequenceTrigger{
+        .behavior = behavior,
+        .sequence = triggers,
+        .binds = binds,
+    };
 }
 
 Layer Layer::from_json(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"layer_name", "layer_number", "remappings"});
+    warn_extra_properties(obj, {"layer_name", "remappings"});
     QString layer_name = get_property_as_string(obj, "layer_name");
-    QList<std::pair<Trigger, Bind>> remappings;
+
+    QList<std::pair<BasicTrigger, QList<Bind>>> basic_remappings;
+    QList<SequenceTrigger> sequence_remappings;
     for (const QJsonValue &remapping :
          get_property_as_array(obj, "remappings")) {
-        remappings.push_back(parse_remapping(get_value_as_object(remapping)));
+        auto obj = get_value_as_object(remapping);
+        if (obj.contains("triggers")) {
+            sequence_remappings.push_back(SequenceTrigger::from_json(obj));
+        } else if (obj.contains("trigger")) {
+            basic_remappings.push_back(parse_basic_remapping(obj));
+        } else {
+        }
     }
-    return Layer{.layer_name = layer_name, .remappings = remappings};
+    return Layer{.layer_name = layer_name,
+                 .basic_remappings = basic_remappings,
+                 .sequence_remappings = sequence_remappings};
 }
-
 // Profile
 Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
     QString profile_name = get_property_as_string(obj, "profile_name");
     qDebug() << "Loading PROFILE_NAME:" << profile_name;
-    // TODO: probably should have some kind of default layer beyond just always
-    // the first size_t default_layer = (size_t)get_property_as_number(obj,
-    // "default_layer");
-    size_t default_layer = 0;
+    size_t default_layer = (size_t)get_property_as_number(obj, "default_layer");
+
     QList<Layer> layers;
 
     for (const QJsonValue &remapping : get_property_as_array(obj, "layers")) {
@@ -310,7 +332,10 @@ Profile Profile::from_json(const QJsonObject &obj) {
     saveLatestJsonProfile(obj);
 
     return Profile{
-        .name = profile_name, .layers = layers, .default_layer = default_layer};
+        .name = profile_name,
+        .layers = layers,
+        .default_layer = default_layer,
+    };
 }
 
 Profile Profile::from_bytes(const QByteArray &bytes) {

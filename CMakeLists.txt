@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 project(keybinder LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
-find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
+set(CMAKE_MACOSX_RPATH ON)
+
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network Widgets)
 
 qt_standard_project_setup()
 
