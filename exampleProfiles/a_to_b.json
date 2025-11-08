@@ -10,21 +10,24 @@
             "type": "key_press",
             "value": "A"
           },
-          "bind": {
-            "type": "press_key",
-            "value": "B"
-          }
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "B"
+            }
+          ]
         },
-
         {
           "trigger": {
             "type": "key_release",
             "value": "A"
           },
-          "bind": {
-            "type": "release_key",
-            "value": "B"
-          }
+          "binds": [
+            {
+              "type": "release_key",
+              "value": "B"
+            }
+          ]
         }
       ]
     }
