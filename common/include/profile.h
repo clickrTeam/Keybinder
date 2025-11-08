@@ -154,10 +154,11 @@ struct Profile {
     QString name;
     QList<Layer> layers;
     size_t default_layer;
+    static Profile default_profile();
     static Profile from_json(const QJsonObject &obj);
     static Profile from_bytes(const QByteArray &bytes);
-    static Profile from_file(const QString &filename);
-    static Profile loadLatest();
+    static std::optional<Profile> from_file(const QString &filename);
+    static std::optional<Profile> load_latest();
 
     bool operator==(const Profile &other) const noexcept {
         return name == other.name && layers == other.layers &&
