@@ -22,6 +22,9 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
             [&](const KeyRelease &kr) {
                 return InputEvent{kr.key_code, KeyEventType::Release};
             },
+            [&](const AppTrigger &at) {
+                return InputEvent{KeyCode::None, KeyEventType::AppLaunch};
+            },
         },
         trigger);
 }
@@ -106,6 +109,7 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
                 [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
                 [&](const Wait &wait) { delay_ms += wait.ms; },
                 [&](const RunScript &s) { queue_output(s, delay_ms); },
+                [&](const AppLaunch &a) { queue_output(a, delay_ms); },
             },
             bind);
     }

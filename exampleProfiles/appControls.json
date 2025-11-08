@@ -1,0 +1,35 @@
+{
+  "profile_name": "App Controls",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "default",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "key_press",
+            "value": "Q"
+          },
+          "binds": [
+            {
+              "type": "launch_app",
+              "appName": "chrome"
+            }
+          ]
+        },
+        {
+          "trigger": {
+            "type": "app_launch",
+            "appName": "chrome"
+          },
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "W"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

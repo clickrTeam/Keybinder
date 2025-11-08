@@ -27,9 +27,8 @@ inline uint qHash(const InputEvent &key, uint seed = 0) {
            ::qHash(static_cast<int>(key.type), seed << 1);
 }
 
-// TODO: eventually these will become differnt however for now they can be the
-// same as we just handle keys
-using OutputEvent = std::variant<InputEvent, RunScript>;
+// Output events can be key events, scripts, or app launches
+using OutputEvent = std::variant<InputEvent, RunScript, AppLaunch>;
 
 inline const char *to_string(KeyEventType t) {
     switch (t) {
@@ -37,7 +36,10 @@ inline const char *to_string(KeyEventType t) {
         return "Press";
     case KeyEventType::Release:
         return "Release";
+    case KeyEventType::AppLaunch:
+        return "AppLaunch";
     }
+    return "Unknown";
 }
 
 // Usefull for failing tests

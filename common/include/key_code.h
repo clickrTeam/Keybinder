@@ -4,6 +4,7 @@
 
 // TODO: implement more keys
 enum class KeyCode : std::uint16_t {
+    None,
     A,
     B,
     C,

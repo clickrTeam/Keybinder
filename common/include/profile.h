@@ -34,6 +34,14 @@ struct KeyRelease {
     }
 };
 
+struct AppTrigger {
+    QString appName;  // Name or identifier of the application
+    static AppTrigger from_json(const QJsonObject &obj);
+    bool operator==(const AppTrigger &other) const noexcept {
+        return appName == other.appName;
+    }
+};
+
 struct MinimumWait {
     size_t ms;
     bool operator==(const MinimumWait &other) const noexcept {
@@ -55,7 +63,7 @@ using BasicTrigger = std::variant<KeyPress, KeyRelease, AppTrigger>;
 BasicTrigger parse_basic_trigger(const QJsonObject &obj);
 
 using AdvancedTrigger =
-    std::variant<KeyPress, KeyRelease, MinimumWait, MaximumWait>;
+    std::variant<KeyPress, KeyRelease, MinimumWait, MaximumWait, AppTrigger>;
 
 AdvancedTrigger parse_trigger(const QJsonObject &obj);
 
@@ -106,14 +114,6 @@ struct AppLaunch {
     }
 };
 
-struct AppTrigger {
-    QString appName;  // Name or identifier of the application
-    static AppTrigger from_json(const QJsonObject &obj);
-    bool operator==(const AppTrigger &other) const noexcept {
-        return appName == other.appName;
-    }
-};
-
 using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait, RunScript, AppLaunch>;
 
 inline uint qHash(const PressKey &key, uint seed = 0) noexcept {
@@ -133,6 +133,9 @@ inline uint qHash(const Wait &wait, uint seed = 0) noexcept {
 }
 inline uint qHash(const RunScript &key, uint seed = 0) noexcept {
     return qHash(key.interpreter, seed) ^ qHash(key.script, seed << 1);
+}
+inline uint qHash(const AppLaunch &key, uint seed = 0) noexcept {
+    return qHash(static_cast<quintptr>(key.appName.toUInt()), seed);
 }
 
 inline uint qHash(const Bind &bind, uint seed = 0) noexcept {

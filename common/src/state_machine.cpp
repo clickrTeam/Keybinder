@@ -121,6 +121,9 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
             [&](const MaximumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
             },
+            [&](const AppTrigger &at) -> std::optional<InputEvent> {
+                return InputEvent{KeyCode::None, KeyEventType::AppLaunch};
+            },
         },
         trigger);
 }

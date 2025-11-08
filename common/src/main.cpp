@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     Profile activeProfile;
 
 #ifdef QT_DEBUG
-    // path = "../../exampleProfiles/numberpad.json";
+    path = "../../exampleProfiles/appControls.json";
 #else
     qInstallMessageHandler(myMessageHandler);
 #endif

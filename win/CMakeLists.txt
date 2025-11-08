@@ -10,3 +10,8 @@ set(PLATFORM_HEADER_PATHS
     PARENT_SCOPE
 )
 
+set(PLATFORM_LIBS
+    RuntimeObject  # Windows Runtime library for modern Windows APIs
+    PARENT_SCOPE
+)
+

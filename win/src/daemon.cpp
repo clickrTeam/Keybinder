@@ -4,14 +4,31 @@
 #include "key_map.h"
 #include <QCoreApplication>
 #include <QtCore/qlogging.h>
+#include <QDir>
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QProcessEnvironment>
 #include <windows.h>
 #include <winuser.h>
+#include <shobjidl.h>
+#include <wrl/client.h>
+#include <winstring.h>
+#include <roapi.h>
+
+using namespace Microsoft::WRL;
 
 HHOOK kbd = NULL; // Global hook handle
+HHOOK shell = NULL; // Global shell hook handle
 KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
     0x1234ABCD; // allowed collisions otherwise,
                 // ((ULONG_PTR)GetCurrentProcessId() << 32) | 0x1234ABCD
+
+// CoInitialize is required for modern app launches
+struct COMInitializer {
+    COMInitializer() { CoInitialize(nullptr); }
+    ~COMInitializer() { CoUninitialize(); }
+} com_initializer;
 
 Daemon::Daemon(KeySender key_sender_tmp) {
     key_sender = key_sender_tmp;
@@ -57,6 +74,11 @@ void Daemon::cleanup() {
         kbd = NULL;
         qDebug() << "Keyboard hook uninstalled.";
     }
+    if (shell) {
+        UnhookWindowsHookEx(shell);
+        shell = NULL;
+        qDebug() << "Shell hook uninstalled.";
+    }
     qDebug() << "Daemon cleaned up";
 }
 
@@ -78,7 +100,7 @@ LRESULT CALLBACK Daemon::ShellProc(int nCode, WPARAM wParam, LPARAM lParam) {
         
         // Create app launch event
         InputEvent e;
-        e.keycode = KeyCode::None; // We might want to add a special code for apps
+        e.keycode = KeyCode::A; // We might want to add a special code for apps
         e.type = KeyEventType::AppLaunch;
         key_sender.send_key(e);
     }
@@ -111,7 +133,9 @@ void Daemon::launchApp(const QString &appName) {
         
         if (SUCCEEDED(hr)) {
             DWORD newProcessId;
-            hr = activationManager->ActivateApplication(appIdHString, nullptr, AO_NONE, &newProcessId);
+            UINT32 length;
+            PCWSTR appIdStr = WindowsGetStringRawBuffer(appIdHString, &length);
+            hr = activationManager->ActivateApplication(appIdStr, nullptr, AO_NONE, &newProcessId);
             if (SUCCEEDED(hr)) {
                 qDebug() << "Successfully launched modern app:" << appName;
                 WindowsDeleteString(appIdHString);
@@ -176,12 +200,8 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
 
     for (int i = 0; i < vk.count(); ++i) {
         const OutputEvent &event = vk[i];
+        
         if (const InputEvent *v = std::get_if<InputEvent>(&event)) {
-            if (v->type == KeyEventType::AppLaunch) {
-                // Handle app launch event
-                // Currently not implemented as this is for output events
-                continue;
-            }
             INPUT input;
             input.type = INPUT_KEYBOARD;
             input.ki.wVk = int_to_keycode.find_backward(v->keycode);
@@ -193,10 +213,10 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
                 input.ki.dwFlags = KEYEVENTF_KEYUP;
             }
             inputs.append(input);
-        } else if (const AppLaunch *app = std::get_if<AppLaunch>(&event)) {
-            launchApp(app->appName);
         } else if (const RunScript *script = std::get_if<RunScript>(&event)) {
             qWarning() << "RunScript is not implemented on Windows yet";
+        } else if (const AppLaunch *app = std::get_if<AppLaunch>(&event)) {
+            launchApp(app->appName);
         }
     }
 
