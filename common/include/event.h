@@ -10,6 +10,7 @@
 enum class KeyEventType {
     Press,
     Release,
+    AppLaunch,
 };
 
 struct InputEvent {

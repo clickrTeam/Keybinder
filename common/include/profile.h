@@ -51,7 +51,7 @@ struct MaximumWait {
 };
 using Timer = std::variant<MinimumWait, MaximumWait>;
 
-using BasicTrigger = std::variant<KeyPress, KeyRelease>;
+using BasicTrigger = std::variant<KeyPress, KeyRelease, AppTrigger>;
 BasicTrigger parse_basic_trigger(const QJsonObject &obj);
 
 using AdvancedTrigger =
@@ -98,7 +98,23 @@ struct RunScript {
     }
 };
 
-using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait, RunScript>;
+struct AppLaunch {
+    QString appName;  // Name or identifier of the application (e.g., "notepad", "chrome", "spotify")
+    static AppLaunch from_json(const QJsonObject &obj);
+    bool operator==(const AppLaunch &other) const noexcept {
+        return appName == other.appName;
+    }
+};
+
+struct AppTrigger {
+    QString appName;  // Name or identifier of the application
+    static AppTrigger from_json(const QJsonObject &obj);
+    bool operator==(const AppTrigger &other) const noexcept {
+        return appName == other.appName;
+    }
+};
+
+using Bind = std::variant<PressKey, ReleaseKey, SwapLayer, Wait, RunScript, AppLaunch>;
 
 inline uint qHash(const PressKey &key, uint seed = 0) noexcept {
     return qHash(static_cast<uint>(key.key_code), seed);
