@@ -110,10 +110,10 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
     return std::visit(
         overloaded{
             [&](const KeyPress &kp) -> std::optional<InputEvent> {
-                return InputEvent{kp.key_code, KeyEventType::Press};
+                return InputEvent::fromKey(kp.key_code, KeyEventType::Press);
             },
             [&](const KeyRelease &kr) -> std::optional<InputEvent> {
-                return InputEvent{kr.key_code, KeyEventType::Release};
+                return InputEvent::fromKey(kr.key_code, KeyEventType::Release);
             },
             [&](const MinimumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;

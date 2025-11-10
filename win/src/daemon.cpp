@@ -3,7 +3,10 @@
 #include "key_channel.h"
 #include "key_map.h"
 #include "app_cache.h"
+#include "generic_indicator.h"
 #include <QCoreApplication>
+#include <QApplication>
+#include <QTimer>
 #include <QtCore/qlogging.h>
 #include <QDir>
 #include <QDirIterator>
@@ -20,7 +23,7 @@
 using namespace Microsoft::WRL;
 
 HHOOK kbd = NULL; // Global hook handle
-HHOOK shell = NULL; // Global shell hook handle
+HWINEVENTHOOK event_hook = NULL; // Global event_hook hook handle
 KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
     0x1234ABCD; // allowed collisions otherwise,
@@ -45,13 +48,32 @@ Daemon::Daemon(KeySender key_sender_tmp) {
     }
     
     // Install shell hook for monitoring app launches
-    HHOOK shell = SetWindowsHookEx(WH_SHELL, &Daemon::ShellProc, 0, 0);
-    if (!shell) {
-        qCritical() << "Failed to install shell hook!";
-        // Continue anyway as this is not critical
-    }
+
+    event_hook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+                           NULL, WinEventProc, 0, 0,
+                           WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
     // idHook, HookProc, Hinstance - N/I, dwThreadId - N/I
     // hooks idHook to HookProc, this happens before the os processes the input
+}
+
+void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
+                                   LONG idObject, LONG idChild, DWORD, DWORD) {
+    if (event != EVENT_SYSTEM_FOREGROUND) return;
+    if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF) return;
+
+    wchar_t className[256] = {0};
+    wchar_t windowTitle[512] = {0};
+
+    GetClassNameW(hwnd, className, _countof(className));
+    GetWindowTextW(hwnd, windowTitle, _countof(windowTitle));
+
+    QString appName = QString::fromWCharArray(windowTitle);
+    if (appName.isEmpty()) appName = QString::fromWCharArray(className);
+
+    qDebug() << "Window activated/focused:" << appName;
+
+    InputEvent e = InputEvent::fromApp(appName);
+    key_sender.send_key(e);
 }
 
 Daemon::~Daemon() { qDebug() << "Daemon destroyed"; }
@@ -76,38 +98,12 @@ void Daemon::cleanup() {
         kbd = NULL;
         qDebug() << "Keyboard hook uninstalled.";
     }
-    if (shell) {
-        UnhookWindowsHookEx(shell);
-        shell = NULL;
-        qDebug() << "Shell hook uninstalled.";
+    if (event_hook) {
+        UnhookWinEvent(event_hook);
+        event_hook = NULL;
+        qDebug() << "event_hook hook uninstalled.";
     }
     qDebug() << "Daemon cleaned up";
-}
-
-LRESULT CALLBACK Daemon::ShellProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    if (nCode < 0) {
-        return CallNextHookEx(NULL, nCode, wParam, lParam);
-    }
-
-    if (wParam == HSHELL_WINDOWCREATED) {
-        HWND hwnd = (HWND)lParam;
-        wchar_t className[256];
-        wchar_t windowTitle[256];
-        
-        GetClassName(hwnd, className, 256);
-        GetWindowText(hwnd, windowTitle, 256);
-        
-        QString appName = QString::fromWCharArray(windowTitle);
-        qDebug() << "App launched:" << appName;
-        
-        // Create app launch event
-        InputEvent e;
-        e.keycode = KeyCode::A; // We might want to add a special code for apps
-        e.type = KeyEventType::AppLaunch;
-        key_sender.send_key(e);
-    }
-
-    return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 // call-site unchanged
@@ -122,10 +118,14 @@ void Daemon::launchApp(const QString &appName) {
         AppCache::Entry entry;
         QString appPath; QString appId;
 
-        if (false) {//cache.lookup(appName, entry)) {
+        if (cache.lookup(appName, entry)) {
             appPath = entry.path;
             appId = entry.appId;
         } else {
+            // Create the notification for layer switching
+            QTimer::singleShot(0, qApp, []() {
+                new GenericIndicator("Finding app...", GenericIndicator::BOTTOM_RIGHT, 1000);
+            });
             appPath = getExecutablePath(appName);
             appId = getAppUserModelId(appName);
             cache.store(appName, {appPath, appId});
@@ -322,7 +322,7 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
         if (const InputEvent *v = std::get_if<InputEvent>(&event)) {
             INPUT input;
             input.type = INPUT_KEYBOARD;
-            input.ki.wVk = int_to_keycode.find_backward(v->keycode);
+            input.ki.wVk = int_to_keycode.find_backward(v->key());
             // identify key so we can ignore it.
             input.ki.dwExtraInfo = InfoIdentifier;
             if (v->type == KeyEventType::Press) {
@@ -381,7 +381,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         InputEvent e;
-        e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
+        e.payload = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Press;
         if (key_sender.send_key(e))
             return 1; // Suppress keypress
@@ -389,7 +389,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
     case WM_KEYUP: {
         InputEvent e;
-        e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
+        e.payload = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Release;
         if (key_sender.send_key(e))
             return 1; // Suppress keypress

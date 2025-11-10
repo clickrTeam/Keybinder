@@ -119,93 +119,93 @@ static const char *a_b_to_c_default = R"(
 TEST(SequenceMapperTests, ABToCCapture) {
     mapper_test(Profile::from_bytes(QByteArray(a_b_to_c_capture)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 },
                 {
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 });
 }
 
 TEST(SequenceMapperTests, ABToCDefault) {
     mapper_test(Profile::from_bytes(QByteArray(a_b_to_c_default)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 },
                 {
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 });
 }
 
 TEST(SequenceMapperTests, ABToCRelease) {
     mapper_test(Profile::from_bytes(QByteArray(a_b_to_c_release)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 },
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::D, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
                 });
 }
 
@@ -276,22 +276,22 @@ static const char *overloaded_sequence = R"(
 TEST(SequenceMapperTests, OverloadedSequence) {
     mapper_test(Profile::from_bytes(QByteArray(overloaded_sequence)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::D, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::D, KeyEventType::Press),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::S, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::S, KeyEventType::Press),
                 },
                 {
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
 
-                    InputEvent{KeyCode::E, KeyEventType::Press},
-                    InputEvent{KeyCode::E, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::E, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::E, KeyEventType::Release),
 
-                    InputEvent{KeyCode::S, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::S, KeyEventType::Press),
                 });
 }

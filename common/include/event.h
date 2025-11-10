@@ -10,22 +10,46 @@
 enum class KeyEventType {
     Press,
     Release,
-    AppLaunch,
+    AppFocus,
 };
 
 struct InputEvent {
-    KeyCode keycode;
     KeyEventType type;
+
+    // payload: either a KeyCode or an app name string
+    std::variant<KeyCode, QString> payload;
+
+    // helpers
+    static InputEvent fromKey(KeyCode k, KeyEventType t = KeyEventType::Press) {
+        return InputEvent{t, std::variant<KeyCode, QString>(k)};
+    }
+    static InputEvent fromApp(const QString &name, KeyEventType t = KeyEventType::AppFocus) {
+        return InputEvent{t, std::variant<KeyCode, QString>(name)};
+    }
+
+    bool isKey() const { return std::holds_alternative<KeyCode>(payload); }
+    bool isApp() const { return std::holds_alternative<QString>(payload); }
+
+    KeyCode key() const { return std::get<KeyCode>(payload); }          // call only if isKey()
+    QString appName() const { return std::get<QString>(payload); }     // call only if isApp()
 };
 
 inline bool operator==(const InputEvent &a, const InputEvent &b) {
-    return a.keycode == b.keycode && a.type == b.type;
+    return a.payload == b.payload && a.type == b.type;
 }
 
 inline uint qHash(const InputEvent &key, uint seed = 0) {
-    return ::qHash(static_cast<int>(key.keycode), seed) ^
-           ::qHash(static_cast<int>(key.type), seed << 1);
+    uint h = ::qHash(static_cast<int>(key.type), seed);
+    h ^= ::qHash(static_cast<int>(key.payload.index()), seed << 1);
+
+    if (std::holds_alternative<KeyCode>(key.payload)) {
+        h ^= ::qHash(static_cast<int>(std::get<KeyCode>(key.payload)), seed << 2);
+    } else {
+        h ^= ::qHash(std::get<QString>(key.payload), seed << 2);
+    }
+    return h;
 }
+
 
 // Output events can be key events, scripts, or app launches
 using OutputEvent = std::variant<InputEvent, RunScript, AppLaunch>;
@@ -36,16 +60,25 @@ inline const char *to_string(KeyEventType t) {
         return "Press";
     case KeyEventType::Release:
         return "Release";
-    case KeyEventType::AppLaunch:
-        return "AppLaunch";
+    case KeyEventType::AppFocus:
+        return "AppFocus";
     }
     return "Unknown";
 }
 
 // Usefull for failing tests
 inline std::ostream &operator<<(std::ostream &os, const InputEvent &e) {
-    os << "InputEvent{ keycode=" << static_cast<int>(e.keycode)
-       << ", type=" << to_string(e.type) << " }";
+    os << "InputEvent::fromKey( type=" << static_cast<int>(e.type) << ", payload=";
+
+    if (std::holds_alternative<KeyCode>(e.payload)) {
+        os << "KeyCode(" << static_cast<int>(std::get<KeyCode>(e.payload)) << ")";
+    } else if (std::holds_alternative<QString>(e.payload)) {
+        os << "AppName(\"" << std::get<QString>(e.payload).toStdString() << "\")";
+    } else {
+        os << "empty";
+    }
+
+    os << " }";
     return os;
 }
 

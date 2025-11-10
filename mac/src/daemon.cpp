@@ -176,10 +176,10 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     if (!int_to_keycode.contains_forward(code))
         return;
 
-    auto event = InputEvent{
+    auto event = InputEvent::fromKey(
         .keycode = int_to_keycode.find_forward(code),
         .type = value ? KeyEventType::Press : KeyEventType::Release,
-    };
+    );
 
     if (!key_sender.send_key(event)) {
         send_outputs({event});

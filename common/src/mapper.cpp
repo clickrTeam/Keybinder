@@ -17,10 +17,10 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
     return std::visit(
         overloaded{
             [&](const KeyPress &kp) {
-                return InputEvent{kp.key_code, KeyEventType::Press};
+                return InputEvent::fromKey(kp.key_code, KeyEventType::Press);
             },
             [&](const KeyRelease &kr) {
-                return InputEvent{kr.key_code, KeyEventType::Release};
+                return InputEvent::fromKey(kr.key_code, KeyEventType::Release);
             }
         },
         trigger);
@@ -95,12 +95,12 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
         std::visit(
             overloaded{
                 [&](const PressKey &bind) {
-                    queue_output(InputEvent{bind.key_code, KeyEventType::Press},
+                    queue_output(InputEvent::fromKey(bind.key_code, KeyEventType::Press),
                                  delay_ms);
                 },
                 [&](const ReleaseKey &bind) {
                     queue_output(
-                        InputEvent{bind.key_code, KeyEventType::Release},
+                        InputEvent::fromKey(bind.key_code, KeyEventType::Release),
                         delay_ms);
                 },
                 [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
@@ -134,7 +134,7 @@ void Mapper::start() {
             // only count presses
             if (settings.get_log_key_frequency() &&
                 e.type == KeyEventType::Press) {
-                key_counter.increment(e.keycode);
+                key_counter.increment(e.key());
             }
             process_input(e);
             processed_events_count++;

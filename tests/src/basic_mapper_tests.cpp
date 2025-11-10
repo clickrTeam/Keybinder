@@ -47,21 +47,20 @@ TEST(BasicMapperTests, KeyTranslation) {
 
     mapper_test(Profile::from_bytes(QByteArray(a_to_b_profile_json)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
                 },
                 {
-
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
                 });
 }
 
@@ -132,21 +131,21 @@ TEST(BasicMapperTests, KeySwap) {
 
     mapper_test(Profile::from_bytes(QByteArray(a_b_swap_profile_json)),
                 {
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
                 },
                 {
 
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::C, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::C, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Release),
                 });
 }
 
@@ -247,43 +246,43 @@ TEST(ProfileTest, BasicLayers) {
     mapper_test(Profile::from_bytes(QByteArray(layer_a_b_profile)),
                 {
                     // First layer
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
 
-                    InputEvent{KeyCode::C, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
 
                     // Second layer
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
 
-                    InputEvent{KeyCode::C, KeyEventType::Press},
+                    InputEvent::fromKey(KeyCode::C, KeyEventType::Press),
 
                     // Back to first layer
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
                 },
                 {
 
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
 
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
-                    InputEvent{KeyCode::A, KeyEventType::Press},
-                    InputEvent{KeyCode::A, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::A, KeyEventType::Release),
 
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
-                    InputEvent{KeyCode::B, KeyEventType::Press},
-                    InputEvent{KeyCode::B, KeyEventType::Release},
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Press),
+                    InputEvent::fromKey(KeyCode::B, KeyEventType::Release),
 
                 });
 }
