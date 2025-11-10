@@ -2,6 +2,7 @@
 #include "event.h"
 #include "key_channel.h"
 #include "key_map.h"
+#include "app_cache.h"
 #include <QCoreApplication>
 #include <QtCore/qlogging.h>
 #include <QDir>
@@ -118,9 +119,18 @@ void Daemon::launchApp(const QString &appName) {
         bool comInitialized = SUCCEEDED(hr);
 
         qDebug() << "Trying to launch app via ShellExecute:" << appName;
-        QString appPath = getExecutablePath(appName);
-        QString appId = getAppUserModelId(appName);
-        qDebug() << "App identification received:" << appName;
+        AppCache::Entry entry;
+        QString appPath; QString appId;
+
+        if (false) {//cache.lookup(appName, entry)) {
+            appPath = entry.path;
+            appId = entry.appId;
+        } else {
+            appPath = getExecutablePath(appName);
+            appId = getAppUserModelId(appName);
+            cache.store(appName, {appPath, appId});
+        }
+        qDebug() << "App identification received { appPath: " << appPath << ", appId: " << appId << " };";
 
         if (!appPath.isEmpty()) {
             std::wstring wPath = appPath.toStdWString();
@@ -167,12 +177,23 @@ void Daemon::launchApp(const QString &appName) {
 }
 
 QString Daemon::getExecutablePath(const QString &appName) {
+    // absolute path case
+    QFileInfo qfi(appName);
+    if (qfi.exists() && qfi.isFile()) return appName;
+
     // Common paths to search for executables
     QStringList searchPaths = {
         QProcessEnvironment::systemEnvironment().value("PROGRAMFILES"),
         QProcessEnvironment::systemEnvironment().value("PROGRAMFILES(X86)"),
-        QProcessEnvironment::systemEnvironment().value("LOCALAPPDATA") + "\\Microsoft\\WindowsApps"
+        QProcessEnvironment::systemEnvironment().value("LOCALAPPDATA"),
+        QProcessEnvironment::systemEnvironment().value("PROGRAMDATA"),
+        QProcessEnvironment::systemEnvironment().value("USERPROFILE") + "\\AppData\\Local",
+        QProcessEnvironment::systemEnvironment().value("USERPROFILE") + "\\AppData\\Roaming"
     };
+
+    // add WindowsApps path explicitly if present
+    QString windowsApps = QProcessEnvironment::systemEnvironment().value("LOCALAPPDATA") + "\\Microsoft\\WindowsApps";
+    if (!searchPaths.contains(windowsApps)) searchPaths.append(windowsApps);
     
     // Common executable names
     QStringList possibleNames = {
@@ -196,18 +217,97 @@ QString Daemon::getExecutablePath(const QString &appName) {
 
 QString Daemon::getAppUserModelId(const QString &appName) {
     // Common modern app IDs (this is a simplified version, you might want to expand this)
-    QMap<QString, QString> knownApps = {
+    static const QMap<QString, QString> knownApps = {
+        // Built-in Windows apps (AppUserModelId)
         {"calculator", "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"},
         {"notepad", "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App"},
         {"paint", "Microsoft.Paint_8wekyb3d8bbwe!App"},
-        {"spotify", "SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"},
+        {"terminal", "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"},
+        {"photos", "Microsoft.Windows.Photos_8wekyb3d8bbwe!App"},
+        {"mail", "microsoft.windowscommunicationsapps_8wekyb3d8bbwe!microsoft.windowslive.mail"},
+        {"calendar", "microsoft.windowscommunicationsapps_8wekyb3d8bbwe!microsoft.windowslive.calendar"},
+        {"edge", "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge"},
+        {"store", "Microsoft.WindowsStore_8wekyb3d8bbwe!App"},
+        {"voice recorder", "Microsoft.SoundRecorder_8wekyb3d8bbwe!App"},
+        {"snippingtool", "Microsoft.ScreenSketch_8wekyb3d8bbwe!App"},
+        {"settings", "windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel"},
+        {"cortana", "Microsoft.549981C3F5F10!App"},
+
+        // Microsoft Office (examples — Office Click-to-Run ProgIDs may vary)
+        {"word", "Word.Application"},
+        {"excel", "Excel.Application"},
+        {"powerpoint", "PowerPoint.Application"},
+        {"outlook", "Outlook.Application"},
+
+        // Browsers (ProgIDs / common identifiers)
         {"chrome", "ChromeHTML"},
-        {"firefox", "Firefox-308046B0AF4A39CB"},
+        {"chrome-beta", "ChromeHTML"},
+        {"edge-chromium", "MSEdgeHTM"},
+        {"firefox", "FirefoxURL"},
+        {"firefox-old", "Firefox-308046B0AF4A39CB"},
+        {"brave", "BraveHTML"},
+        {"opera", "OperaHTML"},
+
+        // IDEs / Editors
         {"code", "Microsoft.VisualStudioCode"},
-        {"terminal", "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"}
+        {"vscode", "Microsoft.VisualStudioCode"},
+        {"visual studio", "VisualStudio.DTE"}, // ProgID for automation; executable path preferred
+        {"sublime", "SublimeText"}, // may not be a ProgID on all installs
+        {"notepad++", "Notepad++_file"}, // varies
+
+        // Runtimes / Launchers / Gaming
+        {"steam", "Steam"}, // Steam has installers; prefer exe path, but "Steam" can be used
+        {"epic", "EpicGamesLauncher"}, // often an exe under Program Files
+        {"twitch", "Twitch"}, // older Twitch launcher
+        {"curseforge", "CurseForge.exe"}, // prefer exe path or AppPaths registry
+        {"battle.net", "Blizzard Battle.net"}, // installers vary
+        {"origin", "Origin"}, // EA Origin
+        {"uplay", "Ubisoft Game Launcher"},
+        {"gog", "GOG Galaxy"},
+        {"riot client", "RiotClientServices"}, // may require exe
+        {"steam-deck", "steam://open"}, // protocol example
+
+        // Media / Communication
+        {"spotify", "SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"},
+        {"vlc", "VLC"}, // often VLC.exe
+        {"discord", "Discord"}, // installer dependent; also "discord" protocol
+        {"skype", "SkypeApp_4.61.0.77_x64__kzf8qxf38zg5c!App"},
+        {"teams", "MicrosoftTeams"}, // desktop has exe
+        {"zoom", "Zoom"}, // exe name usually Zoom.exe
+
+        // Common utilities
+        {"file explorer", "Explorer.EXE"},
+        {"explorer", "Explorer.EXE"},
+        {"cmd", "cmd.exe"},
+        {"powershell", "PowerShell"}, // older ProgID; prefer exe path/pwsh
+        {"powershell core", "pwsh.exe"},
+        {"task manager", "Taskmgr.exe"},
+        {"registry editor", "regedit.exe"},
+
+        // Development tools / runtimes
+        {"docker", "Docker Desktop"},
+        {"postgres", "pgAdmin"}, // varies
+        {"mysql workbench", "MySQLWorkbench"},
+
+        // Add-ons and protocol examples (can be used with ShellExecute)
+        {"mailto", "mailto:"},
+        {"skype-protocol", "skype:"},
+        {"slack", "slack"},
     };
-    
-    return knownApps.value(appName.toLower());
+
+    auto sanitize = [](const QString &s)->QString{
+        QString out;
+        out.reserve(s.size());
+        for (QChar c : s.toLower()) {
+            if (c.isLetterOrNumber()) out.append(c);
+            // treat common word separators as nothing (so "snipping tool" -> "snippingtool")
+            // ignore punctuation, underscores, hyphens, and spaces
+        }
+        return out;
+    };
+
+    QString key = sanitize(appName);
+    return knownApps.value(key);
 }
 
 void Daemon::send_outputs(const QList<OutputEvent> &vk) {
