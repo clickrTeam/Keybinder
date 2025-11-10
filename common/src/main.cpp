@@ -53,7 +53,9 @@ int main(int argc, char *argv[]) {
     KeyCounter key_counter;
     Profile profile;
 
-#ifndef QT_DEBUG
+#ifdef QT_DEBUG
+    // path = "../../exampleProfiles/numberpad.json";
+#else
     qInstallMessageHandler(myMessageHandler);
 #endif
 

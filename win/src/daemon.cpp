@@ -14,6 +14,7 @@
 #include <wrl/client.h>
 #include <winstring.h>
 #include <roapi.h>
+#include <thread>
 
 using namespace Microsoft::WRL;
 
@@ -108,44 +109,61 @@ LRESULT CALLBACK Daemon::ShellProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
+// call-site unchanged
 void Daemon::launchApp(const QString &appName) {
-    QString appPath = getExecutablePath(appName);
-    QString appId = getAppUserModelId(appName);
-    
-    if (!appPath.isEmpty()) {
-        // Try launching via ShellExecute first
-        HINSTANCE result = ShellExecute(NULL, L"open", appPath.toStdWString().c_str(), 
-                                      NULL, NULL, SW_SHOWNORMAL);
-        if ((INT_PTR)result > 32) {
-            qDebug() << "Successfully launched app via ShellExecute:" << appName;
-            return;
-        }
-    }
-    
-    if (!appId.isEmpty()) {
-        // Try launching via modern app activation
-        HSTRING appIdHString;
-        WindowsCreateString(appId.toStdWString().c_str(), appId.length(), &appIdHString);
-        
-        ComPtr<IApplicationActivationManager> activationManager;
-        HRESULT hr = CoCreateInstance(CLSID_ApplicationActivationManager, nullptr, CLSCTX_LOCAL_SERVER,
-                                    IID_PPV_ARGS(&activationManager));
-        
-        if (SUCCEEDED(hr)) {
-            DWORD newProcessId;
-            UINT32 length;
-            PCWSTR appIdStr = WindowsGetStringRawBuffer(appIdHString, &length);
-            hr = activationManager->ActivateApplication(appIdStr, nullptr, AO_NONE, &newProcessId);
-            if (SUCCEEDED(hr)) {
-                qDebug() << "Successfully launched modern app:" << appName;
-                WindowsDeleteString(appIdHString);
+    // capture appName by value so the async task owns it
+    std::thread([appName, this]() {
+        // Initialize COM for this thread
+        HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+        bool comInitialized = SUCCEEDED(hr);
+
+        qDebug() << "Trying to launch app via ShellExecute:" << appName;
+        QString appPath = getExecutablePath(appName);
+        QString appId = getAppUserModelId(appName);
+        qDebug() << "App identification received:" << appName;
+
+        if (!appPath.isEmpty()) {
+            std::wstring wPath = appPath.toStdWString();
+            HINSTANCE result = ShellExecuteW(nullptr, L"open", wPath.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            if (reinterpret_cast<INT_PTR>(result) > 32) {
+                qDebug() << "Successfully launched app via ShellExecute:" << appName;
+                if (comInitialized) CoUninitialize();
                 return;
+            } else {
+                qWarning() << "ShellExecute failed with code" << reinterpret_cast<INT_PTR>(result);
             }
-            WindowsDeleteString(appIdHString);
         }
-    }
-    
-    qWarning() << "Failed to launch app:" << appName;
+
+        if (!appId.isEmpty()) {
+            // Use WindowsCreateString/WindowsDeleteString around HSTRING
+            HSTRING appIdHString = nullptr;
+            WindowsCreateString(appId.toStdWString().c_str(), static_cast<UINT32>(appId.length()), &appIdHString);
+
+            Microsoft::WRL::ComPtr<IApplicationActivationManager> activationManager;
+            hr = CoCreateInstance(CLSID_ApplicationActivationManager, nullptr, CLSCTX_LOCAL_SERVER,
+                                  IID_PPV_ARGS(&activationManager));
+            if (SUCCEEDED(hr) && activationManager) {
+                DWORD newProcessId = 0;
+                UINT32 length = 0;
+                PCWSTR appIdStr = WindowsGetStringRawBuffer(appIdHString, &length);
+                hr = activationManager->ActivateApplication(appIdStr, nullptr, AO_NONE, &newProcessId);
+                if (SUCCEEDED(hr)) {
+                    qDebug() << "Successfully launched modern app:" << appName;
+                    WindowsDeleteString(appIdHString);
+                    if (comInitialized) CoUninitialize();
+                    return;
+                } else {
+                    qWarning() << "ActivateApplication failed HRESULT=" << hr;
+                }
+            } else {
+                qWarning() << "CoCreateInstance failed HRESULT=" << hr;
+            }
+            if (appIdHString) WindowsDeleteString(appIdHString);
+        }
+
+        qWarning() << "Failed to launch app:" << appName;
+        if (comInitialized) CoUninitialize();
+    }).detach();
 }
 
 QString Daemon::getExecutablePath(const QString &appName) {
