@@ -122,7 +122,7 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
                 return std::nullopt;
             },
             [&](const AppTrigger &at) -> std::optional<InputEvent> {
-                return InputEvent{KeyCode::None, KeyEventType::AppLaunch};
+                return std::nullopt;
             },
         },
         trigger);

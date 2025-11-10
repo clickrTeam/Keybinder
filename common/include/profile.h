@@ -59,7 +59,7 @@ struct MaximumWait {
 };
 using Timer = std::variant<MinimumWait, MaximumWait>;
 
-using BasicTrigger = std::variant<KeyPress, KeyRelease, AppTrigger>;
+using BasicTrigger = std::variant<KeyPress, KeyRelease>;
 BasicTrigger parse_basic_trigger(const QJsonObject &obj);
 
 using AdvancedTrigger =

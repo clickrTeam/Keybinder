@@ -235,8 +235,6 @@ BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
         return KeyPress::from_json(obj);
     } else if (trigger_type == "key_release") {
         return KeyRelease::from_json(obj);
-    } else if (trigger_type == "app_launch") {
-        return AppTrigger::from_json(obj);
     }
     throw std::invalid_argument(
         ("Invalid trigger type: " + trigger_type.toStdString()).c_str());

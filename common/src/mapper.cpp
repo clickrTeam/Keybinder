@@ -21,10 +21,7 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
             },
             [&](const KeyRelease &kr) {
                 return InputEvent{kr.key_code, KeyEventType::Release};
-            },
-            [&](const AppTrigger &at) {
-                return InputEvent{KeyCode::None, KeyEventType::AppLaunch};
-            },
+            }
         },
         trigger);
 }
