@@ -53,17 +53,28 @@ int main(int argc, char *argv[]) {
     KeyCounter key_counter;
     Profile profile;
 
+
 #ifndef QT_DEBUG
     qInstallMessageHandler(myMessageHandler);
 #endif
+
     if (argc < 2) {
-        qDebug() << "No profile argument profided";
-        auto profile_opt = Profile::load_latest();
-        if (!profile_opt) {
-            qDebug() << "Could not load latest profile falling back to default";
+        qDebug() << "No profile argument provided";
+        try {
+            auto profile_opt = Profile::load_latest();
+            if (!profile_opt) {
+                qDebug() << "Could not load latest profile, falling back to default";
+                profile = Profile::default_profile();
+            } else {
+                profile = *profile_opt;
+            }
+        } catch (const std::exception &ex) {
+            qDebug() << "Exception loading latest profile:" << ex.what()
+            << " — falling back to default";
             profile = Profile::default_profile();
-        } else {
-            profile = *profile_opt;
+        } catch (...) {
+            qDebug() << "Unknown exception loading latest profile — falling back to default";
+            profile = Profile::default_profile();
         }
     } else {
         path = argv[1];
