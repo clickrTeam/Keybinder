@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -336,6 +337,19 @@ Layer Layer::from_json(const QJsonObject &obj) {
                  .sequence_remappings = sequence_remappings};
 }
 // Profile
+Profile Profile::default_profile() {
+    return Profile{
+        .name = "default",
+        .layers = {Layer{
+            .layer_name = "default",
+            .basic_remappings = {},
+            .sequence_remappings = {},
+        }},
+        .default_layer = 0,
+
+    };
+}
+
 Profile Profile::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"profile_name", "default_layer", "layers"});
     QString profile_name = get_property_as_string(obj, "profile_name");
@@ -367,42 +381,12 @@ Profile Profile::from_bytes(const QByteArray &bytes) {
     return Profile::from_json(doc.object());
 }
 
-QJsonObject defaultProfile() {
-    QJsonObject profile;
-    profile["profile_name"] = "EMPTY-STARTUP-PROFILE";
-    profile["layer_count"] = 1;
-
-    QJsonArray layers;
-    QJsonObject layer;
-    layer["layer_name"] = "default";
-    layer["layer_number"] = 0;
-    QJsonArray remappings;
-    layer["remappings"] = remappings;
-    layers.append(layer);
-
-    profile["layers"] = layers;
-
-    return profile;
-}
-
-Profile Profile::from_file(const QString &filename) {
+std::optional<Profile> Profile::from_file(const QString &filename) {
     QFile file(filename);
-
-    // Get absolute path
-    qDebug() << "Checking file at:" << filename;
-    if (filename == "empty" ||
-        (!file.exists() && filename == LATEST_PROFILE_FILE_LOCATION)) {
-        qDebug() << "Using empty json mapping. Intended for startup by "
-                    "electron app.";
-        QJsonObject defaultJson = defaultProfile();
-        QJsonDocument jsonDoc(defaultJson);
-        QByteArray json_data = jsonDoc.toJson();
-        return Profile::from_bytes(json_data);
-    }
 
     if (!file.exists()) {
         qCritical() << "Profile does not exist:" << file.fileName();
-        throw std::invalid_argument("File does not exist");
+        return std::nullopt;
     }
 
     qDebug() << "Found profile";
@@ -438,7 +422,7 @@ void saveLatestJsonProfile(const QJsonObject &obj) {
              << LATEST_PROFILE_FILE_LOCATION;
 }
 
-Profile Profile::loadLatest() {
+std::optional<Profile> Profile::load_latest() {
     qDebug() << "Loading latest profile";
     return Profile::from_file(LATEST_PROFILE_FILE_LOCATION);
 }

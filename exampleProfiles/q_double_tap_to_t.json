@@ -1,0 +1,62 @@
+{
+  "profile_name": "TEST PROFILE",
+  "layer_count": 2,
+  "layers": [
+    {
+      "layer_name": "TEST_LAYER",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "key_press",
+            "value": "A"
+          },
+          "bind": {
+            "type": "press_key",
+            "value": "B"
+          }
+        },
+        {
+          "trigger": {
+            "type": "key_release",
+            "value": "A"
+          },
+          "bind": {
+            "type": "release_key",
+            "value": "B"
+          }
+        },
+        {
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "Q"
+            },
+            {
+              "type": "key_release",
+              "value": "Q"
+            },
+            {
+              "type": "key_press",
+              "value": "Q"
+            },
+            {
+              "type": "key_release",
+              "value": "Q"
+            }
+          ],
+          "behavior": "default",
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "T"
+            },
+            {
+              "type": "release_key",
+              "value": "T"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

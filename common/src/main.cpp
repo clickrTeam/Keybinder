@@ -51,23 +51,38 @@ int main(int argc, char *argv[]) {
     QString path = "empty";
     KeybinderSettings settings;
     KeyCounter key_counter;
-    Profile activeProfile;
+    Profile profile;
 
-#ifdef QT_DEBUG
-    path = "../../exampleProfiles/appControls.json";
-#else
+#ifndef QT_DEBUG
     qInstallMessageHandler(myMessageHandler);
 #endif
+
     if (argc < 2) {
-        qDebug() << "Not enough arguments, using default profile location.";
+        qDebug() << "No profile argument provided";
+        try {
+            auto profile_opt = Profile::load_latest();
+            if (!profile_opt) {
+                qDebug() << "Could not load latest profile, falling back to default";
+                profile = Profile::default_profile();
+            } else {
+                profile = *profile_opt;
+            }
+        } catch (const std::exception &ex) {
+            qDebug() << "Exception loading latest profile:" << ex.what()
+            << " — falling back to default";
+            profile = Profile::default_profile();
+        } catch (...) {
+            qDebug() << "Unknown exception loading latest profile — falling back to default";
+            profile = Profile::default_profile();
+        }
     } else {
         path = argv[1];
-    }
-
-    if (path == "empty") {
-        activeProfile = Profile::loadLatest();
-    } else {
-        activeProfile = Profile::from_file(path);
+        auto profile_opt = Profile::from_file(path);
+        if (!profile_opt) {
+            qWarning() << "profile:" << path << "could not be loaded";
+            std::exit(1);
+        }
+        profile = *profile_opt;
     }
 
     SignalHandler sh;
@@ -75,14 +90,13 @@ int main(int argc, char *argv[]) {
     auto [sender, receiver] = create_channel();
     Daemon daemon(sender);
     // Mapper mapper(activeProfile, daemon, receiver);
-    Mapper mapper(activeProfile, daemon, receiver, settings, key_counter,
-                  [](auto layer_name) {
-                      QTimer::singleShot(0, qApp, [layer_name]() {
-                          new GenericIndicator(QString(layer_name),
-                                               GenericIndicator::BOTTOM_RIGHT,
-                                               1000);
-                      });
-                  });
+    Mapper mapper(
+        profile, daemon, receiver, settings, key_counter, [](auto layer_name) {
+            QTimer::singleShot(0, qApp, [layer_name]() {
+                new GenericIndicator(QString(layer_name),
+                                     GenericIndicator::BOTTOM_RIGHT, 1000);
+            });
+        });
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine

@@ -24,7 +24,9 @@ void SignalHandler::config_handler() {
         qFatal("Failed to create pipe");
     }
 
+    // clang-format off
     struct sigaction sa {};
+    // clang-format on
     sa.sa_handler = handle_sig;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;

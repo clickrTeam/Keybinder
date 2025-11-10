@@ -1,0 +1,87 @@
+{
+  "profile_name": "MergedProfile",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "default",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "key_press",
+            "value": "Q"
+          },
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "Z"
+            }
+          ]
+        },
+        {
+          "trigger": {
+            "type": "key_release",
+            "value": "Q"
+          },
+          "binds": [
+            {
+              "type": "release_key",
+              "value": "Z"
+            }
+          ]
+        },
+        {
+          "trigger": {
+            "type": "key_press",
+            "value": "Y"
+          },
+          "binds": [
+            {
+              "type": "run_script",
+              "interpreter": "bash",
+              "script": "open -a Calculator"
+            }
+          ]
+        },
+        {
+          "triggers": [
+            {
+              "type": "key_press",
+              "value": "P"
+            },
+            {
+              "type": "key_press",
+              "value": "O"
+            }
+          ],
+          "binds": [
+            {
+              "type": "press_key",
+              "value": "B"
+            },
+            {
+              "type": "release_key",
+              "value": "B"
+            },
+            {
+              "type": "press_key",
+              "value": "A"
+            },
+            {
+              "type": "release_key",
+              "value": "A"
+            },
+            {
+              "type": "press_key",
+              "value": "D"
+            },
+            {
+              "type": "release_key",
+              "value": "D"
+            }
+          ],
+          "behavior": "release"
+        }
+      ]
+    }
+  ]
+}
