@@ -1,0 +1,40 @@
+{
+    "default_layer": 0,
+    "layers": [
+        {
+            "layer_name": "layer 0",
+            "remappings": [
+                {
+                    "binds": [
+                        {
+                            "appName": "C:/Users/Lukew/AppData/Local/Programs/CurseForge Windows/CurseForge.exe",
+                            "type": "launch_app"
+                        }
+                    ],
+                    "trigger": {
+                        "type": "key_press",
+                        "value": "G"
+                    }
+                },
+                {
+                    "binds": [
+                        {
+                            "appName": "snippingtool",
+                            "type": "launch_app"
+                        }
+                    ],
+                    "trigger": {
+                        "type": "key_press",
+                        "value": "F"
+                    }
+                }
+            ]
+        },
+        {
+            "layer_name": "layer 0",
+            "remappings": [
+            ]
+        }
+    ],
+    "profile_name": "new test"
+}
