@@ -1,5 +1,5 @@
 // run_script_helper.cpp
-#include "run_script_helper.h"
+#include "script_runner.h"
 #include "temp_file_manager.h"
 #include <QDebug>
 #include <string>
