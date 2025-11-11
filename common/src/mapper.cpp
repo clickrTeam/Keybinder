@@ -23,7 +23,7 @@ InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
                                               KeyEventType::Release};
                           },
                           [&](const AppOpened &e) -> InputEvent {
-                              return AppOpenEvent{e.app_name};
+                              return AppFocusedEvent{e.app_name};
                           },
                       },
                       trigger);

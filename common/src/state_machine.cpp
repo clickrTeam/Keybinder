@@ -116,7 +116,7 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
                 return KeyEvent{kr.key_code, KeyEventType::Release};
             },
             [&](const AppOpened &a) -> std::optional<InputEvent> {
-                return AppOpenEvent{.app_name = a.app_name};
+                return AppFocusedEvent{.app_name = a.app_name};
             },
             [&](const MinimumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;

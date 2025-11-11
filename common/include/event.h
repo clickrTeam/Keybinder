@@ -12,15 +12,15 @@ enum class KeyEventType {
     Release,
 };
 
-struct AppOpenEvent {
+struct AppFocusedEvent {
     QString app_name;
 };
 
-inline bool operator==(const AppOpenEvent &a, const AppOpenEvent &b) {
+inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
     return a.app_name == b.app_name;
 }
 
-inline uint qHash(const AppOpenEvent &e, uint seed = 0) {
+inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
     return ::qHash(e.app_name, seed);
 }
 
@@ -38,7 +38,7 @@ inline uint qHash(const KeyEvent &key, uint seed = 0) {
            ::qHash(static_cast<int>(key.type), seed << 1);
 }
 
-using InputEvent = std::variant<AppOpenEvent, KeyEvent>;
+using InputEvent = std::variant<AppFocusedEvent, KeyEvent>;
 
 inline uint qHash(const InputEvent &e, uint seed = 0) {
     return std::visit([&](auto &&arg) { return ::qHash(arg, seed); }, e);
