@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     QString lockFilePath = QDir::temp().absoluteFilePath("clickr.lock");
     QLockFile lockFile(lockFilePath);
-    lockFile.setStaleLockTime(0); // optional: never consider stale locks valid
+    lockFile.setStaleLockTime(0); // Never consider stale locks valid
 
     if (!lockFile.tryLock()) {
         qCritical() << "Tried to run keybinder but another instance is already running.";
