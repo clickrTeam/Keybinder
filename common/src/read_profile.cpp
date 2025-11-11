@@ -214,6 +214,11 @@ RunScript RunScript::from_json(const QJsonObject &obj) {
     };
 }
 
+AppLaunch AppLaunch::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "app_name"});
+    return AppLaunch{get_property_as_string(obj, "app_name")};
+}
+
 AppFocused AppFocused::from_json(const QJsonObject &obj) {
     warn_extra_properties(obj, {"type", "app_name"});
     return AppFocused{get_property_as_string(obj, "app_name")};

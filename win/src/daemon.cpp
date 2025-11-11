@@ -72,8 +72,7 @@ void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
 
     qDebug() << "Window activated/focused:" << appName;
 
-    InputEvent e = InputEvent::fromApp(appName);
-    key_sender.send_key(e);
+    key_sender.send_key(AppFocusedEvent{appName});
 }
 
 Daemon::~Daemon() { qDebug() << "Daemon destroyed"; }
@@ -321,7 +320,7 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
         if (const KeyEvent *v = std::get_if<KeyEvent>(&event)) {
             INPUT input;
             input.type = INPUT_KEYBOARD;
-            input.ki.wVk = int_to_keycode.find_backward(v->key());
+            input.ki.wVk = int_to_keycode.find_backward(v->keycode);
             // identify key so we can ignore it.
             input.ki.dwExtraInfo = InfoIdentifier;
             if (v->type == KeyEventType::Press) {

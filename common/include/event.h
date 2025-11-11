@@ -18,7 +18,7 @@ struct AppFocusedEvent {
 };
 
 inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
-    return a.app_name == b.app_name;
+    return a.app_name.toLower().contains(b.app_name.toLower()) || b.app_name.toLower().contains(a.app_name.toLower());
 }
 
 inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
@@ -28,23 +28,6 @@ inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
 struct KeyEvent {
     KeyCode keycode;
     KeyEventType type;
-
-    // payload: either a KeyCode or an app name string
-    std::variant<KeyCode, QString> payload;
-
-    // helpers
-    static InputEvent fromKey(KeyCode k, KeyEventType t = KeyEventType::Press) {
-        return InputEvent{t, std::variant<KeyCode, QString>(k)};
-    }
-    static InputEvent fromApp(const QString &name, KeyEventType t = KeyEventType::AppFocus) {
-        return InputEvent{t, std::variant<KeyCode, QString>(name)};
-    }
-
-    bool isKey() const { return std::holds_alternative<KeyCode>(payload); }
-    bool isApp() const { return std::holds_alternative<QString>(payload); }
-
-    KeyCode key() const { return std::get<KeyCode>(payload); }          // call only if isKey()
-    QString appName() const { return std::get<QString>(payload); }     // call only if isApp()
 };
 
 inline bool operator==(const KeyEvent &a, const KeyEvent &b) {
@@ -64,7 +47,7 @@ inline uint qHash(const InputEvent &e, uint seed = 0) {
 
 // TODO: eventually these will become differnt however for now they can be the
 // same as we just handle keys
-using OutputEvent = std::variant<KeyEvent, RunScript>;
+using OutputEvent = std::variant<KeyEvent, RunScript, AppLaunch>;
 
 inline const char *to_string(KeyEventType t) {
     switch (t) {

@@ -115,13 +115,6 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
 }
 
 void Mapper::queue_output(OutputEvent e, uint64_t delay = 0) {
-    if (const InputEvent *ie = std::get_if<InputEvent>(&e)) {
-        if (ie->isApp()) {
-            qDebug() << "QUEING A APP, this crashes if we don't return.";
-            return;
-        }
-    }
-
     uint64_t time_to_emit = current_time_ms() + delay;
     queued_events.push_back(std::make_pair(time_to_emit, e));
 }
