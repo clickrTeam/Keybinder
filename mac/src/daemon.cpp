@@ -171,6 +171,9 @@ void Daemon::send_outputs(const QList<OutputEvent> &events) {
                        [&](const RunScript &script) {
                            run_script(script.interpreter, script.script);
                        },
+                       [&](const AppLaunch &app_launch) {
+                           qWarning() << "App Launch not supported on mac, try run script.";
+                       },
                    },
                    event);
     }

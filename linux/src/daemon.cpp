@@ -133,6 +133,9 @@ void Daemon::send_outputs(const QList<OutputEvent> &outputs) {
                        [&](const RunScript &script) {
                            run_script(script.interpreter, script.script);
                        },
+                       [&](const AppLaunch &app_launch) {
+                           qWarning() << "App Launch not supported on linux, try run script.";
+                       },
                    },
                    event);
     }
