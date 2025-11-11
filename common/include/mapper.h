@@ -32,9 +32,9 @@ class Mapper {
     void queue_output(OutputEvent, uint64_t);
     void set_layer_inner(size_t);
     void apply_transition(const Transition &,
-                          std::optional<KeyEvent> = std::nullopt);
+                          std::optional<InputEvent> = std::nullopt);
     void check_queued_events();
-    void process_input(KeyEvent);
+    void process_input(InputEvent);
     std::mutex mtx;
     Profile profile;
     Daemon &daemon;
@@ -47,7 +47,7 @@ class Mapper {
     size_t cur_state_idx = HOME_STATE_IDX;
     size_t processed_events_count = 0;
 
-    std::vector<QHash<KeyEvent, std::vector<Bind>>> basic_maps;
+    std::vector<QHash<InputEvent, std::vector<Bind>>> basic_maps;
     // The time (in ms) at which the timer is expired
     std::optional<uint64_t> current_timer;
     std::vector<std::pair<uint64_t, OutputEvent>> queued_events;
