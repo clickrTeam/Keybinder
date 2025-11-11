@@ -1,4 +1,3 @@
-// run_script_helper.cpp
 #include "script_runner.h"
 #include "temp_file_manager.h"
 #include <QDebug>
@@ -6,10 +5,10 @@
 #include <vector>
 #include <windows.h>
 
-bool run_script_bind(const RunScriptBind &bind) {
+bool run_script(const QString &interpreter, const QString &script) {
     // Determine extension only if needed
     QString ext;
-    QString interp_lower = bind.interpreter.toLower();
+    QString interp_lower = interpreter.toLower();
     if (interp_lower.contains("powershell") || interp_lower == "pwsh")
         ext = ".ps1";
     else if (interp_lower.contains("cmd"))
@@ -20,7 +19,7 @@ bool run_script_bind(const RunScriptBind &bind) {
     // Use static TempFileManager; no need to reconstruct per call
     static TempFileManager tmp_mgr;
 
-    QString temp_path = tmp_mgr.get_temp_file(bind.script, bind.script, ext);
+    QString temp_path = tmp_mgr.get_temp_file(script, script, ext);
     if (temp_path.isEmpty()) {
         qWarning() << "run_script_bind: failed to create temp file";
         return false;
@@ -37,7 +36,7 @@ bool run_script_bind(const RunScriptBind &bind) {
                 .arg(temp_path);
     } else {
         command_line =
-            QStringLiteral("\"%1\" \"%2\"").arg(bind.interpreter, temp_path);
+            QStringLiteral("\"%1\" \"%2\"").arg(interpreter, temp_path);
     }
 
     // Prepare mutable C string for CreateProcessA
