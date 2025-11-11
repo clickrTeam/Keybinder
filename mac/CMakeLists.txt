@@ -1,7 +1,8 @@
 set(PLATFORM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
-    ${CMAKE_SOURCE_DIR}/unix/src/signal_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_map.cpp
+    ${CMAKE_SOURCE_DIR}/unix/src/signal_handler.cpp
+    ${CMAKE_SOURCE_DIR}/unix/src/script_runner.cpp
     PARENT_SCOPE
 )
 
@@ -13,8 +14,8 @@ set(PLATFORM_HEADER_PATHS
     PARENT_SCOPE
 )
 
-set(PLATFORM_LIBS 
-  "-framework IOKit" 
+set(PLATFORM_LIBS
+  "-framework IOKit"
   "-framework CoreFoundation"
     PARENT_SCOPE
 )
