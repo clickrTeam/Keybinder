@@ -144,7 +144,7 @@ void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
 void Daemon::send_outputs(const QList<OutputEvent> &events) {
     for (const OutputEvent &event : events) {
         std::visit(overloaded{
-                       [&](const InputEvent &key) {
+                       [&](const KeyEvent &key) {
                            qDebug() << "SENDING KEY "
                                     << str_to_keycode.find_backward(key.keycode)
                                     << (key.type == KeyEventType::Press
@@ -176,7 +176,7 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     if (!int_to_keycode.contains_forward(code))
         return;
 
-    auto event = InputEvent{
+    auto event = KeyEvent{
         .keycode = int_to_keycode.find_forward(code),
         .type = value ? KeyEventType::Press : KeyEventType::Release,
     };

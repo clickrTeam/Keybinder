@@ -10,7 +10,7 @@
 #include <utility>
 
 struct KeyQueueState {
-    std::deque<InputEvent> queue;
+    std::deque<KeyEvent> queue;
     std::condition_variable cv;
     std::mutex mtx;
 };
@@ -22,7 +22,7 @@ class KeySender {
     explicit KeySender(const std::shared_ptr<KeyQueueState> &state);
     // Return true if the key was used. If false is returned then the key is not
     // passed to the mapper
-    bool send_key(InputEvent kc);
+    bool send_key(KeyEvent kc);
 
   private:
     std::shared_ptr<KeyQueueState> state;
@@ -34,7 +34,7 @@ class KeyReceiver {
 
     // Wait for a key with optional timeout
     // If timeout is not provided, waits indefinitely
-    std::optional<InputEvent>
+    std::optional<KeyEvent>
     wait_key(std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 
   private:

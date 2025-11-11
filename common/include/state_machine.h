@@ -10,7 +10,7 @@ constexpr size_t HOME_STATE_IDX = 0;
 // tell the maper to remap some inputs. If it is none that means to remap the
 // latest mapped input
 struct ProccessInput {
-    std::optional<InputEvent> event;
+    std::optional<KeyEvent> event;
 };
 
 inline bool operator==(const ProccessInput &a, const ProccessInput &b) {
@@ -22,7 +22,7 @@ inline uint qHash(const ProccessInput &i, uint seed = 0) {
 }
 
 struct BasicTranlation {
-    std::optional<InputEvent> event;
+    std::optional<KeyEvent> event;
 };
 
 inline bool operator==(const BasicTranlation &a, const BasicTranlation &b) {
@@ -70,7 +70,7 @@ inline uint qHash(const Transition &t, uint seed = 0) {
 }
 
 struct State {
-    QHash<InputEvent, Transition> edges;
+    QHash<KeyEvent, Transition> edges;
     Transition fallback_transition;
     std::optional<Transition> timer_transition;
 };

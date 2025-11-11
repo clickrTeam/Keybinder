@@ -4,7 +4,7 @@
 KeySender::KeySender(const std::shared_ptr<KeyQueueState> &state)
     : state(state) {}
 
-bool KeySender::send_key(InputEvent kc) {
+bool KeySender::send_key(KeyEvent kc) {
     {
         std::lock_guard<std::mutex> lock(state->mtx);
         state->queue.push_back(kc);
@@ -19,7 +19,7 @@ bool KeySender::send_key(InputEvent kc) {
 KeyReceiver::KeyReceiver(const std::shared_ptr<KeyQueueState> &state)
     : state(state) {}
 
-std::optional<InputEvent>
+std::optional<KeyEvent>
 KeyReceiver::wait_key(std::optional<std::chrono::milliseconds> timeout) {
     std::unique_lock<std::mutex> lock(state->mtx);
 
@@ -36,7 +36,7 @@ KeyReceiver::wait_key(std::optional<std::chrono::milliseconds> timeout) {
         return std::nullopt; // timed out
     }
 
-    InputEvent kc = state->queue.front();
+    KeyEvent kc = state->queue.front();
     state->queue.pop_front();
     return kc;
 }

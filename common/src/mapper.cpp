@@ -13,17 +13,17 @@
 
 namespace {
 // TODO: move into utils or somthing
-InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
-    return std::visit(
-        overloaded{
-            [&](const KeyPress &kp) {
-                return InputEvent{kp.key_code, KeyEventType::Press};
-            },
-            [&](const KeyRelease &kr) {
-                return InputEvent{kr.key_code, KeyEventType::Release};
-            },
-        },
-        trigger);
+KeyEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
+    return std::visit(overloaded{
+                          [&](const KeyPress &kp) {
+                              return KeyEvent{kp.key_code, KeyEventType::Press};
+                          },
+                          [&](const KeyRelease &kr) {
+                              return KeyEvent{kr.key_code,
+                                              KeyEventType::Release};
+                          },
+                      },
+                      trigger);
 }
 } // namespace
 
@@ -39,13 +39,13 @@ Mapper::Mapper(
 
 bool Mapper::set_profile(Profile p) {
     std::vector<std::vector<State>> new_states;
-    std::vector<QHash<InputEvent, std::vector<Bind>>> new_basic_maps;
+    std::vector<QHash<KeyEvent, std::vector<Bind>>> new_basic_maps;
     std::lock_guard lock_guard(mtx);
 
     for (const Layer &layer : p.layers) {
-        QHash<InputEvent, std::vector<Bind>> basic_map;
+        QHash<KeyEvent, std::vector<Bind>> basic_map;
         for (const auto &[trigger, binds] : layer.basic_remappings) {
-            InputEvent input_event = trigger_to_input(trigger);
+            KeyEvent input_event = trigger_to_input(trigger);
             if (basic_map.contains(input_event)) {
                 return false;
             }
@@ -95,13 +95,12 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
         std::visit(
             overloaded{
                 [&](const PressKey &bind) {
-                    queue_output(InputEvent{bind.key_code, KeyEventType::Press},
+                    queue_output(KeyEvent{bind.key_code, KeyEventType::Press},
                                  delay_ms);
                 },
                 [&](const ReleaseKey &bind) {
-                    queue_output(
-                        InputEvent{bind.key_code, KeyEventType::Release},
-                        delay_ms);
+                    queue_output(KeyEvent{bind.key_code, KeyEventType::Release},
+                                 delay_ms);
                 },
                 [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
                 [&](const Wait &wait) { delay_ms += wait.ms; },
@@ -129,7 +128,7 @@ void Mapper::start() {
             apply_transition(*cur_state.timer_transition);
         }
         if (key_opt) {
-            InputEvent e = key_opt.value();
+            KeyEvent e = key_opt.value();
             // only count presses
             if (settings.get_log_key_frequency() &&
                 e.type == KeyEventType::Press) {
@@ -150,14 +149,14 @@ void Mapper::start() {
 
 // Must be called wil mtx acquired
 void Mapper::apply_transition(const Transition &transition,
-                              std::optional<InputEvent> prev_event) {
+                              std::optional<KeyEvent> prev_event) {
     cur_state_idx = transition.new_state;
     current_timer =
         transition.timer_ms
             ? std::optional(*transition.timer_ms + current_time_ms())
             : std::nullopt;
 
-    std::vector<InputEvent> events_to_redo;
+    std::vector<KeyEvent> events_to_redo;
     for (const StateMachineOutputEvent &output : transition.outputs) {
         std::visit(overloaded{
                        [&](const ProccessInput &proc) {
@@ -184,12 +183,12 @@ void Mapper::apply_transition(const Transition &transition,
                    output);
     }
 
-    for (InputEvent e : events_to_redo) {
+    for (KeyEvent e : events_to_redo) {
         process_input(e);
     }
 }
 
-void Mapper::process_input(InputEvent e) {
+void Mapper::process_input(KeyEvent e) {
 
     const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
     const Transition &transition = cur_state.edges.contains(e)

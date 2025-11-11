@@ -93,7 +93,7 @@ void Daemon::start() {
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
                0) {
             if (event.type == EV_KEY) {
-                InputEvent e;
+                KeyEvent e;
                 // TODO remove try catch
                 try {
                     e.keycode = int_to_keycode.find_forward(event.code);
@@ -120,7 +120,7 @@ void Daemon::start() {
 
 void Daemon::send_outputs(const QList<OutputEvent> &outputs) {
     foreach (OutputEvent event, outputs) {
-        if (const InputEvent *input = std::get_if<InputEvent>(&event)) {
+        if (const KeyEvent *input = std::get_if<KeyEvent>(&event)) {
 
             bool type = input->type == KeyEventType::Press ? 1 : 0;
             int key_code = int_to_keycode.find_backward(input->keycode);
