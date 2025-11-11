@@ -59,7 +59,7 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
 
     for (int i = 0; i < vk.count(); ++i) {
         const OutputEvent &event = vk[i];
-        if (const InputEvent *v = std::get_if<InputEvent>(&event)) {
+        if (const KeyEvent *v = std::get_if<KeyEvent>(&event)) {
             INPUT input;
             input.type = INPUT_KEYBOARD;
             input.ki.wVk = int_to_keycode.find_backward(v->keycode);
@@ -118,7 +118,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     switch (wParam) {
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
-        InputEvent e;
+        KeyEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Press;
         if (key_sender.send_key(e))
@@ -126,7 +126,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_KEYUP: {
-        InputEvent e;
+        KeyEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Release;
         if (key_sender.send_key(e))

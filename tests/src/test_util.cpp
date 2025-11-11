@@ -10,14 +10,14 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-void mapper_test(Profile p, QList<InputEvent> events,
+void mapper_test(Profile p, QList<KeyEvent> events,
                  QList<OutputEvent> outputs) {
     QList<uint64_t> waits(events.size(), 0);
     mapper_test_timed(p, events, waits, outputs);
 }
 
-void mapper_test_timed(Profile p, QList<InputEvent> events,
-                       QList<uint64_t> waits, QList<OutputEvent> outputs) {
+void mapper_test_timed(Profile p, QList<KeyEvent> events, QList<uint64_t> waits,
+                       QList<OutputEvent> outputs) {
     ASSERT_EQ(events.size(), waits.size());
     auto [rx, tx] = create_channel();
     Daemon d(rx);

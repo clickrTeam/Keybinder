@@ -48,31 +48,31 @@ static const char *a_tap_to_b = R"(
 TEST(SequenceMapperTimedTests, ATapToBSuccessful) {
     mapper_test_timed(Profile::from_bytes(QByteArray(a_tap_to_b)),
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Press},
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Press},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       },
                       {
                           0,
                           100,
                       },
                       {
-                          InputEvent{KeyCode::B, KeyEventType::Press},
-                          InputEvent{KeyCode::B, KeyEventType::Release},
+                          KeyEvent{KeyCode::B, KeyEventType::Press},
+                          KeyEvent{KeyCode::B, KeyEventType::Release},
                       });
 }
 
 TEST(SequenceMapperTimedTests, ATapToBUnsuccessful) {
     mapper_test_timed(Profile::from_bytes(QByteArray(a_tap_to_b)),
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Press},
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Press},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       },
                       {
                           0,
                           3000,
                       },
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       });
 }
 
@@ -121,29 +121,29 @@ static const char *a_hold_to_b = R"(
 TEST(SequenceMapperTimedTests, AHoldToBSuccessful) {
     mapper_test_timed(Profile::from_bytes(QByteArray(a_hold_to_b)),
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Press},
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Press},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       },
                       {
                           0,
                           5000,
                       },
                       {
-                          InputEvent{KeyCode::B, KeyEventType::Press},
-                          InputEvent{KeyCode::B, KeyEventType::Release},
+                          KeyEvent{KeyCode::B, KeyEventType::Press},
+                          KeyEvent{KeyCode::B, KeyEventType::Release},
                       });
 }
 TEST(SequenceMapperTimedTests, AHoldToBUnsuccessful) {
     mapper_test_timed(Profile::from_bytes(QByteArray(a_hold_to_b)),
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Press},
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Press},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       },
                       {
                           0,
                           0,
                       },
                       {
-                          InputEvent{KeyCode::A, KeyEventType::Release},
+                          KeyEvent{KeyCode::A, KeyEventType::Release},
                       });
 }

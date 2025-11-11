@@ -2,6 +2,7 @@
 #include "event.h"
 #include "key_code.h"
 #include "key_map.h"
+#include "script_runner.h"
 #include "util.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hid/IOHIDLib.h>
@@ -19,7 +20,10 @@
 
 // Heavily based on https://github.com/psych3r/driverkit
 Daemon::Daemon(KeySender key_sender)
-    : key_sender(key_sender), matching_dictionary(nullptr),
+    : key_sender(key_sender), app_focus_listener([&key_sender](auto app_name) {
+          key_sender.send_key(AppFocusedEvent{app_name});
+      }),
+      matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
     matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
     UInt32 generic_desktop = kHIDPage_GenericDesktop;
@@ -73,6 +77,7 @@ Daemon::Daemon(KeySender key_sender)
 Daemon::~Daemon() { cleanup(); }
 
 void Daemon::start() {
+    app_focus_listener.start();
     io_iterator_t iter = IO_OBJECT_NULL;
     CFRetain(matching_dictionary);
     IOServiceGetMatchingServices(kIOMainPortDefault, matching_dictionary,
@@ -139,12 +144,15 @@ void Daemon::start() {
 }
 
 /// TODO: fill this in not exactly sure how to unsieze devices
-void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
+void Daemon::cleanup() {
+    app_focus_listener.stop();
+    std::cout << "Daemon cleaned up." << std::endl;
+}
 
 void Daemon::send_outputs(const QList<OutputEvent> &events) {
     for (const OutputEvent &event : events) {
         std::visit(overloaded{
-                       [&](const InputEvent &key) {
+                       [&](const KeyEvent &key) {
                            qDebug() << "SENDING KEY "
                                     << str_to_keycode.find_backward(key.keycode)
                                     << (key.type == KeyEventType::Press
@@ -160,7 +168,9 @@ void Daemon::send_outputs(const QList<OutputEvent> &events) {
 
                            client->async_post_report(report);
                        },
-                       [&](const RunScript &script) { run_script(script); },
+                       [&](const RunScript &script) {
+                           run_script(script.interpreter, script.script);
+                       },
                    },
                    event);
     }
@@ -176,7 +186,7 @@ void Daemon::handle_input_event(uint64_t value, uint32_t page, uint32_t code) {
     if (!int_to_keycode.contains_forward(code))
         return;
 
-    auto event = InputEvent{
+    auto event = KeyEvent{
         .keycode = int_to_keycode.find_forward(code),
         .type = value ? KeyEventType::Press : KeyEventType::Release,
     };
@@ -229,55 +239,4 @@ CFStringRef Daemon::get_property(mach_port_t item, const char *property) {
 CFStringRef Daemon::from_cstr(const char *str) {
     return CFStringCreateWithCString(kCFAllocatorDefault, str,
                                      CFStringGetSystemEncoding());
-}
-
-void Daemon::run_script(const RunScript &rs) {
-    QString tempPath;
-
-    // Reuse temp file if already created
-    if (scriptTempFiles.contains(rs)) {
-        tempPath = scriptTempFiles[rs];
-    } else {
-        QTemporaryFile tempFile(QDir::tempPath() + "/runscript_XXXXXX.sh");
-        tempFile.setAutoRemove(false);
-        if (!tempFile.open()) {
-            qDebug() << "Failed to open temp file";
-            return;
-        }
-
-        tempFile.write(rs.script.toUtf8());
-        tempFile.flush();
-        tempPath = tempFile.fileName();
-        tempFile.close();
-
-        scriptTempFiles[rs] = tempPath;
-
-        // Make executable
-        if (chmod(tempPath.toUtf8().constData(), 0755) != 0) {
-            qDebug() << "Failed to chmod temp script:" << strerror(errno);
-            return;
-        }
-    }
-
-    qDebug() << "interpreter: " << rs.interpreter;
-    qDebug() << "script: " << rs.script;
-    QByteArray interpreterBytes = rs.interpreter.toUtf8();
-    QByteArray tempPathBytes = tempPath.toUtf8();
-
-    char *argv[] = {interpreterBytes.data(), tempPathBytes.data(), nullptr};
-
-    posix_spawnattr_t attr;
-    posix_spawnattr_init(&attr);
-
-    // TODO: Drop privileges for the spawned process
-    pid_t pid;
-    int status = posix_spawnp(&pid, argv[0], nullptr, &attr, argv, environ);
-    posix_spawnattr_destroy(&attr);
-
-    if (status != 0) {
-        qDebug() << "Failed to spawn process:" << strerror(status);
-        return;
-    }
-
-    qDebug() << "Spawned script" << tempPath << "with pid" << pid;
 }

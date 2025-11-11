@@ -110,10 +110,13 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
     return std::visit(
         overloaded{
             [&](const KeyPress &kp) -> std::optional<InputEvent> {
-                return InputEvent{kp.key_code, KeyEventType::Press};
+                return KeyEvent{kp.key_code, KeyEventType::Press};
             },
             [&](const KeyRelease &kr) -> std::optional<InputEvent> {
-                return InputEvent{kr.key_code, KeyEventType::Release};
+                return KeyEvent{kr.key_code, KeyEventType::Release};
+            },
+            [&](const AppFocused &a) -> std::optional<InputEvent> {
+                return AppFocusedEvent{.app_name = a.app_name};
             },
             [&](const MinimumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
