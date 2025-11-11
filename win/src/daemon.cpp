@@ -2,6 +2,8 @@
 #include "event.h"
 #include "key_channel.h"
 #include "key_map.h"
+#include "script_runner.h"
+#include "util.h"
 #include <QCoreApplication>
 #include <QtCore/qlogging.h>
 #include <windows.h>
@@ -59,21 +61,26 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
 
     for (int i = 0; i < vk.count(); ++i) {
         const OutputEvent &event = vk[i];
-        if (const KeyEvent *v = std::get_if<KeyEvent>(&event)) {
-            INPUT input;
-            input.type = INPUT_KEYBOARD;
-            input.ki.wVk = int_to_keycode.find_backward(v->keycode);
-            // identify key so we can ignore it.
-            input.ki.dwExtraInfo = InfoIdentifier;
-            if (v->type == KeyEventType::Press) {
-                input.ki.dwFlags = 0;
-            } else {
-                input.ki.dwFlags = KEYEVENTF_KEYUP;
-            }
-            inputs.append(input);
-        } else {
-            qWarning() << "RunScript is not implemented on Windows yet";
-        }
+        std::visit(overloaded{
+                       [&](const KeyEvent &key_event) {
+                           INPUT input;
+                           input.type = INPUT_KEYBOARD;
+                           input.ki.wVk =
+                               int_to_keycode.find_backward(key_event.keycode);
+                           // identify key so we can ignore it.
+                           input.ki.dwExtraInfo = InfoIdentifier;
+                           if (key_event.type == KeyEventType::Press) {
+                               input.ki.dwFlags = 0;
+                           } else {
+                               input.ki.dwFlags = KEYEVENTF_KEYUP;
+                           }
+                           inputs.append(input);
+                       },
+                       [&](const RunScript &script) {
+                           run_script(script.interpreter, script.script);
+                       },
+                   },
+                   event);
     }
 
     UINT sent = SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
