@@ -1,5 +1,6 @@
 #pragma once
 #include "abstract_daemon.h"
+#include "app_focus_listener.h"
 #include "key_channel.h"
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -30,6 +31,7 @@ class Daemon : public AbstractDaemon {
 
   private:
     KeySender key_sender;
+    AppFocusListener app_focus_listener;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
     std::shared_ptr<

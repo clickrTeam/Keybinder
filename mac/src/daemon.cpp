@@ -20,7 +20,10 @@
 
 // Heavily based on https://github.com/psych3r/driverkit
 Daemon::Daemon(KeySender key_sender)
-    : key_sender(key_sender), matching_dictionary(nullptr),
+    : key_sender(key_sender), app_focus_listener([&key_sender](auto app_name) {
+          key_sender.send_key(AppFocusedEvent{app_name});
+      }),
+      matching_dictionary(nullptr),
       notification_port(IONotificationPortCreate(kIOMainPortDefault)) {
     matching_dictionary = IOServiceMatching(kIOHIDDeviceKey);
     UInt32 generic_desktop = kHIDPage_GenericDesktop;
@@ -74,6 +77,7 @@ Daemon::Daemon(KeySender key_sender)
 Daemon::~Daemon() { cleanup(); }
 
 void Daemon::start() {
+    app_focus_listener.start();
     io_iterator_t iter = IO_OBJECT_NULL;
     CFRetain(matching_dictionary);
     IOServiceGetMatchingServices(kIOMainPortDefault, matching_dictionary,
@@ -140,7 +144,10 @@ void Daemon::start() {
 }
 
 /// TODO: fill this in not exactly sure how to unsieze devices
-void Daemon::cleanup() { std::cout << "Daemon cleaned up." << std::endl; }
+void Daemon::cleanup() {
+    app_focus_listener.stop();
+    std::cout << "Daemon cleaned up." << std::endl;
+}
 
 void Daemon::send_outputs(const QList<OutputEvent> &events) {
     for (const OutputEvent &event : events) {
