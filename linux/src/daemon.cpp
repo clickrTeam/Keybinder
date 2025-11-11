@@ -120,16 +120,19 @@ void Daemon::start() {
 
 void Daemon::send_outputs(const QList<OutputEvent> &outputs) {
     foreach (OutputEvent event, outputs) {
-        if (const KeyEvent *input = std::get_if<KeyEvent>(&event)) {
-
-            bool type = input->type == KeyEventType::Press ? 1 : 0;
-            int key_code = int_to_keycode.find_backward(input->keycode);
-            send_key(key_code, type, uinput_fd);
-            //
-        } else {
-            // TODO: The macos version should be compatable with this
-            qWarning() << "RunScript is not implemented on Windows yet";
-        }
+        std::visit(overloaded{
+                       [&](const KeyEvent &input) {
+                           bool type =
+                               input->type == KeyEventType::Press ? 1 : 0;
+                           int key_code =
+                               int_to_keycode.find_backward(input->keycode);
+                           send_key(key_code, type, uinput_fd);
+                       },
+                       [&](const RunScript &script) {
+                           run_script(script.interpreter, script.script);
+                       },
+                   },
+                   event);
     }
 }
 

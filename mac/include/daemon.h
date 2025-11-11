@@ -29,7 +29,6 @@ class Daemon : public AbstractDaemon {
     void send_outputs(const QList<OutputEvent> &events) override;
 
   private:
-    void run_script(const RunScript &rs);
     KeySender key_sender;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
