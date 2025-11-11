@@ -38,8 +38,8 @@ void AppFocusListener::run() {
         line = buffer.data();
         std::smatch match;
         if (std::regex_search(line, match, appRegex)) {
-            QString appName = QString::fromStdString(match[1].str());
-            callback(appName);
+            QString app_name = QString::fromStdString(match[1].str());
+            callback(app_name);
         }
     }
 }

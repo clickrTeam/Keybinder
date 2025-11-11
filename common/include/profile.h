@@ -108,10 +108,10 @@ struct RunScript {
 };
 
 struct AppLaunch {
-    QString appName;  // Name or identifier of the application (e.g., "notepad", "chrome", "spotify")
+    QString app_name;  // Name or identifier of the application (e.g., "notepad", "chrome", "spotify")
     static AppLaunch from_json(const QJsonObject &obj);
     bool operator==(const AppLaunch &other) const noexcept {
-        return appName == other.appName;
+        return app_name == other.app_name;
     }
 };
 
@@ -136,7 +136,7 @@ inline uint qHash(const RunScript &key, uint seed = 0) noexcept {
     return qHash(key.interpreter, seed) ^ qHash(key.script, seed << 1);
 }
 inline uint qHash(const AppLaunch &key, uint seed = 0) noexcept {
-    return qHash(static_cast<quintptr>(key.appName.toUInt()), seed);
+    return qHash(static_cast<quintptr>(key.app_name.toUInt()), seed);
 }
 
 inline uint qHash(const Bind &bind, uint seed = 0) noexcept {

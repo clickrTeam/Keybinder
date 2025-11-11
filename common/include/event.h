@@ -10,7 +10,6 @@
 enum class KeyEventType {
     Press,
     Release,
-    AppFocus,
 };
 
 struct AppFocusedEvent {
@@ -67,8 +66,6 @@ inline const char *to_string(KeyEventType t) {
         return "Press";
     case KeyEventType::Release:
         return "Release";
-    case KeyEventType::AppFocus:
-        return "AppFocus";
     }
     return "Unknown";
 }

@@ -17,14 +17,14 @@ class Daemon : public AbstractDaemon {
     void cleanup() override;
     void send_outputs(const QList<OutputEvent> &vk) override;
     static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam);
-    void launchApp(const QString &appName);
+    void launch_app(const QString &app_name);
 
     // Stores long run compute items instance to instance
     AppCache cache;
 
 private:
-    static QString getExecutablePath(const QString &appName);
-    static QString getAppUserModelId(const QString &appName);
+    static QString getExecutablePath(const QString &app_name);
+    static QString getAppUserModelId(const QString &app_name);
 
     static void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
                                       LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);

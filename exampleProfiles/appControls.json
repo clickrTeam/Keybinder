@@ -13,14 +13,14 @@
           "binds": [
             {
               "type": "launch_app",
-              "appName": "chrome"
+              "app_name": "chrome"
             }
           ]
         },
         {
           "trigger": {
             "type": "app_launch",
-            "appName": "chrome"
+            "app_name": "chrome"
           },
           "binds": [
             {

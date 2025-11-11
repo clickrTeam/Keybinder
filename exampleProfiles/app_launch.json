@@ -7,7 +7,7 @@
                 {
                     "binds": [
                         {
-                            "appName": "C:/Users/Lukew/AppData/Local/Programs/CurseForge Windows/CurseForge.exe",
+                            "app_name": "C:/Users/Lukew/AppData/Local/Programs/CurseForge Windows/CurseForge.exe",
                             "type": "launch_app"
                         }
                     ],
@@ -19,7 +19,7 @@
                 {
                     "binds": [
                         {
-                            "appName": "snippingtool",
+                            "app_name": "snippingtool",
                             "type": "launch_app"
                         }
                     ],

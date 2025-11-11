@@ -67,12 +67,12 @@ void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
     GetClassNameW(hwnd, className, _countof(className));
     GetWindowTextW(hwnd, windowTitle, _countof(windowTitle));
 
-    QString appName = QString::fromWCharArray(windowTitle);
-    if (appName.isEmpty()) appName = QString::fromWCharArray(className);
+    QString app_name = QString::fromWCharArray(windowTitle);
+    if (app_name.isEmpty()) app_name = QString::fromWCharArray(className);
 
-    qDebug() << "Window activated/focused:" << appName;
+    qDebug() << "Window activated/focused:" << app_name;
 
-    key_sender.send_key(AppFocusedEvent{appName});
+    key_sender.send_key(AppFocusedEvent{app_name});
 }
 
 Daemon::~Daemon() { qDebug() << "Daemon destroyed"; }
@@ -106,18 +106,18 @@ void Daemon::cleanup() {
 }
 
 // call-site unchanged
-void Daemon::launchApp(const QString &appName) {
-    // capture appName by value so the async task owns it
-    std::thread([appName, this]() {
+void Daemon::launch_app(const QString &app_name) {
+    // capture app_name by value so the async task owns it
+    std::thread([app_name, this]() {
         // Initialize COM for this thread
         HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
         bool comInitialized = SUCCEEDED(hr);
 
-        qDebug() << "Trying to launch app via ShellExecute:" << appName;
+        qDebug() << "Trying to launch app via ShellExecute:" << app_name;
         AppCache::Entry entry;
         QString appPath; QString appId;
 
-        if (cache.lookup(appName, entry)) {
+        if (cache.lookup(app_name, entry)) {
             appPath = entry.path;
             appId = entry.appId;
         } else {
@@ -125,9 +125,9 @@ void Daemon::launchApp(const QString &appName) {
             QTimer::singleShot(0, qApp, []() {
                 new GenericIndicator("Finding app...", GenericIndicator::BOTTOM_RIGHT, 1000);
             });
-            appPath = getExecutablePath(appName);
-            appId = getAppUserModelId(appName);
-            cache.store(appName, {appPath, appId});
+            appPath = getExecutablePath(app_name);
+            appId = getAppUserModelId(app_name);
+            cache.store(app_name, {appPath, appId});
         }
         qDebug() << "App identification received { appPath: " << appPath << ", appId: " << appId << " };";
 
@@ -135,7 +135,7 @@ void Daemon::launchApp(const QString &appName) {
             std::wstring wPath = appPath.toStdWString();
             HINSTANCE result = ShellExecuteW(nullptr, L"open", wPath.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
             if (reinterpret_cast<INT_PTR>(result) > 32) {
-                qDebug() << "Successfully launched app via ShellExecute:" << appName;
+                qDebug() << "Successfully launched app via ShellExecute:" << app_name;
                 if (comInitialized) CoUninitialize();
                 return;
             } else {
@@ -157,7 +157,7 @@ void Daemon::launchApp(const QString &appName) {
                 PCWSTR appIdStr = WindowsGetStringRawBuffer(appIdHString, &length);
                 hr = activationManager->ActivateApplication(appIdStr, nullptr, AO_NONE, &newProcessId);
                 if (SUCCEEDED(hr)) {
-                    qDebug() << "Successfully launched modern app:" << appName;
+                    qDebug() << "Successfully launched modern app:" << app_name;
                     WindowsDeleteString(appIdHString);
                     if (comInitialized) CoUninitialize();
                     return;
@@ -170,15 +170,15 @@ void Daemon::launchApp(const QString &appName) {
             if (appIdHString) WindowsDeleteString(appIdHString);
         }
 
-        qWarning() << "Failed to launch app:" << appName;
+        qWarning() << "Failed to launch app:" << app_name;
         if (comInitialized) CoUninitialize();
     }).detach();
 }
 
-QString Daemon::getExecutablePath(const QString &appName) {
+QString Daemon::getExecutablePath(const QString &app_name) {
     // absolute path case
-    QFileInfo qfi(appName);
-    if (qfi.exists() && qfi.isFile()) return appName;
+    QFileInfo qfi(app_name);
+    if (qfi.exists() && qfi.isFile()) return app_name;
 
     // Common paths to search for executables
     QStringList searchPaths = {
@@ -196,8 +196,8 @@ QString Daemon::getExecutablePath(const QString &appName) {
     
     // Common executable names
     QStringList possibleNames = {
-        appName.toLower() + ".exe",
-        appName.toLower(),
+        app_name.toLower() + ".exe",
+        app_name.toLower(),
     };
     
     // Search in common locations
@@ -214,7 +214,7 @@ QString Daemon::getExecutablePath(const QString &appName) {
     return QString();
 }
 
-QString Daemon::getAppUserModelId(const QString &appName) {
+QString Daemon::getAppUserModelId(const QString &app_name) {
     // Common modern app IDs (this is a simplified version, you might want to expand this)
     static const QMap<QString, QString> knownApps = {
         // Built-in Windows apps (AppUserModelId)
@@ -305,7 +305,7 @@ QString Daemon::getAppUserModelId(const QString &appName) {
         return out;
     };
 
-    QString key = sanitize(appName);
+    QString key = sanitize(app_name);
     return knownApps.value(key);
 }
 
@@ -332,7 +332,7 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
         } else if (const RunScript *script = std::get_if<RunScript>(&event)) {
             qWarning() << "RunScript is not implemented on Windows yet";
         } else if (const AppLaunch *app = std::get_if<AppLaunch>(&event)) {
-            launchApp(app->appName);
+            launch_app(app->app_name);
         }
     }
 
