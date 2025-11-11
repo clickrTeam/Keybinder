@@ -14,6 +14,7 @@ set(COMMON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tray.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_counter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/settings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/temp_file_manager.cpp
 
     # For some reason any header of a QObject needs to be here
     ${CMAKE_CURRENT_SOURCE_DIR}/include/local_server.h

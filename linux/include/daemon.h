@@ -27,7 +27,7 @@ class Daemon : public AbstractDaemon {
     bool is_running = false;
     KeySender key_sender;
 
-    void send_keys_helper(const QList<InputEvent> &vk, int fd);
+    void send_keys_helper(const QList<KeyEvent> &vk, int fd);
     void send_key(int key_code, int state, int fd);
 
   public:
@@ -53,7 +53,7 @@ class Daemon : public AbstractDaemon {
     /// descriptor. For each key press/release, a synchronization (EV_SYN /
     /// SYN_REPORT) event is also sent to mark the end of that event frame.
     ///
-    /// \param vk A QList of InputEvent objects, each representing a keycode and
+    /// \param vk A QList of KeyEvent objects, each representing a keycode and
     ///           whether the key is pressed or released.
     ///
     /// \param fd A uinput file descriptor of a device to send the keys to

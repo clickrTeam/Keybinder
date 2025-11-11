@@ -1,0 +1,47 @@
+{
+  "profile_name": "Default Profile",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "test",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "app_focused",
+            "app_name": "Google Chrome"
+          },
+          "binds": [
+            {
+              "type": "wait",
+              "duration": 3000
+            },
+            {
+              "type": "press_key",
+              "value": "B"
+            },
+            {
+              "type": "release_key",
+              "value": "B"
+            },
+            {
+              "type": "press_key",
+              "value": "A"
+            },
+            {
+              "type": "release_key",
+              "value": "A"
+            },
+            {
+              "type": "press_key",
+              "value": "D"
+            },
+            {
+              "type": "release_key",
+              "value": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
