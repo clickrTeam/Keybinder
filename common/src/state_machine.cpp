@@ -122,7 +122,11 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
                 return std::nullopt;
             },
             [&](const AppTrigger &at) -> std::optional<InputEvent> {
-                return std::nullopt;
+                // Represent app triggers as an InputEvent carrying the app name.
+                // This allows sequences that include app-focus/launch events to
+                // be represented in the state machine instead of dropping
+                // the trigger and causing .value() to throw.
+                return InputEvent::fromApp(at.appName, KeyEventType::AppFocus);
             },
         },
         trigger);

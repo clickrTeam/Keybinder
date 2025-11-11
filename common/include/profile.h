@@ -38,7 +38,7 @@ struct AppTrigger {
     QString appName;  // Name or identifier of the application
     static AppTrigger from_json(const QJsonObject &obj);
     bool operator==(const AppTrigger &other) const noexcept {
-        return appName == other.appName;
+        return appName.toLower().contains(other.appName.toLower()) || other.appName.toLower().contains(appName.toLower());
     }
 };
 
@@ -59,7 +59,7 @@ struct MaximumWait {
 };
 using Timer = std::variant<MinimumWait, MaximumWait>;
 
-using BasicTrigger = std::variant<KeyPress, KeyRelease>;
+using BasicTrigger = std::variant<KeyPress, KeyRelease, AppTrigger>;
 BasicTrigger parse_basic_trigger(const QJsonObject &obj);
 
 using AdvancedTrigger =
