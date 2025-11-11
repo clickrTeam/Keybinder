@@ -34,6 +34,15 @@ struct KeyRelease {
     }
 };
 
+struct AppOpened {
+    QString app_name;
+    static AppOpened from_json(const QJsonObject &obj);
+    bool operator==(const AppOpened &other) const noexcept {
+        return app_name.toLower().contains(other.app_name.toLower()) ||
+               other.app_name.toLower().contains(app_name.toLower());
+    }
+};
+
 struct MinimumWait {
     size_t ms;
     bool operator==(const MinimumWait &other) const noexcept {
@@ -51,11 +60,11 @@ struct MaximumWait {
 };
 using Timer = std::variant<MinimumWait, MaximumWait>;
 
-using BasicTrigger = std::variant<KeyPress, KeyRelease>;
+using BasicTrigger = std::variant<KeyPress, KeyRelease, AppOpened>;
 BasicTrigger parse_basic_trigger(const QJsonObject &obj);
 
 using AdvancedTrigger =
-    std::variant<KeyPress, KeyRelease, MinimumWait, MaximumWait>;
+    std::variant<KeyPress, KeyRelease, AppOpened, MinimumWait, MaximumWait>;
 
 AdvancedTrigger parse_trigger(const QJsonObject &obj);
 

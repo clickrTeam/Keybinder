@@ -207,12 +207,16 @@ Wait Wait::from_json(const QJsonObject &obj) {
 }
 
 RunScript RunScript::from_json(const QJsonObject &obj) {
-
     warn_extra_properties(obj, {"type", "interpreter", "script"});
     return RunScript{
         get_property_as_string(obj, "interpreter"),
         get_property_as_string(obj, "script"),
     };
+}
+
+AppOpened AppOpened::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "app_name"});
+    return AppOpened{get_property_as_string(obj, "app_name")};
 }
 
 BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
@@ -238,9 +242,12 @@ AdvancedTrigger parse_advanced_trigger(const QJsonObject &obj) {
         return MinimumWait::from_json(obj);
     } else if (trigger_type == "maximum_wait") {
         return MaximumWait::from_json(obj);
+    } else if (trigger_type == "app_launch") {
+        return AppOpened::from_json(obj);
+    } else {
+        throw std::invalid_argument(
+            ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
     }
-    throw std::invalid_argument(
-        ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
 }
 QList<Bind> parse_binds(const QJsonArray &json_arr) {
 
