@@ -17,12 +17,24 @@ struct AppFocusedEvent {
     QString app_name;
 };
 
+static QString normalize(const QString &s) {
+    QString out;
+    out.reserve(s.size());
+    for (QChar ch : s) {
+        if (!ch.isSpace()) out.append(ch.toLower());
+    }
+    return out;
+}
+
 inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
-    return a.app_name.toLower().contains(b.app_name.toLower()) || b.app_name.toLower().contains(a.app_name.toLower());
+    QString na = normalize(a.app_name);
+    QString nb = normalize(b.app_name);
+    if (na.isEmpty() || nb.isEmpty()) return false; // adjust if empty should count
+    return na.contains(nb) || nb.contains(na);
 }
 
 inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
-    return ::qHash(e.app_name, seed);
+    return ::qHash("APPS", seed);
 }
 
 struct KeyEvent {
