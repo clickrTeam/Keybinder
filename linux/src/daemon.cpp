@@ -2,6 +2,8 @@
 #include "device_manager.h"
 #include "key_channel.h"
 #include "key_map.h"
+#include "script_runner.h"
+#include "util.h"
 #include <QThread>
 #include <stdexcept>
 
@@ -121,11 +123,11 @@ void Daemon::start() {
 void Daemon::send_outputs(const QList<OutputEvent> &outputs) {
     foreach (OutputEvent event, outputs) {
         std::visit(overloaded{
-                       [&](const KeyEvent &input) {
+                       [&](const KeyEvent &key_event) {
                            bool type =
-                               input->type == KeyEventType::Press ? 1 : 0;
+                               key_event.type == KeyEventType::Press ? 1 : 0;
                            int key_code =
-                               int_to_keycode.find_backward(input->keycode);
+                               int_to_keycode.find_backward(key_event.keycode);
                            send_key(key_code, type, uinput_fd);
                        },
                        [&](const RunScript &script) {
