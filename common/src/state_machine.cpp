@@ -16,7 +16,7 @@ struct StateMetadata {
 };
 std::pair<State, StateMetadata> generate_home_state() {
     return std::make_pair(
-        State{QHash<KeyEvent, Transition>{},
+        State{QHash<InputEvent, Transition>{},
               {
                   .timer_ms = std::nullopt,
                   .outputs = QList<StateMachineOutputEvent>{BasicTranlation{}},
@@ -106,19 +106,22 @@ normailze_sequences(const QList<SequenceTrigger> &sequences) {
     }
     return normalized_sequences;
 }
-std::optional<KeyEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
+std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
     return std::visit(
         overloaded{
-            [&](const KeyPress &kp) -> std::optional<KeyEvent> {
+            [&](const KeyPress &kp) -> std::optional<InputEvent> {
                 return KeyEvent{kp.key_code, KeyEventType::Press};
             },
-            [&](const KeyRelease &kr) -> std::optional<KeyEvent> {
+            [&](const KeyRelease &kr) -> std::optional<InputEvent> {
                 return KeyEvent{kr.key_code, KeyEventType::Release};
             },
-            [&](const MinimumWait &mw) -> std::optional<KeyEvent> {
+            [&](const AppOpened &a) -> std::optional<InputEvent> {
+                return AppOpenEvent{.app_name = a.app_name};
+            },
+            [&](const MinimumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
             },
-            [&](const MaximumWait &mw) -> std::optional<KeyEvent> {
+            [&](const MaximumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
             },
         },
@@ -154,7 +157,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             bool is_second_to_last = i + 2 == sequence_trigger.sequence.size();
             const AdvancedTrigger &trigger = sequence_trigger.sequence[i];
 
-            QHash<KeyEvent, Transition> edges;
+            QHash<InputEvent, Transition> edges;
             Transition fallback{
                 .timer_ms = std::nullopt,
                 .outputs = {},
@@ -164,7 +167,7 @@ std::optional<std::vector<State>> generate_states(const Layer &layer) {
             std::optional<Timer> timer = std::nullopt;
             std::optional<size_t> timer_ms = std::nullopt;
 
-            KeyEvent input_event = trigger_to_input(trigger).value();
+            InputEvent input_event = trigger_to_input(trigger).value();
 
             // Look ahead for a timer as it affects the current transition
             if (!is_last) {
