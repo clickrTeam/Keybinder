@@ -1,5 +1,6 @@
 #pragma once
 #include "abstract_daemon.h"
+#include "app_focus_listener.h"
 #include "key_channel.h"
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -29,8 +30,8 @@ class Daemon : public AbstractDaemon {
     void send_outputs(const QList<OutputEvent> &events) override;
 
   private:
-    void run_script(const RunScript &rs);
     KeySender key_sender;
+    AppFocusListener app_focus_listener;
     CFMutableDictionaryRef matching_dictionary;
     IONotificationPortRef notification_port;
     std::shared_ptr<

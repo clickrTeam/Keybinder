@@ -13,7 +13,20 @@ enum class KeyEventType {
     AppFocus,
 };
 
-struct InputEvent {
+struct AppFocusedEvent {
+    QString app_name;
+};
+
+inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
+    return a.app_name == b.app_name;
+}
+
+inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
+    return ::qHash(e.app_name, seed);
+}
+
+struct KeyEvent {
+    KeyCode keycode;
     KeyEventType type;
 
     // payload: either a KeyCode or an app name string
@@ -34,25 +47,24 @@ struct InputEvent {
     QString appName() const { return std::get<QString>(payload); }     // call only if isApp()
 };
 
-inline bool operator==(const InputEvent &a, const InputEvent &b) {
-    return a.payload == b.payload && a.type == b.type;
+inline bool operator==(const KeyEvent &a, const KeyEvent &b) {
+    return a.keycode == b.keycode && a.type == b.type;
 }
 
-inline uint qHash(const InputEvent &key, uint seed = 0) {
-    uint h = ::qHash(static_cast<int>(key.type), seed);
-    h ^= ::qHash(static_cast<int>(key.payload.index()), seed << 1);
-
-    if (std::holds_alternative<KeyCode>(key.payload)) {
-        h ^= ::qHash(static_cast<int>(std::get<KeyCode>(key.payload)), seed << 2);
-    } else {
-        h ^= ::qHash(std::get<QString>(key.payload), seed << 2);
-    }
-    return h;
+inline uint qHash(const KeyEvent &key, uint seed = 0) {
+    return ::qHash(static_cast<int>(key.keycode), seed) ^
+           ::qHash(static_cast<int>(key.type), seed << 1);
 }
 
+using InputEvent = std::variant<AppFocusedEvent, KeyEvent>;
 
-// Output events can be key events, scripts, or app launches
-using OutputEvent = std::variant<InputEvent, RunScript, AppLaunch>;
+inline uint qHash(const InputEvent &e, uint seed = 0) {
+    return std::visit([&](auto &&arg) { return ::qHash(arg, seed); }, e);
+}
+
+// TODO: eventually these will become differnt however for now they can be the
+// same as we just handle keys
+using OutputEvent = std::variant<KeyEvent, RunScript>;
 
 inline const char *to_string(KeyEventType t) {
     switch (t) {
@@ -67,18 +79,9 @@ inline const char *to_string(KeyEventType t) {
 }
 
 // Usefull for failing tests
-inline std::ostream &operator<<(std::ostream &os, const InputEvent &e) {
-    os << "InputEvent::fromKey( type=" << static_cast<int>(e.type) << ", payload=";
-
-    if (std::holds_alternative<KeyCode>(e.payload)) {
-        os << "KeyCode(" << static_cast<int>(std::get<KeyCode>(e.payload)) << ")";
-    } else if (std::holds_alternative<QString>(e.payload)) {
-        os << "AppName(\"" << std::get<QString>(e.payload).toStdString() << "\")";
-    } else {
-        os << "empty";
-    }
-
-    os << " }";
+inline std::ostream &operator<<(std::ostream &os, const KeyEvent &e) {
+    os << "InputEvent{ keycode=" << static_cast<int>(e.keycode)
+       << ", type=" << to_string(e.type) << " }";
     return os;
 }
 

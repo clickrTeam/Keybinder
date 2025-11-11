@@ -110,23 +110,19 @@ std::optional<InputEvent> trigger_to_input(AdvancedTrigger trigger) noexcept {
     return std::visit(
         overloaded{
             [&](const KeyPress &kp) -> std::optional<InputEvent> {
-                return InputEvent::fromKey(kp.key_code, KeyEventType::Press);
+                return KeyEvent{kp.key_code, KeyEventType::Press};
             },
             [&](const KeyRelease &kr) -> std::optional<InputEvent> {
-                return InputEvent::fromKey(kr.key_code, KeyEventType::Release);
+                return KeyEvent{kr.key_code, KeyEventType::Release};
+            },
+            [&](const AppFocused &a) -> std::optional<InputEvent> {
+                return AppFocusedEvent{.app_name = a.app_name};
             },
             [&](const MinimumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
             },
             [&](const MaximumWait &mw) -> std::optional<InputEvent> {
                 return std::nullopt;
-            },
-            [&](const AppTrigger &at) -> std::optional<InputEvent> {
-                // Represent app triggers as an InputEvent carrying the app name.
-                // This allows sequences that include app-focus/launch events to
-                // be represented in the state machine instead of dropping
-                // the trigger and causing .value() to throw.
-                return InputEvent::fromApp(at.appName, KeyEventType::AppFocus);
             },
         },
         trigger);

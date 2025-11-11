@@ -53,9 +53,7 @@ int main(int argc, char *argv[]) {
     KeyCounter key_counter;
     Profile profile;
 
-#ifdef QT_DEBUG
-    // path = "../../exampleProfiles/numberpad.json";
-#else
+#ifndef QT_DEBUG
     qInstallMessageHandler(myMessageHandler);
 #endif
 
@@ -64,17 +62,19 @@ int main(int argc, char *argv[]) {
         try {
             auto profile_opt = Profile::load_latest();
             if (!profile_opt) {
-                qDebug() << "Could not load latest profile, falling back to default";
+                qDebug()
+                    << "Could not load latest profile, falling back to default";
                 profile = Profile::default_profile();
             } else {
                 profile = *profile_opt;
             }
         } catch (const std::exception &ex) {
             qDebug() << "Exception loading latest profile:" << ex.what()
-            << " — falling back to default";
+                     << " — falling back to default";
             profile = Profile::default_profile();
         } catch (...) {
-            qDebug() << "Unknown exception loading latest profile — falling back to default";
+            qDebug() << "Unknown exception loading latest profile — falling "
+                        "back to default";
             profile = Profile::default_profile();
         }
     } else {

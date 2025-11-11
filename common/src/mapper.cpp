@@ -14,19 +14,19 @@
 namespace {
 // TODO: move into utils or somthing
 InputEvent trigger_to_input(const BasicTrigger &trigger) noexcept {
-    return std::visit(
-        overloaded{
-            [&](const KeyPress &kp) {
-                return InputEvent::fromKey(kp.key_code, KeyEventType::Press);
-            },
-            [&](const KeyRelease &kr) {
-                return InputEvent::fromKey(kr.key_code, KeyEventType::Release);
-            },
-            [&](const AppTrigger &at) {
-                return InputEvent::fromApp(at.appName, KeyEventType::AppFocus);
-            }
-        },
-        trigger);
+    return std::visit(overloaded{
+                          [&](const KeyPress &kp) -> InputEvent {
+                              return KeyEvent{kp.key_code, KeyEventType::Press};
+                          },
+                          [&](const KeyRelease &kr) -> InputEvent {
+                              return KeyEvent{kr.key_code,
+                                              KeyEventType::Release};
+                          },
+                          [&](const AppFocused &e) -> InputEvent {
+                              return AppFocusedEvent{e.app_name};
+                          },
+                      },
+                      trigger);
 }
 } // namespace
 
@@ -98,13 +98,12 @@ void Mapper::queue_binds(const std::vector<Bind> &binds) {
         std::visit(
             overloaded{
                 [&](const PressKey &bind) {
-                    queue_output(InputEvent::fromKey(bind.key_code, KeyEventType::Press),
+                    queue_output(KeyEvent{bind.key_code, KeyEventType::Press},
                                  delay_ms);
                 },
                 [&](const ReleaseKey &bind) {
-                    queue_output(
-                        InputEvent::fromKey(bind.key_code, KeyEventType::Release),
-                        delay_ms);
+                    queue_output(KeyEvent{bind.key_code, KeyEventType::Release},
+                                 delay_ms);
                 },
                 [&](const SwapLayer &bind) { set_layer_inner(bind.new_layer); },
                 [&](const Wait &wait) { delay_ms += wait.ms; },
@@ -142,9 +141,10 @@ void Mapper::start() {
         if (key_opt) {
             InputEvent e = key_opt.value();
             // only count presses
-            if (settings.get_log_key_frequency() &&
-                e.type == KeyEventType::Press) {
-                key_counter.increment(e.key());
+            if (const auto *key = std::get_if<KeyEvent>(&e);
+                key && settings.get_log_key_frequency() &&
+                key->type == KeyEventType::Press) {
+                key_counter.increment(key->keycode);
             }
             process_input(e);
             processed_events_count++;
@@ -187,7 +187,10 @@ void Mapper::apply_transition(const Transition &transition,
                                queue_binds(
                                    basic_maps.at(cur_layer_idx)[*event]);
                            } else if (event) {
-                               queue_output(*event);
+                               if (const auto *key_event =
+                                       std::get_if<KeyEvent>(&*event)) {
+                                   queue_output(*key_event);
+                               }
                            }
                        },
                        [&](const Bind &bind) { queue_binds({bind}); },

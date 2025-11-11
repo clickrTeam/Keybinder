@@ -214,18 +214,9 @@ RunScript RunScript::from_json(const QJsonObject &obj) {
     };
 }
 
-AppTrigger AppTrigger::from_json(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"type", "appName"});
-    return AppTrigger{
-        get_property_as_string(obj, "appName")
-    };
-}
-
-AppLaunch AppLaunch::from_json(const QJsonObject &obj) {
-    warn_extra_properties(obj, {"type", "appName"});
-    return AppLaunch{
-        get_property_as_string(obj, "appName"),
-    };
+AppFocused AppFocused::from_json(const QJsonObject &obj) {
+    warn_extra_properties(obj, {"type", "app_name"});
+    return AppFocused{get_property_as_string(obj, "app_name")};
 }
 
 BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
@@ -235,6 +226,8 @@ BasicTrigger parse_basic_trigger(const QJsonObject &obj) {
         return KeyPress::from_json(obj);
     } else if (trigger_type == "key_release") {
         return KeyRelease::from_json(obj);
+    } else if (trigger_type == "app_focused") {
+        return AppFocused::from_json(obj);
     }
     throw std::invalid_argument(
         ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
@@ -251,11 +244,12 @@ AdvancedTrigger parse_advanced_trigger(const QJsonObject &obj) {
         return MinimumWait::from_json(obj);
     } else if (trigger_type == "maximum_wait") {
         return MaximumWait::from_json(obj);
-    } else if (trigger_type == "app_launch") {
-        return AppTrigger::from_json(obj);
+    } else if (trigger_type == "app_focused") {
+        return AppFocused::from_json(obj);
+    } else {
+        throw std::invalid_argument(
+            ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
     }
-    throw std::invalid_argument(
-        ("Invalid trigger type: " + trigger_type.toStdString()).c_str());
 }
 QList<Bind> parse_binds(const QJsonArray &json_arr) {
 

@@ -69,6 +69,5 @@ bool KeybinderSettings::load_from_json(const QJsonObject &obj) {
 
 bool KeybinderSettings::get_log_key_frequency() {
     std::lock_guard<std::mutex> lock(mutex);
-    qDebug() << "for get do log " << log_key_frequency;
     return log_key_frequency;
 }
