@@ -17,12 +17,16 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QLockFile>
 #include <QLoggingCategory>
 #include <QStringList>
 #include <QTextStream>
 #include <QThread>
 #include <QTimer>
 #include <csignal>
+#include <qcoreapplication.h>
+#include <qlogging.h>
+#include <qtmetamacros.h>
 
 QThread *daemon_thread;
 QThread *mapper_thread;
@@ -48,6 +52,17 @@ void cleanShutdown() {
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+
+    QString lockFilePath = QDir::temp().absoluteFilePath("clickr.lock");
+    QLockFile lockFile(lockFilePath);
+    lockFile.setStaleLockTime(0); // Never consider stale locks valid
+
+    if (!lockFile.tryLock()) {
+        qCritical() << "Tried to run keybinder but another instance is already "
+                       "running.";
+        return 1;
+    }
+
     QString path = "empty";
     KeybinderSettings settings;
     KeyCounter key_counter;
@@ -117,6 +132,7 @@ int main(int argc, char *argv[]) {
                      &QCoreApplication::aboutToQuit,
                      [&logger]() { logger.cleanUp(); });
 
+    // Shutdown when the signal is sent
     Tray tray;
     QObject::connect(&tray, &Tray::shutdown, [&]() { cleanShutdown(); });
 

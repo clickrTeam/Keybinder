@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <linux/input-event-codes.h>
 
-// TODO: ChatGPT generated verify this
 BiMap<uint16_t, KeyCode> int_to_keycode = {
+    // --- Letters ---
     {KEY_A, KeyCode::A},
     {KEY_B, KeyCode::B},
     {KEY_C, KeyCode::C},
@@ -32,7 +32,7 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {KEY_Y, KeyCode::Y},
     {KEY_Z, KeyCode::Z},
 
-    // Digits
+    // --- Number row ---
     {KEY_0, KeyCode::K0},
     {KEY_1, KeyCode::K1},
     {KEY_2, KeyCode::K2},
@@ -44,63 +44,100 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {KEY_8, KeyCode::K8},
     {KEY_9, KeyCode::K9},
 
-    // Special Characters
-    {KEY_SPACE, KeyCode::Space},
-    // TODO: add to keycode
-    {KEY_ENTER, KeyCode::Enter},
-    //  {KEY_ESC, KeyCode::Esc},
-    //  {KEY_ESC, KeyCode::Escape},
-    //  {KEY_TAB, KeyCode::Tab},
-    //  {KEY_LEFTSHIFT, KeyCode::Shift},
-    //  {KEY_LEFTCTRL, KeyCode::Ctrl},
-    //  {KEY_LEFTALT, KeyCode::Alt},
-    {KEY_BACKSPACE, KeyCode::Backspace},
-    //  {KEY_PAUSE, KeyCode::Pause},
-    //  {KEY_CAPSLOCK, KeyCode::CapsLock},
-    //
-    //  // Function Keys
-    //  {KEY_F1, KeyCode::F1},
-    //  {KEY_F2, KeyCode::F2},
-    //  {KEY_F3, KeyCode::F3},
-    //  {KEY_F4, KeyCode::F4},
-    //  {KEY_F5, KeyCode::F5},
-    //  {KEY_F6, KeyCode::F6},
-    //  {KEY_F7, KeyCode::F7},
-    //  {KEY_F8, KeyCode::F8},
-    //  {KEY_F9, KeyCode::F9},
-    //  {KEY_F10, KeyCode::F10},
-    //  {KEY_F11, KeyCode::F11},
-    //  {KEY_F12, KeyCode::F12},
+    // --- Function keys ---
+    {KEY_F1, KeyCode::F1},
+    {KEY_F2, KeyCode::F2},
+    {KEY_F3, KeyCode::F3},
+    {KEY_F4, KeyCode::F4},
+    {KEY_F5, KeyCode::F5},
+    {KEY_F6, KeyCode::F6},
+    {KEY_F7, KeyCode::F7},
+    {KEY_F8, KeyCode::F8},
+    {KEY_F9, KeyCode::F9},
+    {KEY_F10, KeyCode::F10},
+    {KEY_F11, KeyCode::F11},
+    {KEY_F12, KeyCode::F12},
 
-    // // Special Symbols
-    // {"~", KEY_GRAVE},
-    // {"`", KEY_GRAVE},
-    // {"-", KEY_MINUS},
-    // {"=", KEY_EQUAL},
-    // {"[", KEY_LEFTBRACE},
-    // {"]", KEY_RIGHTBRACE},
-    // {"\\", KEY_BACKSLASH},
-    // {";", KEY_SEMICOLON},
-    // {"'", KEY_APOSTROPHE},
-    // {",", KEY_COMMA},
-    // {".", KEY_DOT},
-    // {"/", KEY_SLASH},
-    //
-    // // Arrow Keys
-    // {"Up", KEY_UP},
-    // {"Down", KEY_DOWN},
-    // {"Left", KEY_LEFT},
-    // {"Right", KEY_RIGHT},
-    //
-    // // Other special keys
-    // {"Insert", KEY_INSERT},
-    // {"Delete", KEY_DELETE},
-    // {"Home", KEY_HOME},
-    // {"End", KEY_END},
-    // {"PageUp", KEY_PAGEUP},
-    // {"PageDown", KEY_PAGEDOWN},
-    // {"Cmd", KEY_LEFTMETA},
-    // {"Super", KEY_LEFTMETA},
-    // {"Meta", KEY_LEFTMETA},
-    // {"Menu", KEY_MENU}};
+    // --- Modifiers ---
+    {KEY_LEFTSHIFT, KeyCode::LeftShift},
+    {KEY_RIGHTSHIFT, KeyCode::RightShift},
+    {KEY_LEFTCTRL, KeyCode::LeftControl},
+    {KEY_RIGHTCTRL, KeyCode::RightControl},
+    {KEY_LEFTALT, KeyCode::LeftAlt},
+    {KEY_RIGHTALT, KeyCode::RightAlt},
+    {KEY_LEFTMETA, KeyCode::LeftSuper},
+    {KEY_RIGHTMETA, KeyCode::RightSuper},
+
+    // --- Navigation / Control ---
+    {KEY_ESC, KeyCode::Escape},
+    {KEY_TAB, KeyCode::Tab},
+    {KEY_ENTER, KeyCode::Enter},
+    {KEY_BACKSPACE, KeyCode::Backspace},
+    {KEY_SPACE, KeyCode::Space},
+    {KEY_INSERT, KeyCode::Insert},
+    {KEY_DELETE, KeyCode::Delete},
+    {KEY_HOME, KeyCode::Home},
+    {KEY_END, KeyCode::End},
+    {KEY_PAGEUP, KeyCode::PageUp},
+    {KEY_PAGEDOWN, KeyCode::PageDown},
+    {KEY_SYSRQ, KeyCode::PrintScreen}, // KEY_PRINT
+    {KEY_PAUSE, KeyCode::Pause},
+    {KEY_COMPOSE, KeyCode::Menu}, // KEY_MENU
+    {KEY_CAPSLOCK, KeyCode::CapsLock},
+    {KEY_NUMLOCK, KeyCode::NumLock},
+    {KEY_SCROLLLOCK, KeyCode::ScrollLock},
+
+    // --- Arrow keys ---
+    {KEY_UP, KeyCode::ArrowUp},
+    {KEY_DOWN, KeyCode::ArrowDown},
+    {KEY_LEFT, KeyCode::ArrowLeft},
+    {KEY_RIGHT, KeyCode::ArrowRight},
+
+    // --- Symbols / Punctuation ---
+    {KEY_MINUS, KeyCode::Minus},
+    {KEY_EQUAL, KeyCode::Equals},
+    {KEY_LEFTBRACE, KeyCode::LeftBracket},
+    {KEY_RIGHTBRACE, KeyCode::RightBracket},
+    {KEY_BACKSLASH, KeyCode::BackSlash},
+    {KEY_SEMICOLON, KeyCode::Semicolon},
+    {KEY_APOSTROPHE, KeyCode::Apostrophe},
+    {KEY_GRAVE, KeyCode::Grave},
+    {KEY_COMMA, KeyCode::Comma},
+    {KEY_DOT, KeyCode::Period},
+    {KEY_SLASH, KeyCode::ForwardSlash},
+
+    // --- Numpad ---
+    {KEY_KP0, KeyCode::Numpad0},
+    {KEY_KP1, KeyCode::Numpad1},
+    {KEY_KP2, KeyCode::Numpad2},
+    {KEY_KP3, KeyCode::Numpad3},
+    {KEY_KP4, KeyCode::Numpad4},
+    {KEY_KP5, KeyCode::Numpad5},
+    {KEY_KP6, KeyCode::Numpad6},
+    {KEY_KP7, KeyCode::Numpad7},
+    {KEY_KP8, KeyCode::Numpad8},
+    {KEY_KP9, KeyCode::Numpad9},
+    {KEY_KPPLUS, KeyCode::NumpadAdd},
+    {KEY_KPMINUS, KeyCode::NumpadSubtract},
+    {KEY_KPASTERISK, KeyCode::NumpadMultiply},
+    {KEY_KPSLASH, KeyCode::NumpadDivide},
+    {KEY_KPENTER, KeyCode::NumpadEnter},
+    {KEY_KPDOT, KeyCode::NumpadDecimal},
+
+    // --- Media / System ---
+    {KEY_VOLUMEUP, KeyCode::VolumeUp},
+    {KEY_VOLUMEDOWN, KeyCode::VolumeDown},
+    {KEY_MUTE, KeyCode::Mute},
+    {KEY_NEXTSONG, KeyCode::MediaNext},
+    {KEY_PREVIOUSSONG, KeyCode::MediaPrev},
+    {KEY_PLAYPAUSE, KeyCode::MediaPlayPause},
+    {KEY_STOPCD, KeyCode::MediaStop},
+    {KEY_HOMEPAGE, KeyCode::BrowserHome},
+    {KEY_BACK, KeyCode::BrowserBack},
+    {KEY_FORWARD, KeyCode::BrowserForward},
+    {KEY_REFRESH, KeyCode::BrowserRefresh},
+    {KEY_STOP, KeyCode::BrowserStop},
+    {KEY_MAIL, KeyCode::Mail},
+    {KEY_CALC, KeyCode::Calculator},
+    {KEY_COMPUTER, KeyCode::Computer},
 };

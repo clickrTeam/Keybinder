@@ -2,8 +2,8 @@
 #include "bi_map.h"
 #include <cstdint>
 
-// TODO: implement more keys
 enum class KeyCode : std::uint16_t {
+    // Letters
     A,
     B,
     C,
@@ -30,6 +30,8 @@ enum class KeyCode : std::uint16_t {
     X,
     Y,
     Z,
+
+    // Numbers (Top Row)
     K0,
     K1,
     K2,
@@ -40,10 +42,115 @@ enum class KeyCode : std::uint16_t {
     K7,
     K8,
     K9,
-    Space,
+
+    // Function Keys
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    F13,
+    F14,
+    F15,
+    F16,
+    F17,
+    F18,
+    F19,
+    F20,
+    F21,
+    F22,
+    F23,
+    F24,
+
+    // Modifiers
+    LeftShift,
+    RightShift,
+    LeftControl,
+    RightControl,
+    LeftAlt,
+    RightAlt,
+    LeftSuper, // Windows / Command key
+    RightSuper,
     CapsLock,
+    NumLock,
+    ScrollLock,
+
+    // Navigation / Editing
+    Escape,
+    Tab,
     Enter,
     Backspace,
+    Space,
+    Insert,
+    Delete,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+    PrintScreen,
+    Pause,
+    Menu, // Context menu key
+
+    // Arrows
+    ArrowUp,
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+
+    // Symbols / Punctuation
+    Minus,
+    Equals,
+    LeftBracket,
+    RightBracket,
+    BackSlash,
+    Semicolon,
+    Apostrophe,
+    Grave,
+    Comma,
+    Period,
+    ForwardSlash,
+
+    // Numpad Keys
+    Numpad0,
+    Numpad1,
+    Numpad2,
+    Numpad3,
+    Numpad4,
+    Numpad5,
+    Numpad6,
+    Numpad7,
+    Numpad8,
+    Numpad9,
+    NumpadAdd,
+    NumpadSubtract,
+    NumpadMultiply,
+    NumpadDivide,
+    NumpadEnter,
+    NumpadDecimal,
+
+    // Media Keys
+    VolumeUp,
+    VolumeDown,
+    Mute,
+    MediaPlayPause,
+    MediaNext,
+    MediaPrev,
+    MediaStop,
+    BrowserBack,
+    BrowserForward,
+    BrowserRefresh,
+    BrowserStop,
+    BrowserHome,
+    Mail,
+    Calculator,
+    Computer
 };
 
 extern BiMap<QString, KeyCode> str_to_keycode;
