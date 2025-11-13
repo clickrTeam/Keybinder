@@ -2,8 +2,9 @@
 #include "key_code.h"
 #include <windows.h>
 
+// TODO ChatGPT generated please verify
 BiMap<UINT, KeyCode> int_to_keycode = {
-    // Letters
+    // --- Letters ---
     {'A', KeyCode::A},
     {'B', KeyCode::B},
     {'C', KeyCode::C},
@@ -31,7 +32,7 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {'Y', KeyCode::Y},
     {'Z', KeyCode::Z},
 
-    // Digits
+    // --- Number Row ---
     {'0', KeyCode::K0},
     {'1', KeyCode::K1},
     {'2', KeyCode::K2},
@@ -43,72 +44,99 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {'8', KeyCode::K8},
     {'9', KeyCode::K9},
 
-    // Special Characters
+    // --- Function Keys ---
+    {VK_F1, KeyCode::F1},
+    {VK_F2, KeyCode::F2},
+    {VK_F3, KeyCode::F3},
+    {VK_F4, KeyCode::F4},
+    {VK_F5, KeyCode::F5},
+    {VK_F6, KeyCode::F6},
+    {VK_F7, KeyCode::F7},
+    {VK_F8, KeyCode::F8},
+    {VK_F9, KeyCode::F9},
+    {VK_F10, KeyCode::F10},
+    {VK_F11, KeyCode::F11},
+    {VK_F12, KeyCode::F12},
+
+    // --- Modifiers ---
+    {VK_LSHIFT, KeyCode::LeftShift},
+    {VK_RSHIFT, KeyCode::RightShift},
+    {VK_LCONTROL, KeyCode::LeftControl},
+    {VK_RCONTROL, KeyCode::RightControl},
+    {VK_LMENU, KeyCode::LeftAlt},
+    {VK_RMENU, KeyCode::RightAlt},
+    {VK_LWIN, KeyCode::LeftSuper},
+    {VK_RWIN, KeyCode::RightSuper},
+
+    // --- Navigation / Control ---
+    {VK_ESCAPE, KeyCode::Escape},
+    {VK_TAB, KeyCode::Tab},
+    {VK_RETURN, KeyCode::Enter},
+    {VK_BACK, KeyCode::Backspace},
     {VK_SPACE, KeyCode::Space},
-    // {VK_RETURN, "Enter"},
-    // {VK_ESCAPE, "Esc"},
-    // {VK_ESCAPE, "Escape"},
-    // {VK_TAB, "Tab"},
-    // {VK_SHIFT, "Shift"},
-    // {VK_CONTROL, "Ctrl"},
-    // {VK_MENU, "Alt"},
-    // {VK_BACK, "Backspace"},
-    // {VK_PAUSE, "Pause"},
-    // {VK_CAPITAL, "CapsLock"},
-    //
-    // // Function Keys
-    // {VK_F1, "F1"},
-    // {VK_F2, "F2"},
-    // {VK_F3, "F3"},
-    // {VK_F4, "F4"},
-    // {VK_F5, "F5"},
-    // {VK_F6, "F6"},
-    // {VK_F7, "F7"},
-    // {VK_F8, "F8"},
-    // {VK_F9, "F9"},
-    // {VK_F10, "F10"},
-    // {VK_F11, "F11"},
-    // {VK_F12, "F12"},
-    //
-    // // Special Symbols
-    // {VK_OEM_3, "~"},
-    // {VK_OEM_3, "`"},
-    // {VK_OEM_MINUS, "-"},
-    // {VK_OEM_PLUS, "="},
-    // {VK_OEM_4, "["},
-    // {VK_OEM_6, "]"},
-    // {VK_OEM_5, "\\"},
-    // {VK_OEM_1, ";"},
-    // {VK_OEM_7, "'"},
-    // {VK_OEM_COMMA, ","},
-    // {VK_OEM_PERIOD, "."},
-    // {VK_OEM_2, "/"},
-    //
-    // // Arrow Keys
-    // {VK_UP, "Up"},
-    // {VK_DOWN, "Down"},
-    // {VK_LEFT, "Left"},
-    // {VK_RIGHT, "Right"},
-    //
-    // // Other special keys
-    // {VK_INSERT, "Insert"},
-    // {VK_DELETE, "Delete"},
-    // {VK_HOME, "Home"},
-    // {VK_END, "End"},
-    // {VK_PRIOR, "PageUp"},
-    // {VK_NEXT, "PageDown"},
-    // {VK_LWIN, "Cmd"},
-    // {VK_LMENU},
-    // "Alt"};
-    //
-    //-            // Special Characters with directions
-    // { "Shift", VK_SHIFT },
-    // { "ShiftLeft", VK_LSHIFT },
-    // { "ShiftRight", VK_RSHIFT },
-    // { "Ctrl", VK_CONTROL },
-    // { "CtrlLeft", VK_LCONTROL },
-    // { "CtrlRight", VK_RCONTROL },
-    // { "Alt", VK_MENU },
-    // { "AltLeft", VK_LMENU },
-    // { "AltRight", VK_RMENU },
-};
+    {VK_INSERT, KeyCode::Insert},
+    {VK_DELETE, KeyCode::Delete},
+    {VK_HOME, KeyCode::Home},
+    {VK_END, KeyCode::End},
+    {VK_PRIOR, KeyCode::PageUp},
+    {VK_NEXT, KeyCode::PageDown},
+    {VK_SNAPSHOT, KeyCode::PrintScreen},
+    {VK_PAUSE, KeyCode::Pause},
+    {VK_APPS, KeyCode::Menu},
+    {VK_CAPITAL, KeyCode::CapsLock},
+    {VK_NUMLOCK, KeyCode::NumLock},
+    {VK_SCROLL, KeyCode::ScrollLock},
+
+    // --- Arrow Keys ---
+    {VK_UP, KeyCode::ArrowUp},
+    {VK_DOWN, KeyCode::ArrowDown},
+    {VK_LEFT, KeyCode::ArrowLeft},
+    {VK_RIGHT, KeyCode::ArrowRight},
+
+    // --- Symbols / Punctuation ---
+    {VK_OEM_MINUS, KeyCode::Minus},
+    {VK_OEM_PLUS, KeyCode::Equals},
+    {VK_OEM_4, KeyCode::LeftBracket},
+    {VK_OEM_6, KeyCode::RightBracket},
+    {VK_OEM_5, KeyCode::Backslash},
+    {VK_OEM_1, KeyCode::Semicolon},
+    {VK_OEM_7, KeyCode::Apostrophe},
+    {VK_OEM_3, KeyCode::Grave},
+    {VK_OEM_COMMA, KeyCode::Comma},
+    {VK_OEM_PERIOD, KeyCode::Period},
+    {VK_OEM_2, KeyCode::Slash},
+
+    // --- Numpad ---
+    {VK_NUMPAD0, KeyCode::Numpad0},
+    {VK_NUMPAD1, KeyCode::Numpad1},
+    {VK_NUMPAD2, KeyCode::Numpad2},
+    {VK_NUMPAD3, KeyCode::Numpad3},
+    {VK_NUMPAD4, KeyCode::Numpad4},
+    {VK_NUMPAD5, KeyCode::Numpad5},
+    {VK_NUMPAD6, KeyCode::Numpad6},
+    {VK_NUMPAD7, KeyCode::Numpad7},
+    {VK_NUMPAD8, KeyCode::Numpad8},
+    {VK_NUMPAD9, KeyCode::Numpad9},
+    {VK_ADD, KeyCode::NumpadAdd},
+    {VK_SUBTRACT, KeyCode::NumpadSubtract},
+    {VK_MULTIPLY, KeyCode::NumpadMultiply},
+    {VK_DIVIDE, KeyCode::NumpadDivide},
+    {VK_DECIMAL, KeyCode::NumpadDecimal},
+    {VK_RETURN, KeyCode::NumpadEnter}, // Shared Enter mapping for Numpad
+
+    // --- Media / System ---
+    {VK_VOLUME_UP, KeyCode::VolumeUp},
+    {VK_VOLUME_DOWN, KeyCode::VolumeDown},
+    {VK_VOLUME_MUTE, KeyCode::Mute},
+    {VK_MEDIA_NEXT_TRACK, KeyCode::MediaNext},
+    {VK_MEDIA_PREV_TRACK, KeyCode::MediaPrev},
+    {VK_MEDIA_PLAY_PAUSE, KeyCode::MediaPlayPause},
+    {VK_MEDIA_STOP, KeyCode::MediaStop},
+    {VK_BROWSER_BACK, KeyCode::BrowserBack},
+    {VK_BROWSER_FORWARD, KeyCode::BrowserForward},
+    {VK_BROWSER_REFRESH, KeyCode::BrowserRefresh},
+    {VK_BROWSER_STOP, KeyCode::BrowserStop},
+    {VK_BROWSER_HOME, KeyCode::BrowserHome},
+    {VK_LAUNCH_MAIL, KeyCode::Mail},
+    {VK_LAUNCH_APP2, KeyCode::Calculator}, // Typically calculator
+    {VK_LAUNCH_APP1, KeyCode::Computer}};
