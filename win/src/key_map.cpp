@@ -98,13 +98,13 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {VK_OEM_PLUS, KeyCode::Equals},
     {VK_OEM_4, KeyCode::LeftBracket},
     {VK_OEM_6, KeyCode::RightBracket},
-    {VK_OEM_5, KeyCode::Backslash},
+    {VK_OEM_5, KeyCode::BackSlash},
     {VK_OEM_1, KeyCode::Semicolon},
     {VK_OEM_7, KeyCode::Apostrophe},
     {VK_OEM_3, KeyCode::Grave},
     {VK_OEM_COMMA, KeyCode::Comma},
     {VK_OEM_PERIOD, KeyCode::Period},
-    {VK_OEM_2, KeyCode::Slash},
+    {VK_OEM_2, KeyCode::ForwardSlash},
 
     // --- Numpad ---
     {VK_NUMPAD0, KeyCode::Numpad0},
