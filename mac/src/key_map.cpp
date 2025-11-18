@@ -143,17 +143,4 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {0x81, KeyCode::VolumeDown},
     {0x7f, KeyCode::Mute},
 
-    // TODO: The following keys are on the Consumer usage page (0x0C) and will not be recognized
-    // by the current daemon implementation, which only listens to the Keyboard/Keypad page (0x07).
-    // {0xcd, KeyCode::MediaPlayPause},
-    // {0xb5, KeyCode::MediaNext},
-    // {0xb6, KeyCode::MediaPrev},
-    // {0xb7, KeyCode::MediaStop},
-    // {0x0224, KeyCode::BrowserBack},
-    // {0x0225, KeyCode::BrowserForward},
-    // {0x0227, KeyCode::BrowserRefresh},
-    // {0x0223, KeyCode::BrowserHome},
-    // {0x018a, KeyCode::Mail},
-    // {0x0192, KeyCode::Calculator},
-    // {0x0194, KeyCode::Computer},
 };
