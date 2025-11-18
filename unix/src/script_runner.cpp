@@ -6,7 +6,7 @@
 
 extern char **environ;
 
-TempFileManager temp_file_manager(".sh");
+TempFileManager temp_file_manager;
 
 bool run_script(const QString &interpreter, const QString &script) {
     QString temp_path = temp_file_manager.get_temp_file(script, script);

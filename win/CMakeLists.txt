@@ -2,6 +2,7 @@ set(PLATFORM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/signal_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_map.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/script_runner.cpp
     PARENT_SCOPE
 )
 
