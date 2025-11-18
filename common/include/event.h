@@ -17,11 +17,13 @@ struct AppFocusedEvent {
 };
 
 inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
-    return a.app_name == b.app_name;
+    const auto al = a.app_name.toLower();
+    const auto bl = b.app_name.toLower();
+    return al.contains(bl) || bl.contains(al);
 }
 
 inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
-    return ::qHash(e.app_name, seed);
+    return ::qHash("APP", seed); // Required to match apps that are not complete matches.
 }
 
 struct KeyEvent {

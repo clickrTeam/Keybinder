@@ -1,0 +1,37 @@
+{
+  "profile_name": "App Controls",
+  "default_layer": 0,
+  "layers": [
+    {
+      "layer_name": "default",
+      "remappings": [
+        {
+          "trigger": {
+            "type": "app_focused",
+            "app_name": "brave"
+          },
+          "binds": [
+            {
+                "interpreter": "cmd",
+                "script": "code",
+                "type": "run_script"
+            }
+          ]
+        },
+        {
+          "trigger": {
+            "type": "app_focused",
+            "app_name": "notepad"
+          },
+          "binds": [
+            {
+                "interpreter": "cmd",
+                "script": "code",
+                "type": "run_script"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
