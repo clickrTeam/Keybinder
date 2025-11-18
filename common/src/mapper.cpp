@@ -9,6 +9,7 @@
 #include <mutex>
 #include <optional>
 #include <profile.h>
+#include <qthread.h>
 #include <vector>
 
 namespace {
@@ -120,7 +121,7 @@ void Mapper::queue_output(OutputEvent e, uint64_t delay = 0) {
 
 void Mapper::start() {
     std::optional<std::chrono::milliseconds> timeout;
-    while (!stopped) {
+    while (!stopped && !QThread::currentThread()->isInterruptionRequested()) {
         auto key_opt = this->key_receiver.wait_key(timeout);
         // It is important to not aquire the mutex while we are waiting for the
         // key
@@ -130,6 +131,7 @@ void Mapper::start() {
             cur_state.timer_transition) {
             apply_transition(*cur_state.timer_transition);
         }
+
         if (key_opt) {
             InputEvent e = key_opt.value();
             // only count presses
@@ -144,7 +146,7 @@ void Mapper::start() {
         check_queued_events();
 
         // TODO: right now the sleep is hardcoded to 10 ms which is probably
-        // fine but maybe a differnt value is better
+        // fine but maybe a different value is better
         timeout = current_timer || !queued_events.empty()
                       ? std::optional(std::chrono::milliseconds(10))
                       : std::optional(std::chrono::milliseconds(1000));
@@ -196,7 +198,24 @@ void Mapper::apply_transition(const Transition &transition,
 }
 
 void Mapper::process_input(InputEvent e) {
+    // If paused: bypass state machine and forward the event to daemon
+    // immediately.
+    if (paused.load()) {
+        // Convert input event into a list of OutputEvent and send directly.
+        // We only have a few event types (KeyEvent, AppFocusedEvent, etc).
+        QList<OutputEvent> outs;
 
+        if (const auto *ke = std::get_if<KeyEvent>(&e)) {
+            outs.append(*ke);
+        }
+
+        if (!outs.isEmpty()) {
+            daemon.send_outputs(outs);
+        }
+        return;
+    }
+
+    // Normal behavior: run the state machine and apply transitions
     const State &cur_state = states.at(cur_layer_idx).at(cur_state_idx);
     const Transition &transition = cur_state.edges.contains(e)
                                        ? cur_state.edges[e]
@@ -229,7 +248,28 @@ void Mapper::check_queued_events() {
         queued_events.resize(std::distance(queued_events.begin(), mid));
     }
 }
-void Mapper::stop() { stopped = true; }
+void Mapper::stop() {
+    stopped = true;
+    key_receiver.close();
+}
+
+void Mapper::pause() {
+    std::lock_guard lock_guard(mtx);
+    paused.store(true);
+    // Drop any queued remapped outputs
+    queued_events.clear();
+    // Cancel any timers so we don't re-enter transitions while paused
+    current_timer.reset();
+    qDebug() << "Mapper paused";
+}
+
+void Mapper::resume() {
+    std::lock_guard lock_guard(mtx);
+    paused.store(false);
+    qDebug() << "Mapper resumed";
+}
+
+bool Mapper::is_paused() const { return paused.load(); }
 
 bool Mapper::waiting_for_timer() {
     std::lock_guard lock_guard(mtx);

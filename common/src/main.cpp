@@ -30,6 +30,7 @@
 
 QThread *daemon_thread;
 QThread *mapper_thread;
+Mapper *mapper_ptr;
 
 void cleanShutdown() {
     qDebug() << "Shutting down...";
@@ -42,13 +43,23 @@ void cleanShutdown() {
     }
 
     if (mapper_thread) {
-        mapper_thread->requestInterruption();
-        mapper_thread->quit();
+        // Ask mapper to stop first (so its loop can exit)
+        if (mapper_ptr) {
+            mapper_ptr->stop();
+        } else {
+            mapper_thread->requestInterruption();
+            mapper_thread->quit();
+        }
+
         mapper_thread->wait();
     }
 
     QApplication::quit();
 }
+
+void pause_mapper() { mapper_ptr->pause(); }
+
+void resume_mapper() { mapper_ptr->resume(); }
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -114,6 +125,7 @@ int main(int argc, char *argv[]) {
                                      GenericIndicator::BOTTOM_RIGHT, 1000);
             });
         });
+    mapper_ptr = &mapper;
 
     // I am not sure we will want to use qthreads in this context. A std::thread
     // may be better as it does not run an event loop which I could imagine
@@ -135,6 +147,8 @@ int main(int argc, char *argv[]) {
     // Shutdown when the signal is sent
     Tray tray;
     QObject::connect(&tray, &Tray::shutdown, [&]() { cleanShutdown(); });
+    QObject::connect(&tray, &Tray::paused, [&]() { pause_mapper(); });
+    QObject::connect(&tray, &Tray::resumed, [&]() { resume_mapper(); });
 
     QObject::connect(&settings, &KeybinderSettings::settings_changed, [&]() {
         if (!settings.get_log_key_frequency()) {

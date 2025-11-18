@@ -26,6 +26,9 @@ class Mapper {
     bool waiting_for_timer();
     void stop();
     size_t processed_events();
+    void pause();
+    void resume();
+    bool is_paused() const;
 
   private:
     void queue_binds(const std::vector<Bind> &);
@@ -53,5 +56,6 @@ class Mapper {
     std::vector<std::pair<uint64_t, OutputEvent>> queued_events;
 
     std::atomic<bool> stopped = false;
+    std::atomic<bool> paused = false;
     std::optional<std::function<void(QString)>> layer_changed_callback;
 };
