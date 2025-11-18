@@ -2,12 +2,15 @@
 #include "event.h"
 #include "key_channel.h"
 #include "key_map.h"
+#include "script_runner.h"
+#include "util.h"
 #include <QCoreApplication>
 #include <QtCore/qlogging.h>
 #include <windows.h>
 #include <winuser.h>
 
 HHOOK kbd = NULL; // Global hook handle
+HWINEVENTHOOK event_hook = NULL; // Global event_hook hook handle
 KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
     0x1234ABCD; // allowed collisions otherwise,
@@ -17,9 +20,20 @@ Daemon::Daemon(KeySender key_sender_tmp) {
     key_sender = key_sender_tmp;
     qDebug() << "Daemon created";
     qDebug() << "Starting Win systems";
+
     kbd = SetWindowsHookEx(WH_KEYBOARD_LL, &Daemon::HookProc, 0, 0);
     if (!kbd) {
-        qCritical() << "Failed to install keyboard hook!";
+        qCritical() << "[WIN] Failed to install keyboard hook!";
+        return;
+    }
+
+    
+    // Install shell hook for monitoring app launches
+    event_hook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+                           NULL, WinEventProc, 0, 0,
+                           WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    if (!event_hook) {
+        qCritical() << "[WIN] Failed to install Event hook!";
         return;
     }
     // idHook, HookProc, Hinstance - N/I, dwThreadId - N/I
@@ -29,7 +43,7 @@ Daemon::Daemon(KeySender key_sender_tmp) {
 Daemon::~Daemon() { qDebug() << "Daemon destroyed"; }
 
 void Daemon::start() {
-    qDebug() << "Daemon started";
+    qDebug() << "[WIN] Daemon started";
     qDebug() << "Win, message pump starting";
     // message loop - spin until the user presses a key, somehow a common
     // practice in windows programming. aka message pump
@@ -47,6 +61,11 @@ void Daemon::cleanup() {
         UnhookWindowsHookEx(kbd);
         kbd = NULL;
         qDebug() << "Keyboard hook uninstalled.";
+    }    
+    if (event_hook) {
+        UnhookWinEvent(event_hook);
+        event_hook = NULL;
+        qDebug() << "event_hook hook uninstalled.";
     }
     qDebug() << "Daemon cleaned up";
 }
@@ -59,21 +78,26 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
 
     for (int i = 0; i < vk.count(); ++i) {
         const OutputEvent &event = vk[i];
-        if (const KeyEvent *v = std::get_if<KeyEvent>(&event)) {
-            INPUT input;
-            input.type = INPUT_KEYBOARD;
-            input.ki.wVk = int_to_keycode.find_backward(v->keycode);
-            // identify key so we can ignore it.
-            input.ki.dwExtraInfo = InfoIdentifier;
-            if (v->type == KeyEventType::Press) {
-                input.ki.dwFlags = 0;
-            } else {
-                input.ki.dwFlags = KEYEVENTF_KEYUP;
-            }
-            inputs.append(input);
-        } else {
-            qWarning() << "RunScript is not implemented on Windows yet";
-        }
+        std::visit(overloaded{
+                       [&](const KeyEvent &key_event) {
+                           INPUT input;
+                           input.type = INPUT_KEYBOARD;
+                           input.ki.wVk =
+                               int_to_keycode.find_backward(key_event.keycode);
+                           // identify key so we can ignore it.
+                           input.ki.dwExtraInfo = InfoIdentifier;
+                           if (key_event.type == KeyEventType::Press) {
+                               input.ki.dwFlags = 0;
+                           } else {
+                               input.ki.dwFlags = KEYEVENTF_KEYUP;
+                           }
+                           inputs.append(input);
+                       },
+                       [&](const RunScript &script) {
+                           run_script(script.interpreter, script.script);
+                       },
+                   },
+                   event);
     }
 
     UINT sent = SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
@@ -82,6 +106,25 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
     } else {
         qDebug() << "Keys sent!";
     }
+}
+
+void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
+                                   LONG idObject, LONG idChild, DWORD, DWORD) {
+    if (event != EVENT_SYSTEM_FOREGROUND) return;
+    if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF) return;
+
+    wchar_t className[256] = {0};
+    wchar_t windowTitle[512] = {0};
+
+    GetClassNameW(hwnd, className, _countof(className));
+    GetWindowTextW(hwnd, windowTitle, _countof(windowTitle));
+
+    QString app_name = QString::fromWCharArray(windowTitle);
+    if (app_name.isEmpty()) app_name = QString::fromWCharArray(className);
+
+    qDebug() << "Window activated/focused:" << app_name;
+
+    key_sender.send_key(AppFocusedEvent{app_name});
 }
 
 LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {

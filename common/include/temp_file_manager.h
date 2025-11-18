@@ -1,3 +1,4 @@
+// temp_file_manager.h
 #pragma once
 
 #include <QHash>
@@ -6,13 +7,12 @@
 
 class TempFileManager {
   public:
-    explicit TempFileManager(const QString &extension);
+    TempFileManager() = default;
 
-    // Returns the path to a temp file containing ''
-    QString get_temp_file(const QString &key, const QString &content);
+    QString get_temp_file(const QString &key, const QString &content,
+                          const QString &ext = QString());
 
   private:
-    QString extension;
     std::mutex mutex;
     QHash<QString, QString> temp_files;
 };
