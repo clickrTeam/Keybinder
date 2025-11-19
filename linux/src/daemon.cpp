@@ -168,8 +168,4 @@ void Daemon::send_key(int key_code, int state, int fd) {
     event.code = SYN_REPORT;
     event.value = 0; // This value is not used but is set to 0 by convention
     write(fd, &event, sizeof(event)); // Send the event
-
-    const char* state_str = (state == 0) ? "released" : 
-                           (state == 1) ? "pressed" : "repeated";
-    qDebug() << "Key" << state_str << ":" << key_code;
 }
