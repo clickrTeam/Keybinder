@@ -104,6 +104,7 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {VK_OEM_3, KeyCode::Grave},
     {VK_OEM_COMMA, KeyCode::Comma},
     {VK_OEM_PERIOD, KeyCode::Period},
+    {VK_OEM_2, KeyCode::ForwardSlash},
 
     // --- Numpad ---
     {VK_NUMPAD0, KeyCode::Numpad0},

@@ -23,7 +23,8 @@ inline bool operator==(const AppFocusedEvent &a, const AppFocusedEvent &b) {
 }
 
 inline uint qHash(const AppFocusedEvent &e, uint seed = 0) {
-    return ::qHash("APP", seed); // Required to match apps that are not complete matches.
+    return ::qHash(
+        "APP", seed); // Required to match apps that are not complete matches.
 }
 
 struct KeyEvent {
