@@ -202,7 +202,6 @@ void Mapper::process_input(InputEvent e) {
     // immediately.
     if (paused.load()) {
         // Convert input event into a list of OutputEvent and send directly.
-        // We only have a few event types (KeyEvent, AppFocusedEvent, etc).
         QList<OutputEvent> outs;
 
         if (const auto *ke = std::get_if<KeyEvent>(&e)) {
