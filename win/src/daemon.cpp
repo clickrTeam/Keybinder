@@ -9,7 +9,7 @@
 #include <windows.h>
 #include <winuser.h>
 
-HHOOK kbd = NULL; // Global hook handle
+HHOOK kbd = NULL;                // Global hook handle
 HWINEVENTHOOK event_hook = NULL; // Global event_hook hook handle
 KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
@@ -27,11 +27,10 @@ Daemon::Daemon(KeySender key_sender_tmp) {
         return;
     }
 
-    
     // Install shell hook for monitoring app launches
-    event_hook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
-                           NULL, WinEventProc, 0, 0,
-                           WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    event_hook = SetWinEventHook(
+        EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, WinEventProc, 0,
+        0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
     if (!event_hook) {
         qCritical() << "[WIN] Failed to install Event hook!";
         return;
@@ -61,7 +60,7 @@ void Daemon::cleanup() {
         UnhookWindowsHookEx(kbd);
         kbd = NULL;
         qDebug() << "Keyboard hook uninstalled.";
-    }    
+    }
     if (event_hook) {
         UnhookWinEvent(event_hook);
         event_hook = NULL;
@@ -110,8 +109,10 @@ void Daemon::send_outputs(const QList<OutputEvent> &vk) {
 
 void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
                                    LONG idObject, LONG idChild, DWORD, DWORD) {
-    if (event != EVENT_SYSTEM_FOREGROUND) return;
-    if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF) return;
+    if (event != EVENT_SYSTEM_FOREGROUND)
+        return;
+    if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF)
+        return;
 
     wchar_t className[256] = {0};
     wchar_t windowTitle[512] = {0};
@@ -120,7 +121,8 @@ void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
     GetWindowTextW(hwnd, windowTitle, _countof(windowTitle));
 
     QString app_name = QString::fromWCharArray(windowTitle);
-    if (app_name.isEmpty()) app_name = QString::fromWCharArray(className);
+    if (app_name.isEmpty())
+        app_name = QString::fromWCharArray(className);
 
     qDebug() << "Window activated/focused:" << app_name;
 
