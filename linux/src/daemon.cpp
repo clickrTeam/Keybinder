@@ -92,41 +92,27 @@ void Daemon::start() {
         struct input_event event;
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0) {
             if (event.type == EV_KEY) {
-                KeyEvent e;
-                e.keycode = int_to_keycode.find_forward(event.code);
-                
-                if (event.value == 1) {
-                    e.type = KeyEventType::Press;
-                } else if (event.value == 2) {
-                    // Key repeat - treat as press
-                    e.type = KeyEventType::Press;
-                } else {
-                    e.type = KeyEventType::Release;
-                }
+                if (int_to_keycode.contains_forward(event.code)) {
+                    KeyEvent e;
+                    e.keycode = int_to_keycode.find_forward(event.code);
+                    e.type = (event.value == 1) ? KeyEventType::Press
+                                                : KeyEventType::Release;
 
-                if (key_sender.send_key(e)) {
-                    // Key was mapped/suppressed by the mapper
-                    continue;
-                } else {
-                    // Don't batch - send each event as it arrives to maintain timing
-                    int key_code = int_to_keycode.find_backward(e.keycode);
-                    int state = (e.type == KeyEventType::Press) ? 1 : 0;
-                    
-                    // For repeat events, use state = 2
-                    if (event.value == 2) {
-                        state = 2;
+                    if (key_sender.send_key(e)) {
+                        // Suppressed by the mapper (i.e. replaced/mapped to
+                        // something else)
+                        continue;
+                    } else {
+                        // Inject original key if not mapped
+                        event_list.append(e);
+                        send_outputs(event_list);
+                        event_list.clear();
                     }
-                    
-                    send_key(key_code, state, uinput_fd);
                 }
-            } else if (event.type == EV_SYN) {
-                // Forward sync events to maintain proper event boundaries
-                struct input_event sync_event;
-                memset(&sync_event, 0, sizeof(sync_event));
-                sync_event.type = EV_SYN;
-                sync_event.code = SYN_REPORT;
-                sync_event.value = 0;
-                write(uinput_fd, &sync_event, sizeof(sync_event));
+                else {
+                    // The keycode isn't in the bimap
+                    send_key(event.code, event.value, uinput_fd);
+                }
             }
         }
     }
