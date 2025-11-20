@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/favicon.png</file>
+        <file>resources/Clickr-Logo-Black.png</file>
+        <file>resources/Clickr-Logo-Transperent.png</file>
     </qresource>
 </RCC>
