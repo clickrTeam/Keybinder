@@ -84,31 +84,49 @@ void Daemon::start() {
     bool termination_condition = false;
     QList<OutputEvent> event_list;
     is_running = true;
+    
     while (!termination_condition) {
-        // Check if the thread has been requested to be interrupted, if so exit
-        // the loop. Otherwise this loop will block and prevent proper
-        // termination
         termination_condition =
             QThread::currentThread()->isInterruptionRequested();
+        
         struct input_event event;
-        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
-               0) {
+        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0) {
             if (event.type == EV_KEY) {
                 KeyEvent e;
                 e.keycode = int_to_keycode.find_forward(event.code);
-                e.type = (event.value == 1) ? KeyEventType::Press
-                                            : KeyEventType::Release;
+                
+                if (event.value == 1) {
+                    e.type = KeyEventType::Press;
+                } else if (event.value == 2) {
+                    // Key repeat - treat as press
+                    e.type = KeyEventType::Press;
+                } else {
+                    e.type = KeyEventType::Release;
+                }
 
                 if (key_sender.send_key(e)) {
-                    // Suppressed by the mapper (i.e. replaced/mapped to
-                    // something else)
+                    // Key was mapped/suppressed by the mapper
                     continue;
                 } else {
-                    // Inject original key if not mapped
-                    event_list.append(e);
-                    send_outputs(event_list);
-                    event_list.clear();
+                    // Don't batch - send each event as it arrives to maintain timing
+                    int key_code = int_to_keycode.find_backward(e.keycode);
+                    int state = (e.type == KeyEventType::Press) ? 1 : 0;
+                    
+                    // For repeat events, use state = 2
+                    if (event.value == 2) {
+                        state = 2;
+                    }
+                    
+                    send_key(key_code, state, uinput_fd);
                 }
+            } else if (event.type == EV_SYN) {
+                // Forward sync events to maintain proper event boundaries
+                struct input_event sync_event;
+                memset(&sync_event, 0, sizeof(sync_event));
+                sync_event.type = EV_SYN;
+                sync_event.code = SYN_REPORT;
+                sync_event.value = 0;
+                write(uinput_fd, &sync_event, sizeof(sync_event));
             }
         }
     }
@@ -140,7 +158,7 @@ void Daemon::send_key(int key_code, int state, int fd) {
     // Key press event
     event.type = EV_KEY;
     event.code = key_code;            // Key that we are sending
-    event.value = state;              // Key up or down
+    event.value = state;              // 0=release, 1=press, 2=repeat
     write(fd, &event, sizeof(event)); // Send the event
 
     // Synchronization event
@@ -150,6 +168,4 @@ void Daemon::send_key(int key_code, int state, int fd) {
     event.code = SYN_REPORT;
     event.value = 0; // This value is not used but is set to 0 by convention
     write(fd, &event, sizeof(event)); // Send the event
-
-    qDebug() << "Key sent:" << key_code << ":" << state;
 }

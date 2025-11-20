@@ -76,7 +76,7 @@ BiMap<QString, KeyCode> str_to_keycode = {
     {"RightControl", KeyCode::RightControl},
     {"LeftAlt", KeyCode::LeftAlt},
     {"RightAlt", KeyCode::RightAlt},
-    {"LeftSuper", KeyCode::LeftSuper},
+    {"LeftSuper", KeyCode::LeftSuper}, // Windows key, Linux super key, Command key
     {"RightSuper", KeyCode::RightSuper},
 
     // --- Navigation / Control ---

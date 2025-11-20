@@ -23,25 +23,37 @@ std::optional<InputEvent>
 KeyReceiver::wait_key(std::optional<std::chrono::milliseconds> timeout) {
     std::unique_lock<std::mutex> lock(state->mtx);
 
-    bool got_key;
+    bool ready;
     if (timeout.has_value()) {
-        got_key = state->cv.wait_for(lock, *timeout,
-                                     [this] { return !state->queue.empty(); });
+        ready = state->cv.wait_for(lock, *timeout, [this] {
+            return state->closed || !state->queue.empty();
+        });
     } else {
-        state->cv.wait(lock, [this] { return !state->queue.empty(); });
-        got_key = true;
+        state->cv.wait(
+            lock, [this] { return state->closed || !state->queue.empty(); });
+        ready = true;
     }
 
-    if (!got_key) {
-        return std::nullopt; // timed out
-    }
+    if (state->closed)
+        return std::nullopt; // shutdown signal
 
-    InputEvent kc = state->queue.front();
+    if (!ready || state->queue.empty())
+        return std::nullopt;
+
+    InputEvent e = state->queue.front();
     state->queue.pop_front();
-    return kc;
+    return e;
 }
 
 std::pair<KeySender, KeyReceiver> create_channel() {
     auto state = std::make_shared<KeyQueueState>();
     return {KeySender(state), KeyReceiver(state)};
+}
+
+void KeyReceiver::close() {
+    {
+        std::lock_guard<std::mutex> lock(state->mtx);
+        state->closed = true;
+    }
+    state->cv.notify_all();
 }

@@ -13,6 +13,7 @@ struct KeyQueueState {
     std::deque<InputEvent> queue;
     std::condition_variable cv;
     std::mutex mtx;
+    bool closed = false;
 };
 
 // TODO: have some kind of filter to easily send keys back when they are not
@@ -36,6 +37,7 @@ class KeyReceiver {
     // If timeout is not provided, waits indefinitely
     std::optional<InputEvent>
     wait_key(std::optional<std::chrono::milliseconds> timeout = std::nullopt);
+    void close();
 
   private:
     std::shared_ptr<KeyQueueState> state;
