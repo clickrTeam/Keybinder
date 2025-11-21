@@ -112,9 +112,11 @@ void ClientConnection::read_data() {
                     "success", "",
                     QJsonObject({{"frequencies", key_counter.to_json()}}));
             } else if (msg_type == "pause") {
+                qDebug() << "pause requested";
                 emit pause_requested();
                 send_response("success", "");
             } else if (msg_type == "resume") {
+                qDebug() << "resume requested";
                 emit resume_requested();
                 send_response("success", "");
             } else {
