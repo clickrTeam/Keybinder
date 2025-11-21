@@ -124,7 +124,7 @@ void CALLBACK Daemon::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd,
     if (app_name.isEmpty())
         app_name = QString::fromWCharArray(className);
 
-    qDebug() << "Window activated/focused:" << app_name;
+    // qDebug() << "Window activated/focused:" << app_name; // - useful to debug
 
     key_sender.send_key(AppFocusedEvent{app_name});
 }
@@ -153,7 +153,7 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
 
-    qDebug() << "Key pressing:" << kbdStruct->vkCode;
+    // qDebug() << "Key pressing:" << kbdStruct->vkCode; // - useful to debug
 
     // FIXME: this is not a real solution
     if (!int_to_keycode.contains_forward(kbdStruct->vkCode))
