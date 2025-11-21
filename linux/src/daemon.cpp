@@ -84,17 +84,18 @@ void Daemon::start() {
     bool termination_condition = false;
     QList<OutputEvent> event_list;
     is_running = true;
-    
+
     while (!termination_condition) {
         termination_condition =
             QThread::currentThread()->isInterruptionRequested();
-        
+
         struct input_event event;
-        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) == 0) {
+        while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
+               0) {
             if (event.type == EV_KEY) {
                 KeyEvent e;
                 e.keycode = int_to_keycode.find_forward(event.code);
-                
+
                 if (event.value == 1) {
                     e.type = KeyEventType::Press;
                 } else if (event.value == 2) {
@@ -108,15 +109,16 @@ void Daemon::start() {
                     // Key was mapped/suppressed by the mapper
                     continue;
                 } else {
-                    // Don't batch - send each event as it arrives to maintain timing
+                    // Don't batch - send each event as it arrives to maintain
+                    // timing
                     int key_code = int_to_keycode.find_backward(e.keycode);
                     int state = (e.type == KeyEventType::Press) ? 1 : 0;
-                    
+
                     // For repeat events, use state = 2
                     if (event.value == 2) {
                         state = 2;
                     }
-                    
+
                     send_key(key_code, state, uinput_fd);
                 }
             } else if (event.type == EV_SYN) {

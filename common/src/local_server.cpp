@@ -41,10 +41,14 @@ void LocalServer::handle_new_connection() {
 
 ClientConnection::ClientConnection(QLocalSocket *socket, Mapper &mapper,
                                    KeybinderSettings &settings,
-                                   KeyCounter &key_counter, QObject *parent)
+                                   KeyCounter &key_counter, LocalServer *parent)
     : QObject(parent), socket(socket), mapper(mapper), settings(settings),
       key_counter(key_counter) {
     qInfo() << "New client connected";
+    connect(this, &ClientConnection::pause_requested, parent,
+            &LocalServer::pause_requested);
+    connect(this, &ClientConnection::resume_requested, parent,
+            &LocalServer::resume_requested);
     connect(socket, &QLocalSocket::readyRead, this,
             &ClientConnection::read_data);
     connect(socket, &QLocalSocket::disconnected, socket,
@@ -107,6 +111,12 @@ void ClientConnection::read_data() {
                 send_response(
                     "success", "",
                     QJsonObject({{"frequencies", key_counter.to_json()}}));
+            } else if (msg_type == "pause") {
+                emit pause_requested();
+                send_response("success", "");
+            } else if (msg_type == "resume") {
+                emit resume_requested();
+                send_response("success", "");
             } else {
                 qWarning() << "Unknown message_type:" << msg_type;
                 send_response("fail", "unknown message_type: " + msg_type);
