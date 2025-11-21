@@ -160,6 +160,11 @@ int main(int argc, char *argv[]) {
     // IDK if needed)
     LocalServer server(mapper, settings, key_counter);
 
+    QObject::connect(&server, &LocalServer::pause_requested,
+                     [&]() { pause_mapper(); });
+    QObject::connect(&server, &LocalServer::resume_requested,
+                     [&]() { resume_mapper(); });
+
     // Removing for prototype as not yet used
     //
     // TODO: We need to add this argument to startup locations. i.e. add to

@@ -25,6 +25,9 @@ class LocalServer : public QObject {
                          KeyCounter &key_counter);
     virtual ~LocalServer();
     bool start();
+  signals:
+    void pause_requested();
+    void resume_requested();
 
   private slots:
     void handle_new_connection();
@@ -44,8 +47,12 @@ class ClientConnection : public QObject {
   public:
     ClientConnection(QLocalSocket *socket, Mapper &mapper,
                      KeybinderSettings &settings, KeyCounter &key_counter,
-                     QObject *parent = nullptr);
+                     LocalServer *parent = nullptr);
     virtual ~ClientConnection() = default;
+
+  signals:
+    void pause_requested();
+    void resume_requested();
 
   private slots:
     void read_data();
