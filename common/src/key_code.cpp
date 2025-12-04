@@ -139,15 +139,28 @@ BiMap<QString, KeyCode> str_to_keycode = {
     {"VolumeUp", KeyCode::VolumeUp},
     {"VolumeDown", KeyCode::VolumeDown},
     {"Mute", KeyCode::Mute},
+
     {"MediaNext", KeyCode::MediaNext},
     {"MediaPrev", KeyCode::MediaPrev},
     {"MediaPlayPause", KeyCode::MediaPlayPause},
     {"MediaStop", KeyCode::MediaStop},
+
     {"BrowserBack", KeyCode::BrowserBack},
     {"BrowserForward", KeyCode::BrowserForward},
     {"BrowserRefresh", KeyCode::BrowserRefresh},
-    {"BrowserStop", KeyCode::BrowserStop},
     {"BrowserHome", KeyCode::BrowserHome},
+    {"BrowserSearch", KeyCode::BrowserSearch},
+    {"BrowserFavorites", KeyCode::BrowserFavorites},
+
     {"Mail", KeyCode::Mail},
     {"Calculator", KeyCode::Calculator},
-    {"Computer", KeyCode::Computer}};
+    {"Computer", KeyCode::Computer},
+
+    {"Sleep", KeyCode::Sleep},
+    {"Power", KeyCode::Power},
+
+    // --- Language / IME ---
+    {"Hiragana", KeyCode::Hiragana},
+    {"Katakana", KeyCode::Katakana},
+    {"Muhenkan", KeyCode::Muhenkan},
+    {"Henkan", KeyCode::Henkan}};
