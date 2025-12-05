@@ -8,7 +8,7 @@
 Tray::Tray(QObject *parent) : QObject(parent) {
     trayIcon = new QSystemTrayIcon(this);
 
-    QIcon icon(":/resources/favicon.png");
+    QIcon icon(":resources/Clickr-Logo-Transperent.png");
     trayIcon->setIcon(icon);
     trayIcon->setToolTip("Clickr");
 

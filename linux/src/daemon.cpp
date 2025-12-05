@@ -93,33 +93,37 @@ void Daemon::start() {
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
                0) {
             if (event.type == EV_KEY) {
-                KeyEvent e;
-                e.keycode = int_to_keycode.find_forward(event.code);
+                if (int_to_keycode.contains_forward(event.code)) {
+                    KeyEvent e;
+                    e.keycode = int_to_keycode.find_forward(event.code);
 
-                if (event.value == 1) {
-                    e.type = KeyEventType::Press;
-                } else if (event.value == 2) {
-                    // Key repeat - treat as press
-                    e.type = KeyEventType::Press;
-                } else {
-                    e.type = KeyEventType::Release;
-                }
-
-                if (key_sender.send_key(e)) {
-                    // Key was mapped/suppressed by the mapper
-                    continue;
-                } else {
-                    // Don't batch - send each event as it arrives to maintain
-                    // timing
-                    int key_code = int_to_keycode.find_backward(e.keycode);
-                    int state = (e.type == KeyEventType::Press) ? 1 : 0;
-
-                    // For repeat events, use state = 2
-                    if (event.value == 2) {
-                        state = 2;
+                    if (event.value == 1) {
+                        e.type = KeyEventType::Press;
+                    } else if (event.value == 2) {
+                        // Key repeat - treat as press
+                        e.type = KeyEventType::Press;
+                    } else {
+                        e.type = KeyEventType::Release;
                     }
 
-                    send_key(key_code, state, uinput_fd);
+                    if (key_sender.send_key(e)) {
+                        // Key was mapped/suppressed by the mapper
+                        continue;
+                    } else {
+                        // Don't batch - send each event as it arrives to
+                        // maintain timing
+                        int key_code = int_to_keycode.find_backward(e.keycode);
+                        int state = (e.type == KeyEventType::Press) ? 1 : 0;
+
+                        // For repeat events, use state = 2
+                        if (event.value == 2) {
+                            state = 2;
+                        }
+                    }
+                } else {
+                    // The keycode isn't in the bimap so just forward it to the
+                    // kernel
+                    send_key(event.code, event.value, uinput_fd);
                 }
             } else if (event.type == EV_SYN) {
                 // Forward sync events to maintain proper event boundaries

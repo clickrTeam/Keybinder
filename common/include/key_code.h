@@ -76,7 +76,7 @@ enum class KeyCode : std::uint16_t {
     RightControl,
     LeftAlt,
     RightAlt,
-    LeftSuper, // Windows / Command key
+    LeftSuper,
     RightSuper,
     CapsLock,
     NumLock,
@@ -96,7 +96,7 @@ enum class KeyCode : std::uint16_t {
     PageDown,
     PrintScreen,
     Pause,
-    Menu, // Context menu key
+    Menu,
 
     // Arrows
     ArrowUp,
@@ -143,14 +143,29 @@ enum class KeyCode : std::uint16_t {
     MediaNext,
     MediaPrev,
     MediaStop,
+
+    // Browser Keys
     BrowserBack,
     BrowserForward,
     BrowserRefresh,
-    BrowserStop,
+    BrowserSearch,
+    BrowserFavorites,
     BrowserHome,
+
+    // Application Keys
     Mail,
     Calculator,
-    Computer
+    Computer,
+
+    // Power / System
+    Sleep,
+    Power,
+
+    // Language / IME Keys
+    Katakana,
+    Hiragana,
+    Muhenkan,
+    Henkan,
 };
 
 extern BiMap<QString, KeyCode> str_to_keycode;
