@@ -2,7 +2,6 @@
 #include "key_code.h"
 #include <windows.h>
 
-// TODO ChatGPT generated please verify
 BiMap<UINT, KeyCode> int_to_keycode = {
     // --- Letters ---
     {'A', KeyCode::A},
