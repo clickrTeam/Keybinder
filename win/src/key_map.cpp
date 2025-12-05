@@ -137,7 +137,6 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {VK_BROWSER_BACK, KeyCode::BrowserBack},
     {VK_BROWSER_FORWARD, KeyCode::BrowserForward},
     {VK_BROWSER_REFRESH, KeyCode::BrowserRefresh},
-    {VK_BROWSER_STOP, KeyCode::BrowserStop},
     {VK_BROWSER_SEARCH, KeyCode::BrowserSearch},
     {VK_BROWSER_FAVORITES, KeyCode::BrowserFavorites},
     {VK_BROWSER_HOME, KeyCode::BrowserHome},
@@ -146,5 +145,4 @@ BiMap<UINT, KeyCode> int_to_keycode = {
     {VK_LAUNCH_APP2, KeyCode::Calculator}, // Typically calculator
     {VK_LAUNCH_APP1, KeyCode::Computer},
 
-    {VK_SLEEP, KeyCode::Sleep},
-    {VK_POWER, KeyCode::Power}};
+    {VK_SLEEP, KeyCode::Sleep}};
