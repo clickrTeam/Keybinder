@@ -148,8 +148,8 @@ enum class KeyCode : std::uint16_t {
     BrowserBack,
     BrowserForward,
     BrowserRefresh,
-    BrowserSearch,     
-    BrowserFavorites,  
+    BrowserSearch,
+    BrowserFavorites,
     BrowserHome,
 
     // Application Keys
@@ -161,11 +161,11 @@ enum class KeyCode : std::uint16_t {
     Sleep,
     Power,
 
-    // Language / IME Keys 
-    Katakana, 
-    Hiragana,   
-    Muhenkan,         
-    Henkan,           
+    // Language / IME Keys
+    Katakana,
+    Hiragana,
+    Muhenkan,
+    Henkan,
 };
 
 extern BiMap<QString, KeyCode> str_to_keycode;

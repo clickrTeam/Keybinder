@@ -152,7 +152,7 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {KEY_POWER, KeyCode::Power},
 
     // --- Language / IME ---
-    {KEY_HIRAGANA, KeyCode::Hiragana},                 // Hiragana mode
-    {KEY_KATAKANA, KeyCode::Katakana},                 // Katakana mode
-    {KEY_MUHENKAN, KeyCode::Muhenkan},                 // Cycle mode
-    {KEY_HENKAN, KeyCode::Henkan}};                    // Select prev char
+    {KEY_HIRAGANA, KeyCode::Hiragana}, // Hiragana mode
+    {KEY_KATAKANA, KeyCode::Katakana}, // Katakana mode
+    {KEY_MUHENKAN, KeyCode::Muhenkan}, // Cycle mode
+    {KEY_HENKAN, KeyCode::Henkan}};    // Select prev char
