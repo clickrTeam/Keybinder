@@ -128,16 +128,31 @@ BiMap<uint16_t, KeyCode> int_to_keycode = {
     {KEY_VOLUMEUP, KeyCode::VolumeUp},
     {KEY_VOLUMEDOWN, KeyCode::VolumeDown},
     {KEY_MUTE, KeyCode::Mute},
+
     {KEY_NEXTSONG, KeyCode::MediaNext},
     {KEY_PREVIOUSSONG, KeyCode::MediaPrev},
     {KEY_PLAYPAUSE, KeyCode::MediaPlayPause},
     {KEY_STOPCD, KeyCode::MediaStop},
-    {KEY_HOMEPAGE, KeyCode::BrowserHome},
+
+    // --- Browser keys ---
     {KEY_BACK, KeyCode::BrowserBack},
     {KEY_FORWARD, KeyCode::BrowserForward},
     {KEY_REFRESH, KeyCode::BrowserRefresh},
-    {KEY_STOP, KeyCode::BrowserStop},
+    {KEY_HOMEPAGE, KeyCode::BrowserHome},
+    {KEY_SEARCH, KeyCode::BrowserSearch},
+    {KEY_FAVORITES, KeyCode::BrowserFavorites},
+
+    // --- Application keys ---
     {KEY_MAIL, KeyCode::Mail},
     {KEY_CALC, KeyCode::Calculator},
     {KEY_COMPUTER, KeyCode::Computer},
-};
+
+    // --- Power / ACPI ---
+    {KEY_SLEEP, KeyCode::Sleep},
+    {KEY_POWER, KeyCode::Power},
+
+    // --- Language / IME ---
+    {KEY_HIRAGANA, KeyCode::Hiragana}, // Hiragana mode
+    {KEY_KATAKANA, KeyCode::Katakana}, // Katakana mode
+    {KEY_MUHENKAN, KeyCode::Muhenkan}, // Cycle mode
+    {KEY_HENKAN, KeyCode::Henkan}};    // Select prev char
