@@ -15,6 +15,7 @@ KeySender key_sender(nullptr);
 const ULONG_PTR InfoIdentifier =
     0x1234ABCD; // allowed collisions otherwise,
                 // ((ULONG_PTR)GetCurrentProcessId() << 32) | 0x1234ABCD
+QSet<int> pressed_keys;          // Track currently pressed keys to ignore repeats
 
 Daemon::Daemon(KeySender key_sender_tmp) {
     key_sender = key_sender_tmp;
@@ -163,20 +164,25 @@ LRESULT CALLBACK Daemon::HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     switch (wParam) {
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
+        // Ignore repeat keys - only process if this key isn't already tracked as pressed
+        if (pressed_keys.contains(kbdStruct->vkCode)) {
+            return 1;
+        }
+        
+        pressed_keys.insert(kbdStruct->vkCode);
         KeyEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Press;
-        if (key_sender.send_key(e))
-            return 1; // Suppress keypress
-        break;
+        key_sender.send_key(e);
+        return 1; // Suppress keypress
     }
     case WM_KEYUP: {
+        pressed_keys.remove(kbdStruct->vkCode);
         KeyEvent e;
         e.keycode = int_to_keycode.find_forward(kbdStruct->vkCode);
         e.type = KeyEventType::Release;
-        if (key_sender.send_key(e))
-            return 1; // Suppress keypress
-        break;
+        key_sender.send_key(e);
+        return 1; // Suppress keypress
     }
     default: {
         break;

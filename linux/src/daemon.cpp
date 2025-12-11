@@ -93,14 +93,16 @@ void Daemon::start() {
         while (libevdev_next_event(keyb, LIBEVDEV_READ_FLAG_NORMAL, &event) ==
                0) {
             if (event.type == EV_KEY) {
+                // Ignore repeat keys (value == 2)
+                if (event.value == 2) {
+                    continue;
+                }
+
                 if (int_to_keycode.contains_forward(event.code)) {
                     KeyEvent e;
                     e.keycode = int_to_keycode.find_forward(event.code);
 
                     if (event.value == 1) {
-                        e.type = KeyEventType::Press;
-                    } else if (event.value == 2) {
-                        // Key repeat - treat as press
                         e.type = KeyEventType::Press;
                     } else {
                         e.type = KeyEventType::Release;
